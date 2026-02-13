@@ -1,5 +1,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle ,} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+import { Button } from "@/components/ui/button";
 
 
 
@@ -94,38 +97,27 @@ const Procurement = () => {
            </div>
            <div>
             <div className='pl-4 pt-4.5 flex gap-70'>
-                <div className='border-black bg-[#94A3B8]  h-11 w-140 rounded-sm '>
-                    <div className='flex gap-11 pl-7 pt-2'>
-                        <div>
-                            <button  >
-                                      <h5> Purchase Requisition </h5></button>
-                        </div>
-                        <div>
-                            <button>RFQ & Quotations</button>
-                        </div>
-                        <div>
-                            <button className='bg-white  rounded-sm pl-2 pr-2 pt-0.5 pb-0.5'>Purchase Orders</button>
-                        </div>
-                    </div>
-                    
-                </div>
-                <div>
-                        <button className=' border-black rounded-sm bg-blue-600 pl-4 pr-4 pt-1 pb-1'>
-                            <h1 className='text-white'>+ Create PO </h1>
-                        </button>
-                </div>
-                
-            </div>
-            <div>
-                <div>
-         
-        </div>
+                 <Tabs defaultValue="inspections" className="w-full text-black">
+        <TabsList className="bg-[#94A3B8]">
+          <TabsTrigger value="inspections" className="flex-1 flex items-center justify-center
+             h-full text-black rounded-sm
+              hover:bg-white data-[state=active]:bg-white
+               data-[state=active]:text-black data-[state=active]:shadow-md 
+               transition-all">Inspections</TabsTrigger>
+          <TabsTrigger value="checklists"
+          className="flex-1 flex items-center justify-center
+             h-full text-black rounded-sm
+              hover:bg-white data-[state=active]:bg-white
+               data-[state=active]:text-black data-[state=active]:shadow-md 
+               transition-all"
+          >Checklists</TabsTrigger>
+        </TabsList>
 
-       
-      </div>
-      
-    </div>
-    <div className='bg-blue-50'>
+        {/* Inspections Tab */}
+        <TabsContent value="inspections" className="mt-6">
+          <Card>
+            <CardContent className="p-0">
+               <div className='bg-blue-50'>
         <div className="p-6">
       <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
 
@@ -258,6 +250,94 @@ const Procurement = () => {
       </div>
             </div>
            </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Checklists Tab */}
+        <TabsContent value="checklists" className="mt-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            {/* Checklist List */}
+            <Card className="lg:col-span-1">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>QC Checklists</CardTitle>
+                <Button size="sm" className="bg-[#0284C5]">New Checklist</Button>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="p-3 rounded-lg border bg-muted/40">
+                  <p className="font-medium">Steel Materials Inspection</p>
+                  <p className="text-sm text-muted-foreground">
+                    Raw Materials • 12 items
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-lg border">
+                  <p className="font-medium">Electrical Components Check</p>
+                  <p className="text-sm text-muted-foreground">
+                    Electrical • 8 items
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-lg border">
+                  <p className="font-medium">Safety Equipment Verification</p>
+                  <p className="text-sm text-muted-foreground">
+                    Safety • 15 items
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Checklist Preview */}
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle>Inspection Checklist Preview</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {[
+                  "Visual inspection for defects",
+                  "Dimension verification",
+                  "Weight measurement",
+                  "Material composition test",
+                  "Surface finish check",
+                  "Packaging condition",
+                  "Documentation verification",
+                  "Batch/Serial number verification",
+                ].map((item, i) => (
+                  <label key={i} className="flex items-center gap-2">
+                    <input type="checkbox" className="accent-blue-600" />
+                    {item}
+                  </label>
+                ))}
+
+                <div className="flex gap-3 pt-4">
+                  <Button className="flex-1 bg-[#0284C5]">Mark as Pass</Button>
+                  <Button variant="destructive" className="flex-1 bg-fuchsia-500">
+                    Mark as Fail
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
+                <div>
+                        <button className=' border-black rounded-sm bg-blue-600 pl-4 pr-4 pt-1 pb-1'>
+                            <h1 className='text-white'>+ Create PO </h1>
+                        </button>
+                </div>
+                
+            </div>
+            <div>
+                <div>
+         
+        </div>
+
+       
+      </div>
+      
+    </div>
+   
     </div>
     
     </div>
