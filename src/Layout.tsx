@@ -9,52 +9,61 @@ export default function Layout({
   readonly children: React.ReactNode;
 }) {
   return (
-    <SidebarProvider>
-      <div className="min-h-screen overflow-hidden flex w-full ">
-        <AppSidebar />
-        <main className="flex-1 overflow-auto">
-          <div className="flex items-center w-full border rounded-sm px-4 py-4">
+  <SidebarProvider>
+  <div className="flex h-screen w-full">
 
-  {/* Title */}
-  <div className="flex items-center gap-4 flex-1 ">
-    <SidebarTrigger  className="h-2 w-2"/>
+    {/* ================= SIDEBAR ================= */}
+    <AppSidebar />
 
-    <div>
-      <h1 className="text-1xl font-bold">Dashboard</h1>
-      <p className="text-muted-foreground text-sm">
-        Welcome back! Here's what's happening today.
-      </p>
+    {/* ================= MAIN AREA ================= */}
+    <div className="flex flex-1 flex-col">
+
+      {/* ---------- HEADER (FIXED) ---------- */}
+      <header className="sticky top-0 z-40 bg-white border-b">
+        <div className="flex items-center justify-between px-4 py-3">
+
+          {/* Left */}
+          <div className="flex items-center gap-4">
+            <SidebarTrigger className="h-6 w-6" />
+
+            <div>
+              <h1 className="text-lg font-bold">Dashboard</h1>
+              <p className="text-sm text-muted-foreground">
+                Welcome back! Here's what's happening today.
+              </p>
+            </div>
+          </div>
+
+          {/* Right */}
+          <div className="flex items-center gap-4">
+            <input
+              type="text"
+              placeholder="Search..."
+              className="hidden sm:block w-60 rounded-lg border px-3 py-2 text-sm"
+            />
+
+            <div className="relative cursor-pointer">
+              <Bell className="h-6 w-6 text-gray-700" />
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center
+                               justify-center rounded-full bg-red-600 text-[10px]
+                               font-semibold text-white">
+                3
+              </span>
+            </div>
+          </div>
+
+        </div>
+      </header>
+
+      {/* ---------- DASHBOARD CONTENT (SCROLLS) ---------- */}
+      <main className="flex-1 overflow-y-auto bg-blue-50 p-4 sm:p-6">
+        {children}
+      </main>
+
     </div>
   </div>
+</SidebarProvider>
 
-  {/* Bell */}
-  <div className="flex items-center gap-4">
-    <div className="relative">
-      <input
-        type="text"
-        placeholder="Search..."
-        className="w-60 rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-4 text-sm
-                   placeholder-gray-400 "
-      />
-    </div>
-
-    <div className="relative inline-flex">
-      <Bell className="w-6 h-6 text-gray-700" />
-      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center
-                       rounded-full bg-red-600 text-[10px] font-semibold text-white">
-        3
-      </span>
-    </div>
-  </div>
-
-</div>
-
-         
-          <main className=""> {children}</main>
-        </main>
-      </div>
-      
-    </SidebarProvider>
    
     
   );
