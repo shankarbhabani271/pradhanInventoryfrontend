@@ -146,7 +146,7 @@ const items = [
 
 export function AppSidebar() {
   return (
- <Sidebar className="h-screen">
+ <Sidebar className="h-screen ">
 
   {/* Wrapper */}
   <div className="flex h-full flex-col">
