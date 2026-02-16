@@ -1,15 +1,11 @@
 
-
-import Layout from './Layout'
-import AppRouter from './routerouter'
+import AppRouter from "./AppRouter";
 
 const App = () => {
   return (
-    <Layout >
-      
-      <AppRouter/>
-    </Layout>
-  )
-}
+      <AppRouter />
+    
+  );
+};
 
-export default App
+export default App;
