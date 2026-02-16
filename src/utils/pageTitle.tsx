@@ -1,0 +1,15 @@
+export const pageTitles: Record<string, string> = {
+  "/": "Dashboard",
+  "/material-request": "Material Request",
+  "/apporavals": "Approvals",
+  "/procurement": "Procurement",
+  "/inventory": "Inventory",
+  "/qcmanagement": "QC Management",
+  "/barcode-tracking": "Barcode Tracking",
+  "/returns": "Returns",
+  "/vendors": "Vendors",
+  "/reports": "Reports",
+  "/settings": "Settings",
+  "/user": "User",
+  "/masters": "Masters",
+};
