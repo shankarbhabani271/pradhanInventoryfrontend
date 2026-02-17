@@ -2,6 +2,8 @@ import { Routes, Route } from "react-router-dom";
 import { lazy, Suspense } from "react";
 
 import Layout from "./Layout";
+import Login from "./components/pages/Login";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const Dashboard = lazy(() => import("./components/pages/Dashboard"));
 const MaterialRequest = lazy(
@@ -21,10 +23,19 @@ const Settings = lazy(() => import("./components/pages/Settings"));
 const Reports = lazy(() => import("./components/pages/Reports"));
 const Masters = lazy(() => import("./components/pages/Masters"));
 
+
+const SuspenseGate  = ({children }: {children:React.ReactNode }) => (
+  <Suspense fallback={<div>Loading ...</div>}>{children}</Suspense>
+);
 const AppRouter = () => {
   return (
     <Routes>
-      <Route element={<Layout />}>
+      <Route path="login" element={<Login />} />
+      <Route element={
+        <ProtectedRoute>
+          <Layout />
+        </ProtectedRoute>
+      }>
         <Route index element={<Dashboard />} />
 
         <Route path="material-request" element={<SuspenseGate><MaterialRequest /></SuspenseGate>} />
@@ -51,8 +62,7 @@ const AppRouter = () => {
   );
 };
 
-const SuspenseGate = ({ children }: { children: React.ReactNode }) => {
-  return <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>;
-};
+
+
 
 export default AppRouter;

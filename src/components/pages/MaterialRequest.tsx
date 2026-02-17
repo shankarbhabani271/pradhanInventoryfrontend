@@ -7,6 +7,67 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
+const rows = [
+  {
+    ref: "MR-2024-0156",
+    requester: "Sarah Johnson",
+    department: "Operations",
+    date: "2024-01-15",
+    items: 5,
+    priority: "High",
+    priorityStyle: "bg-red-100 text-red-600",
+    status: "Pending",
+    statusStyle: "bg-orange-100 text-orange-600",
+  },
+  {
+    ref: "MR-2024-0155",
+    requester: "Mike Chen",
+    department: "IT",
+    date: "2024-01-14",
+    items: 3,
+    priority: "Medium",
+    priorityStyle: "bg-yellow-100 text-yellow-600",
+    status: "Approved",
+    statusStyle: "bg-green-100 text-green-600",
+  },
+  {
+    ref: "MR-2024-0154",
+    requester: "Emily Davis",
+    department: "HR",
+    date: "2024-01-14",
+    items: 8,
+    priority: "Low",
+    priorityStyle: "bg-blue-100 text-blue-600",
+    status: "Completed",
+    statusStyle: "bg-green-100 text-green-600",
+  },
+  {
+    ref: "MR-2024-0153",
+    requester: "John Smith",
+    department: "Finance",
+    date: "2024-01-13",
+    items: 2,
+    priority: "Medium",
+    priorityStyle: "bg-yellow-100 text-yellow-600",
+    status: "Rejected",
+    statusStyle: "bg-red-100 text-red-600",
+  },
+  {
+    ref: "MR-2024-0152",
+    requester: "Lisa Wong",
+    department: "Marketing",
+    date: "2024-01-12",
+    items: 4,
+    priority: "High",
+    priorityStyle: "bg-red-100 text-red-600",
+    status: "Draft",
+    statusStyle: "bg-gray-100 text-gray-600",
+  },
+];
+
+
+
+
 
 import {
   Funnel,Plus ,MoreHorizontal
@@ -17,189 +78,134 @@ import {
 const MaterialRequest = () => {
   return (
     <div>
-      <div className='flex gap-75  bg-blue-50' >
-      <div className="flex gap-4  pt-4 pl-4.5">
-        <div>
-          <input
-            type="text"
-            placeholder="Search..."
-            className="w-70 rounded-lg border border-black bg-white py-2 pl-10 pr-4 text-sm placeholder-gray-400"
-          />
-        </div>
+      <div className="w-full bg-blue-50 px-4 py-3">
+  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    
+    {/* Left section */}
+    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+      
+      {/* Search */}
+      <div className="relative w-full sm:w-[260px]">
+        <input
+          type="text"
+          placeholder="Search..."
+          className="w-full rounded-lg border border-black bg-white py-2 pl-4 pr-4 text-sm placeholder-gray-400"
+        />
+      </div>
 
-        <div>
-         <Select>
-        <SelectTrigger className="w-[150px] text-black-50 border-black">
+      {/* Select */}
+      <Select>
+        <SelectTrigger className="w-full sm:w-[160px] border-black">
           <SelectValue placeholder="Select material" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="iron">All Status</SelectItem>
-          <SelectItem value="steel">Draft</SelectItem>
-          <SelectItem value="plastic">Pending</SelectItem>
-          <SelectItem value="plastic">Approved</SelectItem>
-          <SelectItem value="plastic">Rejected</SelectItem>
-          <SelectItem value="plastic">Completed</SelectItem>
+          <SelectItem value="all">All Status</SelectItem>
+          <SelectItem value="draft">Draft</SelectItem>
+          <SelectItem value="pending">Pending</SelectItem>
+          <SelectItem value="approved">Approved</SelectItem>
+          <SelectItem value="rejected">Rejected</SelectItem>
+          <SelectItem value="completed">Completed</SelectItem>
         </SelectContent>
       </Select>
+
+      {/* Filter button */}
+      <button className="flex h-10 w-10 items-center justify-center rounded-lg border border-black bg-white shadow-sm hover:bg-gray-100">
+        <Funnel className="h-5 w-5 text-gray-700" />
+      </button>
+    </div>
+
+    {/* Right section */}
+    <div className="flex justify-start md:justify-end">
+      <button className="flex items-center gap-2 rounded-lg bg-[#0284C5] px-4 py-2 font-medium text-white hover:bg-[#0271aa]">
+        <Plus className="h-4 w-4" />
+        <span>New Request</span>
+      </button>
+    </div>
+
+  </div>
+</div>
+
+  <div className="bg-blue-50 min-h-screen p-4">
+  <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+
+    {/* HEADER – DESKTOP ONLY */}
+    <div className="hidden lg:grid grid-cols-8 bg-gray-200 p-4 text-sm font-semibold">
+      <div>Reference</div>
+      <div>Requester</div>
+      <div>Department</div>
+      <div>Date</div>
+      <div>Items</div>
+      <div>Priority</div>
+      <div>Status</div>
+      <div></div>
+    </div>
+
+    {/* ROWS */}
+    {rows.map((row, index) => (
+      <div
+        key={index}
+        className="
+          border-t p-4 hover:bg-gray-50
+          grid gap-4
+          grid-cols-1
+          sm:grid-cols-2
+          md:grid-cols-4
+          lg:grid-cols-8
+        "
+      >
+        <div className="min-w-0 break-words">
+          <p className="lg:hidden text-xs text-gray-500">Reference</p>
+          <p className="font-semibold">{row.ref}</p>
+        </div>
+
+        <div className="min-w-0 break-words">
+          <p className="lg:hidden text-xs text-gray-500">Requester</p>
+          <p>{row.requester}</p>
+        </div>
+
+        <div className="min-w-0 break-words">
+          <p className="lg:hidden text-xs text-gray-500">Department</p>
+          <p>{row.department}</p>
         </div>
 
         <div>
-           <button className="flex items-center justify-center w-10 h-10 border border-black rounded-lg bg-white shadow-sm hover:bg-gray-100">
-      <Funnel className="w-5 h-5 text-gray-700" />
-    </button>
+          <p className="lg:hidden text-xs text-gray-500">Date</p>
+          <p>{row.date}</p>
+        </div>
+
+        <div>
+          <p className="lg:hidden text-xs text-gray-500">Items</p>
+          <p>{row.items}</p>
+        </div>
+
+        <div>
+          <p className="lg:hidden text-xs text-gray-500">Priority</p>
+          <span
+            className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${row.priorityStyle}`}
+          >
+            {row.priority}
+          </span>
+        </div>
+
+        <div>
+          <p className="lg:hidden text-xs text-gray-500">Status</p>
+          <span
+            className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${row.statusStyle}`}
+          >
+            {row.status}
+          </span>
+        </div>
+
+        <div className="flex lg:justify-center">
+          <MoreHorizontal className="w-5 h-5 text-gray-500 cursor-pointer" />
         </div>
       </div>
-      <div className='pt-4.5'>
-       <button className="flex items-center gap-2 px-4 py-2 bg-[#0284C5] text-white font-medium rounded-lg ">
-  <Plus className="w-4 h-4" />
-  <span>New Request</span>
-</button>
-      </div>
-    </div>
-    <div className='bg-blue-50'>
-        <div className="p-6">
-      <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+    ))}
 
-        {/* main heading for  */}
-        <div className="grid grid-cols-8 bg-gray-200 p-4 font-semibold text-sm">
-          <div>Reference</div>
-          <div>Requester</div>
-          <div>Department</div>
-          <div>Date</div>
-          <div>Items</div>
-          <div>Priority</div>
-          <div>Status</div>
-          <div></div>
-        </div>
+  </div>
+</div>
 
-        {/* bhabani 1 */}
-        <div className="grid grid-cols-8 items-center p-4 border-t text-sm h-18 hover:bg-gray-100">
-          <div className="font-semibold">MR-2024-0156</div>
-          <div>Sarah Johnson</div>
-          <div>Operations</div>
-          <div>2024-01-15</div>
-          <div>5</div>
 
-          <div>
-            <span className="px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-600">
-              high
-            </span>
-          </div>
-
-          <div>
-            <span className="px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-600">
-              pending
-            </span>
-          </div>
-
-          <div>
-            <MoreHorizontal className="w-5 h-5 text-gray-500 cursor-pointer" />
-          </div>
-        </div>
-
-        {/* bhabani 2 */}
-        <div className="grid grid-cols-8 items-center p-4 border-t text-sm h-18 hover:bg-gray-100">
-          <div className="font-semibold">MR-2024-0155</div>
-          <div>Mike Chen</div>
-          <div>IT</div>
-          <div>2024-01-14</div>
-          <div>3</div>
-
-          <div>
-            <span className="px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-600">
-              medium
-            </span>
-          </div>
-
-          <div>
-            <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-600">
-              approved
-            </span>
-          </div>
-
-          <div>
-            <MoreHorizontal className="w-5 h-5 text-gray-500 cursor-pointer" />
-          </div>
-        </div>
-        {/* 3rd bhabani*/}
-         <div className="grid grid-cols-8 items-center p-4 border-t text-sm h-18 hover:bg-gray-100">
-          <div className="font-semibold">MR-2024-0154</div>
-          <div>Emily Davis</div>
-          <div>HR</div>
-          <div>2024-01-14</div>
-          <div>8</div>
-
-          <div>
-            <span className="px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-600">
-              low
-            </span>
-          </div>
-
-          <div>
-            <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-600">
-              completed
-            </span>
-          </div>
-
-          <div>
-            <MoreHorizontal className="w-5 h-5 text-gray-500 cursor-pointer" />
-          </div>
-        </div>
-        {/*4th bhabani  */}
-         <div className="grid grid-cols-8 items-center p-4 border-t text-sm h-18 hover:bg-gray-100">
-          <div className="font-semibold">MR-2024-0153</div>
-          <div>john Smith</div>
-          <div>Finance</div>
-          <div>2024-01-13</div>
-          <div>2</div>
-
-          <div>
-            <span className="px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-600">
-              medium
-            </span>
-          </div>
-
-          <div>
-            <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-600">
-              rejected
-            </span>
-          </div>
-
-          <div>
-            <MoreHorizontal className="w-5 h-5 text-gray-500 cursor-pointer" />
-          </div>
-        </div>
-        {/*5th bhabnai */}
-              <div className="grid grid-cols-8 items-center p-4 border-t text-sm h-18 hover:bg-gray-100">
-          <div className="font-semibold">MR-2024-0152</div>
-          <div>lisa Wong</div>
-          <div>marketing</div>
-          <div>2024-01-12</div>
-          <div>4</div>
-
-          <div>
-            <span className="px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-600">
-              high
-            </span>
-          </div>
-
-          <div>
-            <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-600">
-              draft
-            </span>
-          </div>
-
-          <div>
-            <MoreHorizontal className="w-5 h-5 text-gray-500 cursor-pointer" />
-          </div>
-        </div>
-
-       
-       
-      </div>
-    </div>
-    </div>
-  
 
     </div>
     
