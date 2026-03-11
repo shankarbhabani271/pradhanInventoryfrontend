@@ -66,11 +66,11 @@ const NotificationItem = ({
 /* ================= Settings Page ================= */
 const Settings = () => {
   return (
-    <div className="bg-slate-50">
-      <Tabs defaultValue="items" className="w-full pt-4 pl-6 ">
+    <div className="bg-[#EFF6FF]">
+      <Tabs defaultValue="items" className="w-full pt-4 pl-6  ">
 
         {/* ================= Tabs Header ================= */}
-        <TabsList className="bg-[#94A3B8] rounded-xl p-1 w-ful ">
+        <TabsList className="bg-[#94A3B8] rounded-xl p-1 w-ful  ">
           <TabsTrigger value="general" className=" text-black rounded-sm
               hover:bg-white data-[state=active]:bg-white
                data-[state=active]:text-black data-[state=active]:shadow-md 
@@ -95,7 +95,7 @@ const Settings = () => {
 
         {/* ================= ITEMS ================= */}
         <TabsContent value="general" className="mt-6">
-          <div className="p-6 bg-slate-50 min-h-screen">
+          <div className="p-6 bg-[#EFF6FF]min-h-screen">
 
             <Card className="p-6 rounded-xl mb-6">
               <div className="flex items-start gap-4 mb-6">
