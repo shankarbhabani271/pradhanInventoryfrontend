@@ -55,7 +55,7 @@ const Signup: React.FC = () => {
 
   return (
     <section id="signup ">
-      <div className="mx-auto container p-12 ">
+      <div className="mx-auto container p-12  bg-blue-200 min-h-screen">
         <div className="bg-white max-w-sm py-2 mx-auto p-4 w-full rounded shadow">
           {/* Form */}
           <form onSubmit={handleSubmit} className="mt-4">
