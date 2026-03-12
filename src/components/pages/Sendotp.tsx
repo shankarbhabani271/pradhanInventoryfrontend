@@ -48,7 +48,7 @@ const Signup: React.FC = () => {
 
   return (
     <section id="signup">
-      <div className="mx-auto container p-5 ">
+      <div className="mx-auto container p-5 min-h-screen bg-blue-200 ">
         <div className="bg-white max-w-sm py-5 mx-auto p-4 w-full rounded shadow">
           <form onSubmit={handleSubmit} className="mt-4">
             {/* OTP */}
