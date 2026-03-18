@@ -1,8 +1,11 @@
 import { Routes, Route } from "react-router-dom";
 import { lazy, Suspense } from "react";
-
+import React from "react";
 import Layout from "./Layout";
 import Login from "./components/pages/Login";
+import Forgotpassword from "./components/pages/Forgotpassword";
+import Sendotp from "./components/pages/Sendotp"
+
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const Dashboard = lazy(() => import("./components/pages/Dashboard"));
@@ -31,6 +34,8 @@ const AppRouter = () => {
   return (
     <Routes>
       <Route path="login" element={<Login />} />
+      <Route path="forgot-password" element={<Forgotpassword />} />
+      <Route path ="sendotp" element={<Sendotp/>}/>
       <Route element={
         <ProtectedRoute>
           <Layout />
@@ -49,6 +54,7 @@ const AppRouter = () => {
         <Route path="reports" element={<SuspenseGate><Reports /></SuspenseGate>} />
         <Route path="settings" element={<SuspenseGate><Settings /></SuspenseGate>} />
         <Route path="user" element={<SuspenseGate><User /></SuspenseGate>} />
+      
         <Route
           path="masters"
           element={

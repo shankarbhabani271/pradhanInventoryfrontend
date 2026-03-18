@@ -1,10 +1,9 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 
 
+import React from 'react'
+
+import { Card, CardContent, CardHeader, CardTitle,CardDescription } from "@/components/ui/card"
 import {
   FileText,
   IndianRupee,
@@ -12,6 +11,12 @@ import {
   Clock, Search, Plus, MoreHorizontal,
   
 } from "lucide-react"
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs"
 
 
 const dashboardCards = [
@@ -52,49 +57,10 @@ const dashboardCards = [
   },
 ];
 
-
-
-const items = [
-  {
-    id: "ITM-001",
-    name: "Steel Pipes 2inch",
-    category: "Steel & Metals",
-    uom: "Pcs",
-    hsn: "7304",
-    status: "Active",
-  },
-  {
-    id: "ITM-002",
-    name: "Copper Wire 10mm",
-    category: "Electrical",
-    uom: "Mtrs",
-    hsn: "7408",
-    status: "Active",
-  },
-  {
-    id: "ITM-003",
-    name: "PVC Fittings",
-    category: "Plumbing",
-    uom: "Pcs",
-    hsn: "3917",
-    status: "Active",
-  },
-  {
-    id: "ITM-004",
-    name: "Cement Bags 50kg",
-    category: "Construction",
-    uom: "Bags",
-    hsn: "2523",
-    status: "Inactive",
-  },
-];
-
-
-
 const Masters = () => {
   return (
-
- <div  className="p-4 space-y-4 bg-blue-50 min-h-screen">
+    <div>
+       <div  className="p-4 space-y-4 bg-blue-50 min-h-screen">
       
       {/* Header */}
       <div>
@@ -138,143 +104,82 @@ const Masters = () => {
           );
         })}
      </div>
-     <div>
-        <Tabs defaultValue="items" className="w-full">
+    <div>
 
-      {/* Tabs Header */}
-      <TabsList className="bg-[#94A3B8] rounded-xl p-1 w-fit">
-        <TabsTrigger
-          value="items"
-          className="px-6 py-2 rounded-lg data-[state=active]:bg-white data-[state=active]:text-black"
-        >
-          Items
-        </TabsTrigger>
-
-        <TabsTrigger
-          value="categories"
-          className="px-6 py-2 rounded-lg data-[state=active]:bg-white data-[state=active]:text-black"
-        >
-          Categories
-        </TabsTrigger>
-
-        <TabsTrigger
-          value="warehouses"
-          className="px-6 py-2 rounded-lg data-[state=active]:bg-white data-[state=active]:text-black"
-        >
-          Warehouses
-        </TabsTrigger>
-
-        <TabsTrigger
-          value="departments"
-          className="px-6 py-2 rounded-lg data-[state=active]:bg-white data-[state=active]:text-black"
-        >
-          Departments
-        </TabsTrigger>
+       <Tabs defaultValue="overview" className="w-[400px]">
+      <TabsList >
+        <TabsTrigger value="overview">Overview</TabsTrigger>
+        <TabsTrigger value="analytics">Analytics</TabsTrigger>
+        <TabsTrigger value="reports">Reports</TabsTrigger>
+        <TabsTrigger value="settings">Settings</TabsTrigger>
       </TabsList>
-
-      {/* Items */}
-      <TabsContent value="items" className="mt-6">
-          <div className="p-6 bg-slate-50 min-h-screen">
-      <Card className="p-6 rounded-xl">
-
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold">Item Master</h1>
-
-          <div className="flex items-center gap-4">
-            <div className="relative w-72">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <input
-                placeholder="Search items..."
-                className="w-full pl-9 pr-4 py-2 border rounded-lg focus:outline-none"
-              />
-            </div>
-
-            <Button className="bg-[#0284C7] hover:bg-[#0369A1]">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Item
-            </Button>
-          </div>
-        </div>
-
-        {/* Table Header */}
-        <div className="grid grid-cols-7 text-sm font-semibold text-gray-600 border-b pb-3">
-          <div>Item ID</div>
-          <div>Name</div>
-          <div>Category</div>
-          <div>UOM</div>
-          <div>HSN Code</div>
-          <div>Status</div>
-          <div className="text-center">Actions</div>
-        </div>
-
-        {/* Rows */}
-        {items.map((item, i) => (
-          <div
-            key={i}
-            className="grid grid-cols-7 items-center py-5 border-b last:border-none"
-          >
-            <div className="font-medium">{item.id}</div>
-            <div>{item.name}</div>
-
-            <div>
-              <Badge variant="outline">{item.category}</Badge>
-            </div>
-
-            <div>{item.uom}</div>
-            <div>{item.hsn}</div>
-
-            <div>
-              <Badge
-                className={
-                  item.status === "Active"
-                    ? "bg-emerald-100 text-emerald-700"
-                    : "bg-slate-300 text-slate-800"
-                }
-              >
-                {item.status}
-              </Badge>
-            </div>
-
-            <div className="flex justify-center">
-              <MoreHorizontal className="h-5 w-5 cursor-pointer text-gray-600" />
-            </div>
-          </div>
-        ))}
-      </Card>
-    </div>
+      <TabsContent value="overview">
+        <Card>
+          <CardHeader>
+            <CardTitle>Overview</CardTitle>
+            <CardDescription>
+              View your key metrics and recent project activity. Track progress
+              across all your active projects.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-muted-foreground text-sm">
+            You have 12 active projects and 3 pending tasks.
+          </CardContent>
+        </Card>
       </TabsContent>
-
-      {/* Categories */}
-      <TabsContent value="categories" className="mt-6">
-        <div className="bg-white rounded-xl p-6 shadow">
-          <h2 className="text-xl font-semibold">Categories</h2>
-          <p>Categories content goes here.</p>
-        </div>
+      <TabsContent value="analytics">
+        <Card>
+          <CardHeader>
+            <CardTitle>Analytics</CardTitle>
+            <CardDescription>
+              Track performance and user engagement metrics. Monitor trends and
+              identify growth opportunities.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-muted-foreground text-sm">
+            Page views are up 25% compared to last month.
+          </CardContent>
+        </Card>
       </TabsContent>
-
-      {/* Warehouses */}
-      <TabsContent value="warehouses" className="mt-6">
-        <div className="bg-white rounded-xl p-6 shadow">
-          <h2 className="text-xl font-semibold">Warehouses</h2>
-          <p>Warehouses content goes here.</p>
-        </div>
+      <TabsContent value="reports">
+        <Card>
+          <CardHeader>
+            <CardTitle>Reports</CardTitle>
+            <CardDescription>
+              Generate and download your detailed reports. Export data in
+              multiple formats for analysis.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-muted-foreground text-sm">
+            You have 5 reports ready and available to export.
+          </CardContent>
+        </Card>
       </TabsContent>
-
-      {/* Departments */}
-      <TabsContent value="departments" className="mt-6">
-        <div className="bg-white rounded-xl p-6 shadow">
-          <h2 className="text-xl font-semibold">Departments</h2>
-          <p>Departments content goes here.</p>
-        </div>
+      <TabsContent value="settings">
+        <Card>
+          <CardHeader>
+            <CardTitle>Settings</CardTitle>
+            <CardDescription>
+              Manage your account preferences and options. Customize your
+              experience to fit your needs.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-muted-foreground text-sm">
+            Configure notifications, security, and themes.
+          </CardContent>
+        </Card>
       </TabsContent>
-
     </Tabs>
-     </div>
-     </div>
+    </div>
+</div>
+<div>
 
 
+  <p>bhavav</p>
+</div>
+    </div>
   )
 }
 
 export default Masters
+
