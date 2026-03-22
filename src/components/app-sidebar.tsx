@@ -31,7 +31,7 @@ const items = [
     icon: LayoutDashboard,
   },
   {
-    title: "MaterialRequest",
+    title: "Material Request",
     url: "/material-request",
     icon: FileText,
   },
@@ -83,12 +83,12 @@ const items = [
     ],
   },
    {
-    title: "QCmanagement",
+    title: "QC Management",
     url: "/qcmanagement",
     icon: ClipboardCheck,
   },
   {
-    title: "Barcode&Tracking",
+    title: "Barcode & Tracking",
     url: "/barcode&tracking",
     icon: Scan,
   },
