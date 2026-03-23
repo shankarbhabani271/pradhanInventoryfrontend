@@ -180,9 +180,9 @@ const Inventory = () => {
           <div className="flex gap-3">
             <input
               placeholder="Search items..."
-              className="h-11 w-[280px] rounded-lg border px-4 text-sm border hover:border-blue-500 transition-all"
+              className="h-11 w-[280px]rounded-lg border px-4 text-sm hover:border-blue-500 transition-all"
             />
-            <button className="rounded-lg bg-white text-black h-11 px-4">
+            <button className="rounded-lg bg-white text-black h-11 px-4" title="open menu">
               <Filter className="h-5 w-5 text-gray-700" />
             </button>
             <button className="h-11 px-4 rounded-lg border bg-white font-medium">
@@ -233,10 +233,10 @@ const Inventory = () => {
                     </div>
 
                     <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <div
+                      <div  
                         className={`h-full ${barColor}`}
                         style={{ width: `${percent}%` }}
-                      />
+                      ></div>
                     </div>
                   </div>
 

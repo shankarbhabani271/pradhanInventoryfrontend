@@ -19,6 +19,7 @@ const Layout = () => {
                 <SidebarTrigger className="h-6 w-6" />
                 <div>
                   <h1 className="text-lg font-bold">Dashboard</h1>
+                  
                   <p className="text-sm text-muted-foreground">
                     Welcome back! Here's what's happening today.
                   </p>
