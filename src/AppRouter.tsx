@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Outlet, Navigate } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import React from "react";
 import Layout from "./Layout";
@@ -7,6 +7,10 @@ import Forgotpassword from "./components/pages/Forgotpassword";
 import Sendotp from "./components/pages/Sendotp"
 
 import ProtectedRoute from "./components/ProtectedRoute";
+import SignInPage from "./components/pages/Login";
+import Loader from "./components/Loader";
+import { useSelector } from "react-redux";
+import type { RootState } from "./config/redux/reducers/rootReducer";
 
 const Dashboard = lazy(() => import("./components/pages/Dashboard"));
 const MaterialRequest = lazy(
@@ -33,13 +37,18 @@ const SuspenseGate  = ({children }: {children:React.ReactNode }) => (
 const AppRouter = () => {
   return (
     <Routes>
-      <Route path="login" element={<Login />} />
-      <Route path="forgot-password" element={<Forgotpassword />} />
-      <Route path ="sendotp" element={<Sendotp/>}/>
+    
       <Route element={
-        <ProtectedRoute>
-          <Layout />
-        </ProtectedRoute>
+        <GuestOnly/>
+      }>
+         <Route path="/login" element={<Login />} />
+      <Route path="/forgot-password" element={<Forgotpassword />} />
+      <Route path ="/sendotp" element={<Sendotp/>}/>
+      </Route>
+      <Route element={
+        <Layout>
+          <RequireAuth/>
+        </Layout>
       }>
         <Route index element={<Dashboard />} />
 
@@ -65,6 +74,36 @@ const AppRouter = () => {
         />
       </Route>
     </Routes>
+  );
+};
+
+const RequireAuth = () => {
+  const { accessToken } = useSelector((state:RootState) => state.auth);
+
+  if (!accessToken) {
+    return <SignInPage />;
+  }
+
+  return (
+    <Suspense fallback={<Loader  />}>
+      {<Outlet />}
+    </Suspense>
+  );
+};
+
+
+
+const GuestOnly = () => {
+  const { accessToken } = useSelector((state:RootState) => state.auth);
+
+  return (
+    <Suspense fallback={<Loader  />}>
+      {accessToken ? (
+        <Navigate to={"/"} replace />
+      ) : (
+        <Suspense fallback={<Loader />}>{<Outlet />}</Suspense>
+      )}
+    </Suspense>
   );
 };
 

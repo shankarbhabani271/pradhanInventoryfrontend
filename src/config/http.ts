@@ -2,8 +2,8 @@
 import type { ApiResponse } from "@/types/global.types";
 import axios, { type AxiosRequestConfig } from "axios";
 
-// export const API_BASE_URL = "http://localhost:4550/api";
-export const API_BASE_URL = "https://api.buzzerp.in/api";
+export const API_BASE_URL = "http://localhost:8080/api";
+// export const API_BASE_URL = "https://api.buzzerp.in/api";
 
 export const http = axios.create({
     baseURL: API_BASE_URL,

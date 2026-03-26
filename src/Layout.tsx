@@ -4,9 +4,10 @@ import { Outlet } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./components/app-sidebar";
 import { Bell } from "lucide-react";
+import type React from "react";
 // import Loader from "./components/Loader";
 
-const Layout = () => {
+const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full">
@@ -40,7 +41,7 @@ const Layout = () => {
           {/* 🔥 THIS IS THE KEY */}
           <main className="flex-1 overflow-y-auto bg-blue-50 p-4">
             {/* <Suspense fallback={<Loader />}> */}
-              <Outlet />
+              {children}
             {/* </Suspense> */}
           </main>
         </div>
