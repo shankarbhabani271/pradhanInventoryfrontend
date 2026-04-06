@@ -46,9 +46,8 @@ const AppRouter = () => {
       <Route path ="/sendotp" element={<Sendotp/>}/>
       </Route>
       <Route element={
-        <Layout>
+        
           <RequireAuth/>
-        </Layout>
       }>
         <Route index element={<Dashboard />} />
 
@@ -86,7 +85,8 @@ const RequireAuth = () => {
 
   return (
     <Suspense fallback={<Loader  />}>
-      {<Outlet />}
+      <Layout> {<Outlet />} </Layout>
+      
     </Suspense>
   );
 };
