@@ -4,13 +4,15 @@ import React from "react";
 import Layout from "./Layout";
 import Login from "./components/pages/Login";
 import Forgotpassword from "./components/pages/Forgotpassword";
-import Sendotp from "./components/pages/Sendotp"
+import Sendotp from "./components/pages/Sendotp";
 
-import ProtectedRoute from "./components/ProtectedRoute";
+
 import SignInPage from "./components/pages/Login";
 import Loader from "./components/Loader";
 import { useSelector } from "react-redux";
 import type { RootState } from "./config/redux/reducers/rootReducer";
+import Signup from "./components/pages/Signup";
+
 
 const Dashboard = lazy(() => import("./components/pages/Dashboard"));
 const MaterialRequest = lazy(
@@ -30,39 +32,111 @@ const Settings = lazy(() => import("./components/pages/Settings"));
 const Reports = lazy(() => import("./components/pages/Reports"));
 const Masters = lazy(() => import("./components/pages/Masters"));
 
-
-const SuspenseGate  = ({children }: {children:React.ReactNode }) => (
+const SuspenseGate = ({ children }: { children: React.ReactNode }) => (
   <Suspense fallback={<div>Loading ...</div>}>{children}</Suspense>
 );
 const AppRouter = () => {
   return (
     <Routes>
-    
-      <Route element={
-        <GuestOnly/>
-      }>
-         <Route path="/login" element={<Login />} />
-      <Route path="/forgot-password" element={<Forgotpassword />} />
-      <Route path ="/sendotp" element={<Sendotp/>}/>
-      </Route>
-      <Route element={
+      <Route element={<GuestOnly />}>
+        <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<Forgotpassword />} />
+        <Route path="/sendotp" element={<Sendotp />} />
+        <Route path="/signup" element={<Signup />} />
         
-          <RequireAuth/>
-      }>
+      </Route>
+      <Route element={<RequireAuth />}>
         <Route index element={<Dashboard />} />
 
-        <Route path="material-request" element={<SuspenseGate><MaterialRequest /></SuspenseGate>} />
-        <Route path="apporavals" element={<SuspenseGate><Apporavals /></SuspenseGate>} />
-        <Route path="procurement" element={<SuspenseGate><Procurement /></SuspenseGate>} />
-        <Route path="inventory" element={<SuspenseGate><Inventory /></SuspenseGate>} />
-        <Route path="qcmanagement" element={<SuspenseGate><QcManagement /></SuspenseGate>} />
-        <Route path="barcode-tracking" element={<SuspenseGate><BarcodeTracking /></SuspenseGate>} />
-        <Route path="returns" element={<SuspenseGate><Returns /></SuspenseGate>} />
-        <Route path="vendors" element={<SuspenseGate><Vendors /></SuspenseGate>} />
-        <Route path="reports" element={<SuspenseGate><Reports /></SuspenseGate>} />
-        <Route path="settings" element={<SuspenseGate><Settings /></SuspenseGate>} />
-        <Route path="user" element={<SuspenseGate><User /></SuspenseGate>} />
-      
+        <Route
+          path="material-request"
+          element={
+            <SuspenseGate>
+              <MaterialRequest />
+            </SuspenseGate>
+          }
+        />
+        <Route
+          path="apporavals"
+          element={
+            <SuspenseGate>
+              <Apporavals />
+            </SuspenseGate>
+          }
+        />
+        <Route
+          path="procurement"
+          element={
+            <SuspenseGate>
+              <Procurement />
+            </SuspenseGate>
+          }
+        />
+        <Route
+          path="inventory"
+          element={
+            <SuspenseGate>
+              <Inventory />
+            </SuspenseGate>
+          }
+        />
+        <Route
+          path="qcmanagement"
+          element={
+            <SuspenseGate>
+              <QcManagement />
+            </SuspenseGate>
+          }
+        />
+        <Route
+          path="barcode-tracking"
+          element={
+            <SuspenseGate>
+              <BarcodeTracking />
+            </SuspenseGate>
+          }
+        />
+        <Route
+          path="returns"
+          element={
+            <SuspenseGate>
+              <Returns />
+            </SuspenseGate>
+          }
+        />
+        <Route
+          path="vendors"
+          element={
+            <SuspenseGate>
+              <Vendors />
+            </SuspenseGate>
+          }
+        />
+        <Route
+          path="reports"
+          element={
+            <SuspenseGate>
+              <Reports />
+            </SuspenseGate>
+          }
+        />
+        <Route
+          path="settings"
+          element={
+            <SuspenseGate>
+              <Settings />
+            </SuspenseGate>
+          }
+        />
+        <Route
+          path="user"
+          element={
+            <SuspenseGate>
+              <User />
+            </SuspenseGate>
+          }
+        />
+
         <Route
           path="masters"
           element={
@@ -77,27 +151,24 @@ const AppRouter = () => {
 };
 
 const RequireAuth = () => {
-  const { accessToken } = useSelector((state:RootState) => state.auth);
+  const { accessToken } = useSelector((state: RootState) => state.auth);
 
   if (!accessToken) {
     return <SignInPage />;
   }
 
   return (
-    <Suspense fallback={<Loader  />}>
+    <Suspense fallback={<Loader />}>
       <Layout> {<Outlet />} </Layout>
-      
     </Suspense>
   );
 };
 
-
-
 const GuestOnly = () => {
-  const { accessToken } = useSelector((state:RootState) => state.auth);
+  const { accessToken } = useSelector((state: RootState) => state.auth);
 
   return (
-    <Suspense fallback={<Loader  />}>
+    <Suspense fallback={<Loader />}>
       {accessToken ? (
         <Navigate to={"/"} replace />
       ) : (
@@ -106,8 +177,5 @@ const GuestOnly = () => {
     </Suspense>
   );
 };
-
-
-
 
 export default AppRouter;

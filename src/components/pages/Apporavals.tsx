@@ -215,7 +215,7 @@ const DetailsPanel = () => {
 const Approvals = () => {
   return (
     <div className="
-      min-h-screen bg-[#EFF6FF]
+      min-h-screen bg--[#EFF6FF]]
       p-4 sm:p-6 lg:p-8
       flex flex-col gap-6
       lg:flex-row

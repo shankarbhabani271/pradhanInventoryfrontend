@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 
 
+
 const dashboardCards = [
   {
     title: "Total Users",
@@ -107,6 +108,8 @@ const users = [
 
 
 const User = () => {
+  
+
   return (
     <div className="p-3 sm:p-4 bg-blue-50 min-h-screen space-y-6  w-full">
 
@@ -143,33 +146,47 @@ const User = () => {
       </TabsList>
       <TabsContent value="overview">
         <Card>
-           <div className="p-4 sm:p-6 bg-slate-50 min-h-screen w-full overflow-x-hidden">
-      <div className="bg-white   shadow-sm p-4 sm:p-6">
+        
 
         {/* ================= HEADER ================= */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-          <h1 className="text-xl sm:text-2xl font-semibold">
-            User Management
-          </h1>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 pl-3 pr-3">
+  
+  {/* Title */}
+  <h1 className="text-lg sm:text-xl md:text-2xl font-semibold pl-3">
+    User Management
+  </h1>
 
-          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-            <div className="relative w-full sm:w-80">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <input
-                placeholder="Search users..."
-                className="w-full pl-9 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+  {/* Right Section */}
+  <div className="flex flex-col sm:flex-row items-stretch sm:items-center  gap-3 w-full md:w-auto">
+    
+    {/* Search Input */}
+    <div className="relative w-full sm:w-72 md:w-80">
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+      
+      <input
+        type="text"
+        placeholder="Search users..."
+        className="w-full pl-9 pr-4 py-2.5 border rounded-lg text-sm 
+                   focus:outline-none focus:ring-2 focus:ring-blue-500 
+                   transition-all"
+      />
+    </div>
 
-            <button className="flex items-center justify-center gap-2 bg-blue-600 text-white px-5 py-2 rounded-lg font-medium">
-              <Plus className="h-4 w-4" />
-              Add User
-            </button>
-          </div>
-        </div>
+    {/* Button */}
+    <button  className="flex items-center justify-center gap-2 
+                       bg-blue-600 hover:bg-blue-700 
+                       text-white px-4 sm:px-5 py-2.5 
+                       rounded-lg text-sm font-medium 
+                       transition-all w-full sm:w-auto">
+      <Plus className="h-4 w-4" />
+      Add User
+    </button>
+
+  </div>
+</div>
 
         {/* ================= TABLE HEADER (DESKTOP) ================= */}
-        <div className="hidden md:grid grid-cols-7 text-sm font-semibold text-gray-600 border-b pb-3">
+        <div className="hidden md:grid grid-cols-7 text-sm font-semibold text-gray-600 border-b pl-6 pb-3">
           <div>User</div>
           <div>Contact</div>
           <div>Department</div>
@@ -187,7 +204,7 @@ const User = () => {
               className="grid grid-cols-7 items-center py-5 border-b text-sm"
             >
               {/* USER */}
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 pl-3">
                 <div className="h-10 w-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-semibold">
                   {u.initials}
                 </div>
@@ -287,8 +304,8 @@ const User = () => {
           ))}
         </div>
 
-      </div>
-    </div>
+     
+    
          
         </Card>
       </TabsContent>
