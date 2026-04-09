@@ -12,6 +12,7 @@ import Loader from "./components/Loader";
 import { useSelector } from "react-redux";
 import type { RootState } from "./config/redux/reducers/rootReducer";
 import Signup from "./components/pages/Signup";
+import Userdetails from "./components/pages/Userdetails";
 
 
 const Dashboard = lazy(() => import("./components/pages/Dashboard"));
@@ -43,11 +44,13 @@ const AppRouter = () => {
         <Route path="/forgot-password" element={<Forgotpassword />} />
         <Route path="/sendotp" element={<Sendotp />} />
         <Route path="/signup" element={<Signup />} />
-        
+             
       </Route>
       <Route element={<RequireAuth />}>
         <Route index element={<Dashboard />} />
-
+          <Route
+           path="/userdetails"
+            element={<Userdetails />} />
         <Route
           path="material-request"
           element={
@@ -145,6 +148,8 @@ const AppRouter = () => {
             </SuspenseGate>
           }
         />
+
+  
       </Route>
     </Routes>
   );
