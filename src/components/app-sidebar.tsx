@@ -151,7 +151,11 @@ const navigate = useNavigate();
 
 const handleLogout = async () => {
   await logoutUser();   // call backend logout
-  navigate("/login");   // redirect
+  // redirect immediately
+  navigate("/login",{replace:true});   // redirect
+
+  // optianal but strong (prevebts back access)
+  window.location.reload();
 };
   return (
  <Sidebar className="h-screen ">
