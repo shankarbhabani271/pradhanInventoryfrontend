@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@/lib/forms/zodResolver";
 import { useDispatch } from "react-redux";
+import { setAccessToken } from "@/config/redux/slice/authSlice";
 import {
   Mail,
   Lock,
@@ -15,11 +16,14 @@ import {
   signInSchema,
   type SignInFormData,
 } from "@/validations/auth.validation";
-import { GoogleLoginlogin, login } from "@/config/redux/slice/authSlice";
-import { Link } from "react-router-dom";
+import { GoogleLoginlogin } from "@/config/redux/slice/authSlice";
+import { Link, useNavigate } from "react-router-dom";
 // import { toast } from "sonner"; // Removed as handleApiError handles toasts
 import { handleApiError } from "@/lib/errors/handleApiError";
 import ErrorMessage from "@/components/ErrorMessage";
+import { set } from "zod";
+import api from "@/api/axios";
+
 
 export default function SignInPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -28,6 +32,7 @@ export default function SignInPage() {
   const [success, setSuccess] = useState<string | null>(null);
 
   const dispatch: AppDispatch = useDispatch();
+  const navigate = useNavigate();
 
   const {
     register,
@@ -39,27 +44,46 @@ export default function SignInPage() {
     reValidateMode: "onChange",
   });
 
+  
+
+ // ✅ LOGIN FUNCTION (CORRECTED)
   const onSubmit = async (data: SignInFormData) => {
     setIsLoading(true);
     setError(null);
-    setSuccess(null);
 
     try {
-      await dispatch(
-        login({
-          email: data.email,
-          password: data.password,
-        }),
-      );
-    } catch (err) {
-      const appError = handleApiError(err);
-      setError(appError.message);
+      const res = await api.post("/auth/login", {
+        email: data.email,
+        password: data.password,
+      }
+    );
+
+     
+
+      // ✅ get access token
+      const token = res?.data?.data?.accessToken;
+
+      if (token) {
+        // ✅ store access token
+        localStorage.setItem("accessToken", token);
+
+        console.log("ACCESS TOKEN:", token);
+        console.log("REFRESH TOKEN stored in cookie (auto)");
+
+        // ✅ redirect
+        navigate("/",{replace:true  });
+      } else {
+        setError("No access token received");
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Login failed");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const Glogin = ({ token }:{token: string}) => {
+  // optional google login
+  const Glogin = ({ token }: { token: string }) => {
     dispatch(GoogleLoginlogin({ token }));
   };
 
@@ -164,7 +188,7 @@ export default function SignInPage() {
                 </label>
               </div> */}
               <Link
-                to="/auth/forgot-password"
+                to="/forgot-password"
                 className="text-sm text-primary hover:underline"
               >
                 Forgot password?
@@ -189,9 +213,7 @@ export default function SignInPage() {
                 <div className="w-full border-t border-gray-300" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-card text-foreground">
-                  Or
-                </span>
+                <span className="px-2 bg-card text-foreground">Or</span>
               </div>
             </div>
 
@@ -204,12 +226,11 @@ export default function SignInPage() {
                 <Googl size={20} />
                 <span className="ml-2">Google</span>
               </button> */}
-
             </div>
 
             <p className="text-center text-sm text-foreground">
               {"Don't have an account? "}
-              <Link to="/auth/signup" className="text-primary hover:underline">
+              <Link to="/signup" className="text-primary hover:underline">
                 Sign up
               </Link>
             </p>

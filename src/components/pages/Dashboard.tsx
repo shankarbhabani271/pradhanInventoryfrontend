@@ -186,25 +186,21 @@ const Dashboard = () => {
     </div>
   </div>
 </div>
- 
-    {/* bhabani last table */}
- <div className="min-h-screen bg-blue-50 p-4 sm:p-6">
 
-  {/* Main Grid */}
-  <div className="mx-auto max-w-7xl grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-    {/* LEFT : Pending Approvals */}
-    <div className="lg:col-span-2 bg-white rounded-xl shadow-md p-4">
 
-      {/* Header */}
-      <div className="flex justify-between items-center border-b pb-3 mb-4">
-        <h3 className="text-lg font-semibold">Pending Approvals</h3>
-        <span className="text-sm text-blue-600 cursor-pointer">
-          View all
-        </span>
-      </div>
+{/* bhabani first table */}
+<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div className="lg:col-span-2 bg-white rounded-xl shadow-md p-4">
+    
+    {/* Header */}
+    <div className="flex justify-between items-center border-b pb-3 mb-4">
+      <h3 className="font-semibold text-lg">Pending Approvals</h3>
+      <span className="text-blue-600 text-sm cursor-pointer">View all</span>
+    </div>
 
-      {/* Items */}
+    {/* Item */}
+    <div className="space-y-4">
       {[
         { id: "MR-2024-516", amount: "$2,450", time: "Today, 10:30 AM" },
         { id: "MR-2024-517", amount: "$2,450", time: "Today, 10:30 AM" },
@@ -238,9 +234,10 @@ const Dashboard = () => {
         </div>
       ))}
     </div>
+  </div>
 
-    {/* RIGHT : Inventory Overview */}
-    <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+  {/* RIGHT : Inventory Overview */}
+ <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
 
       {/* Header */}
       <div className="flex justify-between items-center px-4 py-3 border-b">
@@ -330,11 +327,19 @@ const Dashboard = () => {
         </div>
       ))}
     </div>
+
+
   </div>
+ 
+    {/* bhabani last table */}
+ 
+
+  {/* Main Grid */}
+ 
 </div>
 
   
-  </div>
+  
   
   
   );

@@ -1,28 +1,16 @@
-import React from 'react'
-
-
-import { Card, CardHeader, CardTitle, CardContent,  CardDescription, } from "@/components/ui/card";
+import React, { useState, useEffect } from "react";
 import {
-  Tabs,
-  TabsContent,
-  TabsList,TabsTrigger,
-
-} from "@/components/ui/tabs"
-
-import {
+  Search,
+  Plus,
+  Phone,
   FileText,
   IndianRupee,
   ShoppingCart,
   Clock,
-  Search,
-  Plus,
-  Mail,
-  Phone,
-  Calendar,
-  MoreHorizontal,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
-
+// ✅ Dashboard Cards
 const dashboardCards = [
   {
     title: "Total Users",
@@ -58,287 +46,134 @@ const dashboardCards = [
   },
 ];
 
-const users = [
-  {
-    initials: "JD",
-    name: "John Doe",
-    id: "USR-001",
-    email: "john.doe@company.com",
-    phone: "+91 98765 43210",
-    department: "Production",
-    role: "Admin",
-    status: "Active",
-    lastLogin: "2024-01-15 10:30 AM",
-  },
-  {
-    initials: "SW",
-    name: "Sarah Wilson",
-    id: "USR-002",
-    email: "sarah.wilson@company.com",
-    phone: "+91 87654 32109",
-    department: "Warehouse",
-    role: "Manager",
-    status: "Active",
-    lastLogin: "2024-01-15 09:15 AM",
-  },
-  {
-    initials: "MS",
-    name: "Mike Smith",
-    id: "USR-003",
-    email: "mike.smith@company.com",
-    phone: "+91 76543 21098",
-    department: "Procurement",
-    role: "User",
-    status: "Active",
-    lastLogin: "2024-01-14 04:45 PM",
-  },
-  {
-    initials: "PP",
-    name: "Priya Patel",
-    id: "USR-004",
-    email: "priya.patel@company.com",
-    phone: "+91 65432 10987",
-    department: "QC",
-    role: "Manager",
-    status: "Inactive",
-    lastLogin: "2024-01-10 02:00 PM",
-  },
-];
-
-
 const User = () => {
-  return (
-    <div className="p-3 sm:p-4 bg-blue-50 min-h-screen space-y-6  w-full">
+  const navigate = useNavigate();
 
-      {/* ================= DASHBOARD CARDS ================= */}
-      <div className="grid gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+  // ✅ State
+  const [userList, setUserList] = useState([]);
+
+  // ✅ Fetch users from backend
+  const fetchUsers = async () => {
+    try {
+      const res = await fetch("http://localhost:8080/api/userdetails");
+      const data = await res.json();
+      setUserList(data);
+    } catch (error) {
+      console.log("Error:", error);
+    }
+  };
+
+  // ✅ Load data on page start
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  return (
+    <div className="p-6 bg-gray-100 min-h-screen space-y-6">
+
+      {/* ================= DASHBOARD ================= */}
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {dashboardCards.map((card, i) => {
           const Icon = card.icon;
           return (
-            <Card key={i}>
-              <CardHeader className="flex flex-row justify-between items-center pb-2">
-                <CardTitle className="text-sm text-muted-foreground">
-                  {card.title}
-                </CardTitle>
-                <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${card.iconBg}`}>
-                  <Icon className={`h-5 w-5 ${card.iconColor}`} />
+            <div key={i} className="bg-white p-4 rounded-xl shadow">
+              <div className="flex justify-between items-center">
+                <h3 className="text-sm text-gray-500">{card.title}</h3>
+                <div className={`p-2 rounded-lg ${card.iconBg}`}>
+                  <Icon className={card.iconColor} size={18} />
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl sm:text-3xl font-bold">{card.value}</div>
-                <p className="text-sm text-muted-foreground">{card.subtitle}</p>
-              </CardContent>
-            </Card>
+              </div>
+              <h2 className="text-2xl font-bold mt-2">{card.value}</h2>
+              <p className="text-sm text-gray-400">{card.subtitle}</p>
+            </div>
           );
         })}
       </div>
 
-      <div>
-         <Tabs defaultValue="overview" className="w-full">
-      <TabsList className='bg-[#666c78] text-black'>
-        <TabsTrigger value="overview" className='cursor-pointer data-[state=active]:bg-white '>Overview</TabsTrigger>
-        <TabsTrigger value="analytics" className='cursor-pointer data-[state=active]:bg-white' >Analytics</TabsTrigger>
-        <TabsTrigger value="reports" className='cursor-pointer data-[state=active]:bg-white'>Reports</TabsTrigger>
-        <TabsTrigger value="settings">Settings</TabsTrigger>
-      </TabsList>
-      <TabsContent value="overview">
-        <Card>
-           <div className="p-4 sm:p-6 bg-slate-50 min-h-screen w-full overflow-x-hidden">
-      <div className="bg-white   shadow-sm p-4 sm:p-6">
+      {/* ================= USER TABLE ================= */}
+      <div className="bg-white rounded-xl shadow p-4">
 
-        {/* ================= HEADER ================= */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-          <h1 className="text-xl sm:text-2xl font-semibold">
-            User Management
-          </h1>
+        {/* Header */}
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold">User Management</h2>
 
-          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-            <div className="relative w-full sm:w-80">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+          <div className="flex gap-3">
+            <div className="flex items-center border rounded-lg px-3 py-2">
+              <Search size={16} className="text-gray-400 mr-2" />
               <input
+                type="text"
                 placeholder="Search users..."
-                className="w-full pl-9 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="outline-none text-sm"
               />
             </div>
 
-            <button className="flex items-center justify-center gap-2 bg-blue-600 text-white px-5 py-2 rounded-lg font-medium">
-              <Plus className="h-4 w-4" />
-              Add User
+            <button
+              onClick={() => navigate("/userdetails")}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700"
+            >
+              <Plus size={16} /> Add User
             </button>
           </div>
         </div>
 
-        {/* ================= TABLE HEADER (DESKTOP) ================= */}
-        <div className="hidden md:grid grid-cols-7 text-sm font-semibold text-gray-600 border-b pb-3">
-          <div>User</div>
-          <div>Contact</div>
-          <div>Department</div>
-          <div>Role</div>
-          <div>Status</div>
-          <div>Last Login</div>
-          <div className="text-center">Actions</div>
-        </div>
+        {/* Table */}
+        <table className="w-full text-sm border-collapse">
+          <thead className="text-gray-500 border-b bg-gray-50">
+            <tr>
+              <th className="text-left py-3 px-2">User</th>
+              <th className="text-left py-3 px-2">Phone</th>
+              <th className="text-left py-3 px-2">Email</th>
+              <th className="text-left py-3 px-2">Company</th>
+              <th className="text-left py-3 px-2">Description</th>
+            </tr>
+          </thead>
 
-        {/* ================= TABLE ROWS (DESKTOP) ================= */}
-        <div className="hidden md:block">
-          {users.map((u, i) => (
-            <div
-              key={i}
-              className="grid grid-cols-7 items-center py-5 border-b text-sm"
-            >
-              {/* USER */}
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-semibold">
-                  {u.initials}
-                </div>
-                <div>
-                  <div className="font-semibold">{u.name}</div>
-                  <div className="text-gray-500">{u.id}</div>
-                </div>
-              </div>
+          <tbody>
+            {userList.map((user) => (
+              <tr key={user._id} className="border-b hover:bg-gray-50">
 
-              {/* CONTACT */}
-              <div className="space-y-1">
-                <div className="flex gap-2 items-center">
-                  <Mail className="h-4 w-4 text-gray-500" />
-                  {u.email}
-                </div>
-                <div className="flex gap-2 items-center">
-                  <Phone className="h-4 w-4 text-gray-500" />
-                  {u.phone}
-                </div>
-              </div>
+                {/* User */}
+                <td className="py-3 px-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 flex items-center justify-center rounded-full bg-blue-100 text-blue-600 font-semibold">
+                      {user.name?.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="font-medium">{user.name}</p>
+                    </div>
+                  </div>
+                </td>
 
-              <div>{u.department}</div>
+                {/* Phone */}
+                <td className="py-3 px-2">
+                  <div className="flex items-center gap-2">
+                    <Phone size={14} /> {user.phone}
+                  </div>
+                </td>
 
-              {/* ROLE */}
-              <span
-                className={`px-3 py-1 rounded-full text-xs font-medium w-fit ${
-                  u.role === "Admin"
-                    ? "bg-red-100 text-red-600"
-                    : u.role === "Manager"
-                    ? "bg-blue-100 text-blue-600"
-                    : "bg-green-100 text-green-600"
-                }`}
-              >
-                {u.role}
-              </span>
+                {/* Email */}
+                <td className="py-3 px-2">{user.email}</td>
 
-              {/* STATUS */}
-              <span
-                className={`px-3 py-1 rounded-full text-xs font-medium w-fit ${
-                  u.status === "Active"
-                    ? "bg-green-100 text-green-600"
-                    : "bg-gray-300 text-gray-800"
-                }`}
-              >
-                {u.status}
-              </span>
+                {/* Company */}
+                <td className="py-3 px-2">{user.company}</td>
 
-              {/* LAST LOGIN */}
-              <div className="flex gap-2 items-center">
-                <Calendar className="h-4 w-4 text-gray-500" />
-                {u.lastLogin}
-              </div>
+                {/* Description */}
+                <td className="py-3 px-2">{user.description}</td>
 
-              {/* ACTIONS */}
-              <div className="flex justify-center">
-                <MoreHorizontal className="h-5 w-5 cursor-pointer text-gray-600" />
-              </div>
-            </div>
-          ))}
-        </div>
+              </tr>
+            ))}
+          </tbody>
+        </table>
 
-        {/* ================= MOBILE CARD VIEW ================= */}
-        <div className="md:hidden space-y-4 mt-4">
-          {users.map((u, i) => (
-            <div
-              key={i}
-              className="border rounded-xl p-4 bg-white shadow-sm space-y-2"
-            >
-              <div className="flex justify-between items-center">
-                <div className="font-semibold">{u.name}</div>
-                <MoreHorizontal className="h-5 w-5" />
-              </div>
-
-              <div className="text-sm text-gray-600">{u.email}</div>
-              <div className="text-sm">{u.phone}</div>
-
-              <div className="flex gap-2 flex-wrap">
-                <span className="px-3 py-1 rounded-full text-xs bg-blue-100 text-blue-600">
-                  {u.role}
-                </span>
-                <span
-                  className={`px-3 py-1 rounded-full text-xs ${
-                    u.status === "Active"
-                      ? "bg-green-100 text-green-600"
-                      : "bg-gray-300 text-gray-800"
-                  }`}
-                >
-                  {u.status}
-                </span>
-              </div>
-
-              <div className="text-sm flex gap-2 items-center">
-                <Calendar className="h-4 w-4 text-gray-500" />
-                {u.lastLogin}
-              </div>
-            </div>
-          ))}
-        </div>
-
+        {/* Empty state */}
+        {userList.length === 0 && (
+          <p className="text-center text-gray-500 py-4">
+            No users found
+          </p>
+        )}
       </div>
     </div>
-         
-        </Card>
-      </TabsContent>
-      <TabsContent value="analytics">
-        <Card>
-          <CardHeader>
-            <CardTitle>Analytics</CardTitle>
-            <CardDescription>
-              Track performance and user engagement metrics. Monitor trends and
-              identify growth opportunities.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-muted-foreground text-sm">
-            Page views are up 25% compared to last month.
-          </CardContent>
-        </Card>
-      </TabsContent>
-      <TabsContent value="reports">
-        <Card>
-          <CardHeader>
-            <CardTitle>Reports</CardTitle>
-            <CardDescription>
-              Generate and download your detailed reports. Export data in
-              multiple formats for analysis.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-muted-foreground text-sm">
-            You have 5 reports ready and available to export.
-          </CardContent>
-        </Card>
-      </TabsContent>
-      <TabsContent value="settings">
-        <Card>
-          <CardHeader>
-            <CardTitle>Settings</CardTitle>
-            <CardDescription>
-              Manage your account preferences and options. Customize your
-              experience to fit your needs.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-muted-foreground text-sm">
-            Configure notifications, security, and themes.
-          </CardContent>
-        </Card>
-      </TabsContent>
-    </Tabs>
-      </div>
-      </div>
+  );
+};
 
-  )
-}
-
-export default User
+export default User;

@@ -14,13 +14,14 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
+import { logoutUser } from "@/utils/logout";
+import { useNavigate } from "react-router-dom";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
 import { Link } from "react-router-dom"
-
 
 
 // Menu items.
@@ -145,6 +146,13 @@ const items = [
 ]
 
 export function AppSidebar() {
+  
+const navigate = useNavigate();
+
+const handleLogout = async () => {
+  await logoutUser();   // call backend logout
+  navigate("/login");   // redirect
+};
   return (
  <Sidebar className="h-screen ">
 
@@ -233,7 +241,8 @@ export function AppSidebar() {
 
         <div className="flex gap-3">
           <Bell className="h-5 w-5 cursor-pointer text-black" />
-          <LogOut className="h-5 w-5 cursor-pointer hover:text-red-500" />
+          <LogOut className="h-5 w-5 cursor-pointer hover:text-red-500" 
+           onClick={handleLogout}/>
         </div>
       </div>
     </div>
