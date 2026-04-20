@@ -1,250 +1,278 @@
-import { FileText, ChevronRight, User } from "lucide-react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {  ChevronRight, User,Building2, Package, Hash,CheckCircle, XCircle, Clock  } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState, useEffect } from "react";
 
 /* =========================
-   CARD COMPONENT
+   LIST COMPONENT
 ========================= */
-const Card = ({ priority = "high" }: { priority?: "high" | "low" }) => {
+const List = ({ data, selected, setSelected }) => {
   return (
-    <div className="
-      w-full
-      bg-[#E5EFF6]
-      border border-gray-200
-      rounded-xl
-      p-3 sm:p-4 md:p-6
-      hover:shadow-lg
-      transition
-      cursor-pointer
-    ">
-      <div className="
-        flex flex-col gap-4
-        sm:flex-row
-        sm:items-center
-        sm:justify-between
-      ">
-        {/* LEFT */}
-        <div className="flex gap-3 sm:gap-4 min-w-0">
-          <div className="flex-shrink-0">
-            <div className="
-              w-10 h-10 sm:w-12 sm:h-12
-              flex items-center justify-center
-              rounded-xl
-              border
-              bg-white
-            ">
-              <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700" />
+    <div className="space-y-4 mt-4">
+      {data.length === 0 && <p>No Data</p>}
+
+      {data.map((item) => (
+        <div
+          key={item._id}
+          onClick={() => setSelected(item)}
+          className={`bg-[#E5EFF6] p-4 rounded-xl cursor-pointer border
+          ${selected?._id === item._id ? "bg-blue-100" : ""}`}
+        >
+          <div className="flex justify-between">
+            <div>
+              <h2>{item.referenceId}</h2>
+              <p>{item.requester}</p>
+              <button className="bg-yellow-400 text-white rounded-2xl px-3 py-1 mt-2 text-xs">
+              <span>{item.priority}</span></button>
             </div>
-          </div>
-
-          <div className="min-w-0">
-            <h1 className="text-sm sm:text-base md:text-lg font-semibold break-words">
-              MR-2024-0156
-            </h1>
-
-            <p className="text-xs sm:text-sm md:text-base text-gray-600 break-words">
-              Sarah Johnson
-            </p>
-
-            <span className={`
-              inline-block mt-2 px-2.5 py-1 rounded-full
-              text-xs sm:text-sm font-medium
-              ${priority === "high"
-                ? "bg-orange-100 text-orange-600"
-                : "bg-green-100 text-green-600"}
-            `}>
-              {priority}
-            </span>
+            <ChevronRight />
           </div>
         </div>
-
-        {/* RIGHT */}
-        <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
-      </div>
+      ))}
     </div>
-  )
-}
-
-/* =========================
-   LISTS
-========================= */
-const PendingList = () => (
-  <div className="space-y-4 mt-4">
-    <Card priority="high" />
-    <Card priority="high" />
-    <Card priority="low" />
-  </div>
-)
-
-const ApprovedList = () => (
-  <div className="space-y-4 mt-4">
-    <Card priority="low" />
-    <Card priority="low" />
-  </div>
-)
-
-const RejectedList = () => (
-  <div className="space-y-4 mt-4">
-    <Card priority="high" />
-  </div>
-)
+  );
+};
 
 /* =========================
    DETAILS PANEL
 ========================= */
-const DetailsPanel = () => {
+const DetailsPanel = ({ selected, handleApprove, handleReject }) => {
+  if (!selected) return <div className="p-6">Select item</div>;
+
   return (
-    <div className="
-      w-full max-w-[750px] mx-auto
-      bg-blue-50 rounded-xl
-      p-4 sm:p-6 lg:p-8
-      shadow-md
-    ">
-      {/* HEADER */}
-      <div className="flex flex-col sm:flex-row gap-4 sm:justify-between">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-semibold">
-            MR-2024-0516
-          </h1>
-          <p className="text-sm sm:text-base text-gray-600">
-            MATERIAL REQUEST
-          </p>
-        </div>
+   <div className="w-full max-w-[850px] mx-auto mt-10">
 
-        <span className="
-          self-start px-4 py-1 rounded-full
-          text-xs sm:text-sm font-semibold
-          bg-orange-100 text-orange-600
-        ">
-          High Priority
-        </span>
-      </div>
+  {/* Card */}
+  <div className="bg-white/80 backdrop-blur-lg border border-gray-200 rounded-3xl shadow-xl p-8">
 
-      {/* INFO */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
-        <div className="flex gap-3">
-          <User className="w-5 h-5 text-gray-600" />
-          <div>
-            <p className="text-xs sm:text-sm text-gray-600">Requester</p>
-            <h2 className="text-lg sm:text-xl">Sarah Johnson</h2>
-          </div>
-        </div>
-
-        <div className="flex gap-3">
-          <User className="w-5 h-5 text-gray-600" />
-          <div>
-            <p className="text-xs sm:text-sm text-gray-600">Department</p>
-            <h2 className="text-lg sm:text-xl">Operations</h2>
-          </div>
-        </div>
-      </div>
-
-      {/* PURPOSE */}
-      <div className="mt-6">
-        <h2 className="text-lg sm:text-xl font-medium">Purpose</h2>
-        <p className="text-sm sm:text-base text-gray-700 mt-1">
-          Required for new warehouse safety compliance audit
+    {/* Top Section */}
+    <div className="flex justify-between items-start mb-6">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900 tracking-wide">
+          {selected.referenceId}
+        </h1>
+        <p className="text-gray-500 text-sm mt-1">
+          Material Request Overview
         </p>
       </div>
 
-      {/* TABLE */}
-      <div className="mt-6">
-        <h2 className="mb-3 text-lg sm:text-xl font-medium">Items</h2>
-        <div className="overflow-x-auto rounded-lg border">
-          <table className="w-full min-w-[420px]">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="p-3 text-left">Item</th>
-                <th className="p-3 text-center">Qty</th>
-                <th className="p-3 text-right">UOM</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                ["Safety Helmets", "25", "pcs"],
-                ["Safety Goggles", "50", "pcs"],
-                ["Work Gloves", "100", "pairs"],
-              ].map((row, i) => (
-                <tr key={i} className="border-t">
-                  <td className="p-3">{row[0]}</td>
-                  <td className="p-3 text-center">{row[1]}</td>
-                  <td className="p-3 text-right">{row[2]}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {/* Status */}
+      <span
+        className={`px-4 py-1.5 text-xs font-semibold rounded-full shadow-sm
+          ${
+            selected.status === "Pending"
+              ? "bg-yellow-100 text-yellow-700"
+              : selected.status === "Approved"
+              ? "bg-green-100 text-green-700"
+              : "bg-red-100 text-red-700"
+          }`}
+      >
+        {selected.status}
+      </span>
+    </div>
+
+    {/* Divider */}
+    <div className="border-t mb-6"></div>
+
+    {/* Info Cards */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5">
+
+      {/* Requester */}
+      <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-xl">
+        <User className="text-blue-500" />
+        <div>
+          <p className="text-xs text-gray-500">Requester</p>
+          <p className="font-semibold text-gray-800">
+            {selected.requester}
+          </p>
         </div>
       </div>
 
-      {/* ACTIONS */}
-      <div className="mt-6">
-        <textarea
-          rows={3}
-          placeholder="Add comment..."
-          className="
-            w-full border rounded-lg
-            p-3 text-sm sm:text-base
-            focus:outline-none focus:ring-2 focus:ring-blue-400
-          "
-        />
+      {/* Department */}
+      <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-xl">
+        <Building2 className="text-purple-500" />
+        <div>
+          <p className="text-xs text-gray-500">Department</p>
+          <p className="font-semibold text-gray-800">
+            {selected.department}
+          </p>
+        </div>
+      </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 mt-4">
-          <button className="
-            w-full sm:flex-1
-            bg-emerald-600 hover:bg-emerald-700
-            text-white py-3 rounded-lg
-          ">
-            Approve
-          </button>
+      {/* Product */}
+      <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-xl">
+        <Package className="text-green-500" />
+        <div>
+          <p className="text-xs text-gray-500">Product</p>
+          <p className="font-semibold text-gray-800">
+            {selected.productDetails}
+          </p>
+        </div>
+      </div>
 
-          <button className="
-            w-full sm:flex-1
-            bg-red-600 hover:bg-red-700
-            text-white py-3 rounded-lg
-          ">
+      {/* Quantity */}
+      <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-xl">
+        <Hash className="text-orange-500" />
+        <div>
+          <p className="text-xs text-gray-500">Quantity</p>
+          <p className="font-semibold text-gray-800">
+            {selected.quantity}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    {/* Action Section */}
+    {selected.status === "Pending" && (
+     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mt-10">
+        <p className="text-sm text-gray-500">
+          Take action on this request
+        </p>
+
+        <div className="flex gap-4">
+          <button
+            onClick={() => handleReject(selected._id)}
+            className="px-6 py-2 rounded-xl border border-red-500 text-red-600 font-medium hover:bg-red-50 transition"
+          >
             Reject
           </button>
+
+          <button
+            onClick={() => handleApprove(selected._id)}
+            className="px-6 py-2 rounded-xl bg-gradient-to-r from-green-500 to-green-600 text-white font-medium shadow hover:scale-105 transition"
+          >
+            Approve
+          </button>
         </div>
       </div>
-    </div>
-  )
-}
+    )}
+  </div>
+</div>
+  );
+};
 
 /* =========================
-   MAIN PAGE
+   MAIN COMPONENT
 ========================= */
 const Approvals = () => {
+  const [status, setStatus] = useState("Pending");
+  const [data, setData] = useState([]);
+  const [selected, setSelected] = useState(null);
+
+  const fetchData = () => {
+    fetch(`http://localhost:8080/api/material?status=${status}`)
+      .then((res) => res.json())
+      .then((res) => {
+        setData(res.data || []);
+        setSelected(res.data?.[0] || null);
+      });
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [status]);
+
+  const handleApprove = async (id) => {
+    await fetch(`http://localhost:8080/api/material/${id}/approve`, {
+      method: "PUT",
+    });
+    fetchData();
+  };
+
+  const handleReject = async (id) => {
+    await fetch(`http://localhost:8080/api/material/${id}/reject`, {
+      method: "PUT",
+    });
+    fetchData();
+  };
+
   return (
-    <div className="
-      min-h-screen bg--[#EFF6FF]]
-      p-4 sm:p-6 lg:p-8
-      flex flex-col gap-6
-      lg:flex-row
-    ">
-      {/* LEFT */}
-      <Tabs defaultValue="pending" className="w-full lg:w-[420px]">
-        <div className="overflow-x-auto">
-          <TabsList className="
-            flex min-w-[360px]
-            bg-[#94A3B8]
-            h-14 rounded-md p-1 gap-1
-          ">
-            <TabsTrigger value="pending" className="flex-1 cursor-pointer data-[state=active]:bg-white">
-              Pending <span className="ml-2 text-xs bg-white px-2 rounded-full">3</span>
-            </TabsTrigger>
-            <TabsTrigger value="approved" className="flex-1 cursor-pointer data-[state=active]:bg-white">Approved</TabsTrigger>
-            <TabsTrigger value="rejected" className="flex-1 cursor-pointer data-[state=active]:bg-white">Rejected</TabsTrigger>
-          </TabsList>
+    
+<div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 p-6">
+
+  <div className="max-w-[1200px] mx-auto grid  grid-cols-1 md:grid-cols-12 gap-6">
+
+    {/* LEFT PANEL */}
+    <div className="col-span-12 md:col-span-5 bg-white rounded-2xl shadow-lg p-4 md:p-5 border">
+
+      {/* Header */}
+      <h2 className="text-lg font-semibold text-gray-800 mb-4">
+        Material Requests
+      </h2>
+
+      {/* Tabs */}
+      <Tabs defaultValue="pending" className="w-full">
+
+       <TabsList className="grid grid-cols-3 bg-gray-100 p-1 rounded-xl mb-4 text-xs md:text-sm">
+
+          <TabsTrigger
+            value="pending"
+            onClick={() => setStatus("Pending")}
+            className="flex items-center justify-center gap-2 text-sm"
+          >
+            <Clock size={16} /> Pending
+          </TabsTrigger>
+
+          <TabsTrigger
+            value="approved"
+            onClick={() => setStatus("Approved")}
+            className="flex items-center justify-center gap-2 text-sm"
+          >
+            <CheckCircle size={16} /> Approved
+          </TabsTrigger>
+
+          <TabsTrigger
+            value="rejected"
+            onClick={() => setStatus("Rejected")}
+            className="flex items-center justify-center gap-2 text-sm"
+          >
+            <XCircle size={16} /> Rejected
+          </TabsTrigger>
+
+        </TabsList>
+
+        {/* Tab Content */}
+       <div className="max-h-[400px] md:max-h-[520px] overflow-y-auto pr-2">
+
+          <TabsContent value="pending">
+            <List data={data} selected={selected} setSelected={setSelected} />
+          </TabsContent>
+
+          <TabsContent value="approved">
+            <List data={data} selected={selected} setSelected={setSelected} />
+          </TabsContent>
+
+          <TabsContent value="rejected">
+            <List data={data} selected={selected} setSelected={setSelected} />
+          </TabsContent>
+
         </div>
-
-        <TabsContent value="pending"><PendingList /></TabsContent>
-        <TabsContent value="approved"><ApprovedList /></TabsContent>
-        <TabsContent value="rejected"><RejectedList /></TabsContent>
       </Tabs>
-
-      {/* RIGHT */}
-      <DetailsPanel />
     </div>
-  )
-}
 
-export default Approvals
+    {/* RIGHT PANEL */}
+    <div className="col-span-12 md:col-span-7">
+
+      <div className="">
+
+        {selected ? (
+          <DetailsPanel
+            selected={selected}
+            handleApprove={handleApprove}
+            handleReject={handleReject}
+          />
+        ) : (
+          <div className="flex items-center justify-center h-full text-gray-400 text-sm">
+            Select a request to view details
+          </div>
+        )}
+
+      </div>
+
+    </div>
+
+  </div>
+</div>
+  );
+};
+
+export default Approvals;

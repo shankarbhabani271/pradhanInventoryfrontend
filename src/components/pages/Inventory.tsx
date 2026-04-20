@@ -1,89 +1,73 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   FileText,
   IndianRupee,
   ShoppingCart,
   Clock,
-  AlertTriangle,
+  Pencil,
+  Trash2,
   Filter,
-} from "lucide-react"
+} from "lucide-react";
 import { useEffect, useState } from "react";
-import { getProducts } from "@/services/product.service";
-
-
+import { useNavigate } from "react-router-dom";
 
 type ProductUI = {
-  id: string;
-  code: string;
+  _id: string;
   name: string;
   category: string;
-  warehouse: string;
-  current: number;
-  max: number;
   unit: string;
-  value: string;
-  status: string;
+  price: number;
+  stock: number;
 };
 
 const Inventory = () => {
+  const navigate = useNavigate();
+
   const [products, setProducts] = useState<ProductUI[]>([]);
 
+  // ✅ FETCH PRODUCTS
   const fetchProducts = async () => {
     try {
-      const res = await getProducts();
-
-      const formatted: ProductUI[] = res.data.map((item: any) => {
-        const p = item.product;
-        const variants = item.variants || [];
-
-        const totalStock = variants.reduce(
-          (sum: number, v: any) => sum + (v.stock || 0),
-          0
-        );
-
-        return {
-          id: p._id,
-          code: p._id.slice(-5),
-          name: p.name,
-          category:
-            typeof p.category === "object"
-              ? p.category?.name
-              : p.category || "N/A",
-          warehouse: "Main Warehouse",
-          current: totalStock,
-          max: 100,
-          unit: "pcs",
-          value: p.price || 0,
-          status: totalStock < 20 ? "low" : "in",
-        };
-      });
-
-      setProducts(formatted);
-    } catch (error) {
-      console.error("Error fetching products:", error);
+      const res = await fetch("http://localhost:8080/api/productmenu");
+      const data = await res.json();
+      setProducts(data);
+    } catch (err) {
+      console.error(err);
     }
   };
 
   useEffect(() => {
     fetchProducts();
-
-    const interval = setInterval(fetchProducts, 5000);
-    return () => clearInterval(interval);
   }, []);
 
-  // ✅ Dashboard calculations
+  // ✅ DELETE PRODUCT
+  const handleDelete = async (id: string) => {
+    const confirmDelete = window.confirm("Delete this product?");
+    if (!confirmDelete) return;
+
+    try {
+      await fetch(`http://localhost:8080/api/productmenu/${id}`, {
+        method: "DELETE",
+      });
+      fetchProducts();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // ✅ DASHBOARD
   const totalItems = products.length;
 
   const totalValue = products.reduce(
-    (sum: number, p) => sum + p.value,
+    (sum, p) => sum + p.price,
     0
   );
 
-  const lowStockItems = products.filter(p => p.status === "low").length;
+  const lowStockItems = products.filter(p => p.stock < 20).length;
 
   const stockMovements = products.reduce(
-    (sum: number, p) => sum + p.current,
+    (sum, p) => sum + p.stock,
     0
   );
 
@@ -122,147 +106,106 @@ const Inventory = () => {
     },
   ];
 
-
-
   return (
     <div className="min-h-screen bg-blue-50 p-6 space-y-6">
-      {/* ===== KPI CARDS ===== */}
+
+      {/* KPI */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {dashboardCards.map((card, index) => {
           const Icon = card.icon;
           return (
-            <Card key={index} className="rounded-2xl shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">
-                  {card.title}
-                </CardTitle>
-                <div
-                  className={`h-10 w-10 rounded-lg flex items-center justify-center ${card.iconBg}`}
-                >
-                  <Icon className={`h-5 w-5 ${card.iconColor}`} />
-                </div>
+            <Card key={index}>
+              <CardHeader className="flex justify-between">
+                <CardTitle className="text-sm">{card.title}</CardTitle>
+                <Icon className={card.iconColor} />
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">{card.value}</div>
-                <p className="text-sm text-gray-500 mt-1">
-                  {card.subtitle}
-                </p>
+                <div className="text-2xl font-bold">{card.value}</div>
+                <p className="text-sm">{card.subtitle}</p>
               </CardContent>
             </Card>
           );
         })}
       </div>
 
-      {/* ===== TABS ===== */}
+      {/* TABS */}
       <Tabs defaultValue="overview">
-        <div className="flex items-center justify-between">
-          <TabsList className="bg-[#94A3B8] h-12 rounded-xl p-1">
-            <TabsTrigger
-              value="overview"
-              className="px-6 rounded-lg data-[state=active]:bg-white"
-            >
-              Stock Overview
-            </TabsTrigger>
-            <TabsTrigger
-              value="movements"
-              className="px-6 rounded-lg data-[state=active]:bg-white"
-            >
-              Movements
-            </TabsTrigger>
-            <TabsTrigger
-              value="adjustments"
-              className="px-6 rounded-lg data-[state=active]:bg-white"
-            >
-              Adjustments
-            </TabsTrigger>
+        <div className="flex justify-between">
+          <TabsList>
+            <TabsTrigger value="overview">Stock</TabsTrigger>
           </TabsList>
 
           <div className="flex gap-3">
             <input
-              placeholder="Search items..."
-              className="h-11 w-[280px]rounded-lg border px-4 text-sm hover:border-blue-500 transition-all"
+              placeholder="Search..."
+              className="h-11 w-[280px] rounded-lg border px-4"
             />
-            <button className="rounded-lg bg-white text-black h-11 px-4" title="open menu">
-              <Filter className="h-5 w-5 text-gray-700" />
-            </button>
-            <button className="h-11 px-4 rounded-lg border bg-white font-medium">
-              Export
+            <button className="bg-white px-4 rounded-lg">
+              <Filter />
             </button>
           </div>
         </div>
 
-        {/* ===== TABLE ===== */}
+        {/* TABLE */}
         <TabsContent value="overview">
-          <div className="bg-white rounded-xl shadow-sm border overflow-hidden mt-4">
-            <div className="grid grid-cols-8 bg-gray-50 px-6 py-3 text-sm font-semibold text-gray-600">
-              <div>Code</div>
-              <div>Item</div>
-              <div>Category</div>
-              <div>Warehouse</div>
-              <div className="col-span-2">Stock</div>
-              <div>Value</div>
-              <div>Status</div>
-            </div>
+          <div className="bg-white rounded-xl border">
+            <table className="w-full">
 
-            {products?.map((item) => {
-              const percent = item.max
-                ? Math.round((item.current / item.max) * 100)
-                : 0;
+              <thead className="bg-blue-500 text-white">
+                <tr>
+                  <th className="p-3">ID</th>
+                  <th>Name</th>
+                  <th>Category</th>
+                  <th>Unit</th>
+                  <th>Price</th>
+                  <th>Stock</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
 
-              const barColor =
-                percent <= 30 ? "bg-orange-500" : "bg-blue-600";
+              <tbody>
+                {products.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="text-center p-4">
+                      No Data
+                    </td>
+                  </tr>
+                ) : (
+                  products.map((item, index) => (
+                    <tr key={item._id} className="border-t">
+                      <td className="p-3">{index + 1}</td>
+                      <td>{item.name}</td>
+                      <td>{item.category}</td>
+                      <td>{item.unit}</td>
+                      <td>₹ {item.price}</td>
+                      <td>{item.stock}</td>
 
-              return (
-                <div
-                  key={item.id}
-                  className="grid grid-cols-8 items-center px-6 py-4 border-t hover:bg-gray-50"
-                >
-                  <div className="font-mono">{item.code}</div>
-                  <div>{item.name}</div>
-                  <div>{item.category}</div>
-                  <div>{item.warehouse}</div>
+                      <td className="flex gap-2 justify-center">
+                        <button
+                          onClick={() => navigate("/productmenu")}
+                          className="p-2 bg-blue-100 rounded"
+                        >
+                          <Pencil />
+                        </button>
 
-                  <div className="col-span-2">
-                    <div className="flex justify-between text-sm mb-1">
-                      <span>
-                        {item.current} {item.unit}
-                      </span>
-                      <span className="text-gray-400">
-                        / {item.max}
-                      </span>
-                    </div>
+                        <button
+                          onClick={() => handleDelete(item._id)}
+                          className="p-2 bg-red-100 rounded"
+                        >
+                          <Trash2 />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
 
-                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <div  
-                        className={`h-full ${barColor}`}
-                        style={{ width: `${percent}%` }}
-                      ></div>
-                    </div>
-                  </div>
-
-                  <div className="font-semibold">{item.value}</div>
-
-                  <div>
-                    {item.status === "in" ? (
-                      <span className="px-3 py-1 text-xs rounded-full bg-emerald-100 text-emerald-700">
-                        In Stock
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-3 py-1 text-xs rounded-full bg-orange-100 text-orange-700">
-                        <AlertTriangle className="h-4 w-4" />
-                        Low Stock
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+            </table>
           </div>
         </TabsContent>
       </Tabs>
     </div>
   );
-}
-
+};
 
 export default Inventory;

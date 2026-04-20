@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Filter, Plus } from "lucide-react";
-
+import { useNavigate } from "react-router-dom";
 const stats = [
   { title: "Total Inspections", value: "124" },
   { title: "Completed", value: "86" },
@@ -14,6 +14,7 @@ const stats = [
 ];
 
 const QcManagement = () => {
+  const navigate = useNavigate();
   return (
     <div className="p-6 space-y-6">
       
@@ -25,7 +26,9 @@ const QcManagement = () => {
             Manage and track all quality inspections
           </p>
         </div>
-        <Button className="gap-2 bg-[#0284C5]">
+        <Button 
+        onClick={()=>navigate("/studentpage")}
+        className="gap-2 bg-[#0284C5]">
           <Plus className="w-4 h-4" />
           New Inspection
         </Button>

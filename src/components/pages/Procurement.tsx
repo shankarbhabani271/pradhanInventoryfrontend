@@ -3,7 +3,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 
 import { FileText, IndianRupee, ShoppingCart, Clock,MoreHorizontal ,Filter
 ,} from "lucide-react";
-
+import { useNavigate } from "react-router-dom";
 const dashboardCards = [
   {
     title: "Open Requests",
@@ -43,6 +43,7 @@ const dashboardCards = [
 ];
 
 const Procurement = () => {
+  const navigate = useNavigate();
   return (
     <div className="p-4 space-y-4 bg-blue-50 min-h-screen">
        {/* Cards */}
@@ -109,15 +110,17 @@ const Procurement = () => {
                      data-[state=active]:bg-blue-50
                             transition-all"
             />
-            <button className=" rounded-lg bg-white text-black h-11 px-4 "><Filter className="h-5 w-5 text-gray-700"/></button>
-            <button className="h-11 px-4 rounded-lg border bg-white font-medium">
-              Export
+           
+            <button
+            onClick={()=>navigate("/po")}
+            className="h-11 px-4 rounded-lg border bg-blue-500 text-white  font-medium">
+              Create PO 
             </button>
           </div>
         </div>
 
         {/* ===== TABLE ===== */}
-        <TabsContent value="Requisitions">
+        <TabsContent value=" Orders">
           <div className='bg-blue-50'>
         <div className="p-6">
       <div className="bg-white rounded-xl border shadow-sm overflow-hidden">

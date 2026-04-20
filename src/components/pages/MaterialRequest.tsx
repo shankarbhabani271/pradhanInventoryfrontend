@@ -1,4 +1,4 @@
-
+import { useEffect, useState } from "react";
 import {
   Select,
   SelectContent,
@@ -72,10 +72,23 @@ const rows = [
 import {
   Funnel,Plus ,MoreHorizontal
 }from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 
 
 const MaterialRequest = () => {
+    const [data, setData] = useState([]);
+
+  useEffect(() => {
+    fetch("http://localhost:8080/api/material")
+      .then((res) => res.json())
+      .then((res) => {
+        console.log("API DATA",res);
+        setData(res.data);
+      })
+      .catch((err) => console.log(err));
+  }, []);
+  const navigate = useNavigate();
   return (
     <div>
       <div className="w-full bg-blue-50 px-4 py-3">
@@ -109,14 +122,18 @@ const MaterialRequest = () => {
       </Select>
 
       {/* Filter button */}
-      <button className="flex h-10 w-10 items-center justify-center rounded-lg border border-black bg-white shadow-sm hover:bg-gray-100">
+      <button 
+      
+      className="flex h-10 w-10 items-center justify-center rounded-lg border border-black bg-white shadow-sm hover:bg-gray-100">
         <Funnel className="h-5 w-5 text-gray-700" />
       </button>
     </div>
 
     {/* Right section */}
     <div className="flex justify-start md:justify-end">
-      <button className="flex items-center gap-2 rounded-lg bg-[#0284C5] px-4 py-2 font-medium text-white hover:bg-[#0271aa]">
+      <button
+      onClick={()=>navigate("/material")}
+      className="flex items-center gap-2 rounded-lg bg-[#0284C5] px-4 py-2 font-medium text-white hover:bg-[#0271aa]">
         <Plus className="h-4 w-4" />
         <span>New Request</span>
       </button>
@@ -128,79 +145,75 @@ const MaterialRequest = () => {
   <div className="bg-blue-50 min-h-screen p-4">
   <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
 
-    {/* HEADER – DESKTOP ONLY */}
-    <div className="hidden lg:grid grid-cols-8 bg-gray-200 p-4 text-sm font-semibold">
-      <div>Reference</div>
-      <div>Requester</div>
-      <div>Department</div>
-      <div>Date</div>
-      <div>Items</div>
-      <div>Priority</div>
-      <div>Status</div>
-      <div></div>
-    </div>
+  <table className="w-full border rounded-xl overflow-hidden">
 
-    {/* ROWS */}
-    {rows.map((row, index) => (
-      <div
-        key={index}
-        className="
-          border-t p-4 hover:bg-gray-50
-          grid gap-4
-          grid-cols-1
-          sm:grid-cols-2
-          md:grid-cols-4
-          lg:grid-cols-8
-        "
+  <thead className="bg-[#0284C5] text-sm font-semibold text-white">
+    <tr>
+      <th className="p-3 text-left">Reference</th>
+      <th className="p-3 text-left">Requester</th>
+      <th className="p-3 text-left">Department</th>
+      <th className="p-3 text-left">Date</th>
+        <th className="p-3 text-left">Product Details</th>
+      <th className="p-3 text-left">Quantity</th>
+      <th className="p-3 text-left">Priority</th>
+     
+      <th className="p-3 text-center">Action</th>
+      <th className="p-3 text-left">Status</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    {data.map((row) => (
+      <tr
+        key={row._id}
+        className="border-t hover:bg-gray-50 text-sm"
       >
-        <div className="min-w-0 break-words">
-          <p className="lg:hidden text-xs text-gray-500">Reference</p>
-          <p className="font-semibold">{row.ref}</p>
-        </div>
+        <td className="p-3 font-semibold">
+          {row.referenceId} {/* ✅ FIX */}
+        </td>
 
-        <div className="min-w-0 break-words">
-          <p className="lg:hidden text-xs text-gray-500">Requester</p>
-          <p>{row.requester}</p>
-        </div>
+        <td className="p-3">
+          {row.requester}
+        </td>
 
-        <div className="min-w-0 break-words">
-          <p className="lg:hidden text-xs text-gray-500">Department</p>
-          <p>{row.department}</p>
-        </div>
+        <td className="p-3">
+          {row.department}
+        </td>
 
-        <div>
-          <p className="lg:hidden text-xs text-gray-500">Date</p>
-          <p>{row.date}</p>
-        </div>
+        <td className="p-3">
+          {row.date}
+        </td>
+        <td className="p-3">
+          {row.productDetails}
+        </td>
 
-        <div>
-          <p className="lg:hidden text-xs text-gray-500">Items</p>
-          <p>{row.items}</p>
-        </div>
+        <td className="p-3">
+          {row.quantity} {/* ✅ FIX */}
+        </td>
 
-        <div>
-          <p className="lg:hidden text-xs text-gray-500">Priority</p>
-          <span
-            className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${row.priorityStyle}`}
-          >
+        <td className="p-3">
+          <button onClick={() => navigate("/apporavals")}>  
+          <span className="px-3 py-1 rounded-full text-xs bg-yellow-400 text-white">
             {row.priority}
           </span>
-        </div>
+          </button>
+        </td>
+      <td className="p-3">
+  <button onClick={() => navigate("/apporavals")}>
+    <span className="px-3 py-1 rounded-full text-xs bg-blue-400 text-white">
+      {row.status || "Pending"}
+    </span>
+  </button>
+</td>
+       
 
-        <div>
-          <p className="lg:hidden text-xs text-gray-500">Status</p>
-          <span
-            className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${row.statusStyle}`}
-          >
-            {row.status}
-          </span>
-        </div>
-
-        <div className="flex lg:justify-center">
+        <td className="p-3 text-center">
           <MoreHorizontal className="w-5 h-5 text-gray-500 cursor-pointer" />
-        </div>
-      </div>
+        </td>
+      </tr>
     ))}
+  </tbody>
+</table>
 
   </div>
 </div>

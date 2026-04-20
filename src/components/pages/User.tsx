@@ -69,7 +69,7 @@ const User = () => {
   }, []);
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen space-y-6">
+    <div className=" min-h-screen space-y-6">
 
       {/* ================= DASHBOARD ================= */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
@@ -118,7 +118,7 @@ const User = () => {
 
         {/* Table */}
         <table className="w-full text-sm border-collapse">
-          <thead className="text-gray-500 border-b bg-gray-50">
+          <thead className="text-white border-b bg-blue-500">
             <tr>
               <th className="text-left py-3 px-2">User</th>
               <th className="text-left py-3 px-2">Phone</th>

@@ -4,12 +4,14 @@ import { User ,Phone,Mail,FileText, Building2, Send} from "lucide-react";
 import { Description } from "@radix-ui/react-dialog";
 
 
-
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 
 
 
 const Userdetails = () => {
+  const navigate = useNavigate();
 
  const [form, setForm] = useState({
   name: "",
@@ -33,8 +35,21 @@ const Userdetails = () => {
                 },
                 body:JSON.stringify(form)
             });
-            const data = await res.json();
-            alert(data.message);
+            await res.json();
+            //ONLY SUCCESS TOAST 
+             toast.success("User created successfully 🎉");
+
+            //  RESET FORM
+    setForm({
+      name: "",
+      phone: "",
+      email: "",
+      company: "",
+      description: "",
+    });
+
+    // REDIRECT TO USER PAGE 
+    navigate("/user") //
 
             //clear form after success
     

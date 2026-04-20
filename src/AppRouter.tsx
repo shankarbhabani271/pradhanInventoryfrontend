@@ -5,7 +5,7 @@ import Layout from "./Layout";
 import Login from "./components/pages/Login";
 import Forgotpassword from "./components/pages/Forgotpassword";
 import Sendotp from "./components/pages/Sendotp";
-
+import Productmenu from "./components/pages/Productmenu";
 
 import SignInPage from "./components/pages/Login";
 import Loader from "./components/Loader";
@@ -13,8 +13,9 @@ import { useSelector } from "react-redux";
 import type { RootState } from "./config/redux/reducers/rootReducer";
 import Signup from "./components/pages/Signup";
 import Userdetails from "./components/pages/Userdetails";
-
-
+import Material from "./components/pages/Material";
+import Studentpage from "./components/pages/studentpage";
+import Po from "./components/pages/Po"
 const Dashboard = lazy(() => import("./components/pages/Dashboard"));
 const MaterialRequest = lazy(
   () => import("./components/pages/MaterialRequest"),
@@ -51,6 +52,20 @@ const AppRouter = () => {
           <Route
            path="/userdetails"
             element={<Userdetails />} />
+            <Route 
+            path="/material"
+            element={<Material/>}/>
+            <Route
+            path="/studentpage"
+            element={<Studentpage/>}/>
+            <Route
+            path="/po"
+            element={<Po/>}/>
+            <Route
+            path="/productmenu"
+            element={<Productmenu/>}/>
+          
+
         <Route
           path="material-request"
           element={
@@ -59,6 +74,9 @@ const AppRouter = () => {
             </SuspenseGate>
           }
         />
+        //Product page 
+        
+
         <Route
           path="apporavals"
           element={

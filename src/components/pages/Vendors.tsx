@@ -1,3 +1,5 @@
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -8,10 +10,6 @@ import {
   IndianRupee,
   ShoppingCart,
   Clock,
-  Search,
-  Phone,
-  Mail,
-  MapPin,
   Star,
   Package,
 } from "lucide-react";
@@ -52,43 +50,6 @@ const dashboardCards = [
   },
 ];
 
-/* ---------------- Vendor Data ---------------- */
-const vendors = [
-  {
-    name: "Prime Metals",
-    code: "VEN-004",
-    category: "Steel & Metals",
-    phone: "+91 65432 10987",
-    email: "contact@primemetals.com",
-    location: "Chennai, Tamil Nadu",
-    rating: 4.8,
-    orders: { total: 234, pending: 5 },
-    status: "Active",
-  },
-  {
-    name: "ABC Supplies Ltd",
-    code: "VEN-001",
-    category: "Steel & Metals",
-    phone: "+91 98765 43210",
-    email: "sales@abcsupplies.com",
-    location: "Mumbai, Maharashtra",
-    rating: 4.5,
-    orders: { total: 156, pending: 3 },
-    status: "Active",
-  },
-  {
-    name: "XYZ Materials",
-    code: "VEN-002",
-    category: "Construction",
-    phone: "+91 87654 32109",
-    email: "info@xyzmaterials.com",
-    location: "Delhi, NCR",
-    rating: 4.2,
-    orders: { total: 89, pending: 1 },
-    status: "Active",
-  },
-];
-
 /* ---------------- Performance Data ---------------- */
 const topPerformers = [
   { rank: 1, name: "Prime Metals", category: "Steel & Metals", rating: 4.8 },
@@ -104,6 +65,32 @@ const orderVolume = [
 
 /* ---------------- Page Component ---------------- */
 const VendorsPage = () => {
+  const [vendors, setVendors] = useState([]);
+
+  // FETCH DATA
+  useEffect(() => {
+    fetchVendors();
+  }, []);
+
+  const fetchVendors = async () => {
+    try {
+      const res = await axios.get("http://localhost:8080/api/vendor/get");
+
+      console.log("API:", res.data);
+
+      if (Array.isArray(res.data)) {
+        setVendors(res.data);
+      } else if (res.data.vendors) {
+        setVendors(res.data.vendors);
+      } else {
+        setVendors([]);
+      }
+    } catch (error) {
+      console.log("ERROR:", error);
+      setVendors([]);
+    }
+  };
+
   return (
     <div className="p-4 space-y-6 bg-blue-50 min-h-screen">
 
@@ -136,85 +123,62 @@ const VendorsPage = () => {
         </TabsList>
 
         {/* ---------------- Vendors Tab ---------------- */}
-        <TabsContent value="vendors" className="mt-6 ">
-          <Card>
-            <CardContent className="p-6 space-y-4">
-              <div className="flex justify-between">
-                <h2 className="text-xl font-semibold">Vendor Directory</h2>
-                <div className="relative w-64">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <input
-                    className="w-full pl-9 py-2 border rounded-lg"
-                    placeholder="Search vendors..."
-                  />
-                </div>
-              </div>
+        <TabsContent value="vendors" className="mt-6">
+          <div className="overflow-x-auto">
+            <table className="w-full border rounded-lg">
 
-              {vendors.map((v, i) => (
-                <div key={i} className="grid grid-cols-7 border-b py-4 items-center">
-                  <div>
-                    <p className="font-semibold">{v.name}</p>
-                    <p className="text-sm text-gray-300">{v.code}</p>
-                  </div>
+              <thead className="bg-blue-600 ">
+                <tr className="text-white">
+                  <th className="p-3 text-left">Name</th>
+                  <th className="p-3 text-left">Phone</th>
+                  <th className="p-3 text-left">Secondary Phone</th>
+                  <th className="p-3 text-left">Email</th>
+                  <th className="p-3 text-left">Primary Address</th>
+                </tr>
+              </thead>
 
-                  <Badge>{v.category}</Badge>
+              <tbody>
+                {Array.isArray(vendors) && vendors.length > 0 ? (
+                  vendors.map((v, i) => (
+                    <tr key={i} className="border-t hover:bg-white">
+                      <td className="p-3">{v?.name}</td>
+                      <td className="p-3">{v?.phone}</td>
+                      <td className="p-3">{v?.secondaryphone || "N/A"}</td>
+                      <td className="p-3">{v?.email}</td>
+                      <td className="p-3">
+                        {v?.primaryaddress || v?.address || "N/A"}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="5" className="text-center p-4 text-gray-500">
+                      No vendors found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
 
-                  <div className="text-sm space-y-1">
-                    <p className="flex gap-1"><Phone size={14} /> {v.phone}</p>
-                    <p className="flex gap-1"><Mail size={14} /> {v.email}</p>
-                  </div>
-
-                  <div className="flex gap-1"><MapPin size={14} /> {v.location}</div>
-
-                  <div className="flex items-center gap-1">
-                    {[1,2,3,4,5].map(n => (
-                      <Star
-                        key={n}
-                        size={16}
-                        className={n <= Math.round(v.rating)
-                          ? "fill-yellow-400 text-yellow-400"
-                          : "text-gray-300"}
-                      />
-                    ))}
-                    <span className="ml-1">{v.rating}</span>
-                  </div>
-
-                  <div>
-                    <p className="font-semibold">{v.orders.total} total</p>
-                    <p className="text-sm text-gray-500">{v.orders.pending} pending</p>
-                  </div>
-
-                  <Badge className="bg-emerald-100 text-emerald-700">
-                    {v.status}
-                  </Badge>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+            </table>
+          </div>
         </TabsContent>
 
         {/* ---------------- Performance Tab ---------------- */}
         <TabsContent value="performance" className="mt-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-            {/* Top Performers */}
             <div className="bg-white rounded-xl border shadow p-6">
               <h2 className="text-xl font-semibold mb-6">Top Performers</h2>
 
               <div className="space-y-6">
                 {topPerformers.map((v) => (
-                  <div key={v.rank} className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-semibold">
-                        {v.rank}
-                      </div>
-                      <div>
-                        <p className="font-semibold">{v.name}</p>
-                        <p className="text-sm text-gray-500">{v.category}</p>
-                      </div>
+                  <div key={v.rank} className="flex justify-between">
+                    <div>
+                      <p className="font-semibold">{v.name}</p>
+                      <p className="text-sm text-gray-500">{v.category}</p>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
                       {[1,2,3,4,5].map(n => (
                         <Star
                           key={n}
@@ -224,36 +188,22 @@ const VendorsPage = () => {
                             : "text-gray-300"}
                         />
                       ))}
-                      <span className="font-semibold">{v.rating}</span>
+                      <span>{v.rating}</span>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Order Volume */}
             <div className="bg-white rounded-xl border shadow p-6">
               <h2 className="text-xl font-semibold mb-6">Order Volume</h2>
 
-              <div className="space-y-6">
-                {orderVolume.map((v, i) => (
-                  <div key={i} className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                        <Package className="h-5 w-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <p className="font-semibold">{v.name}</p>
-                        <p className="text-sm text-gray-500">{v.orders} orders</p>
-                      </div>
-                    </div>
-
-                    <span className="px-4 py-1 text-sm rounded-full bg-slate-800 text-white">
-                      {v.pending} pending
-                    </span>
-                  </div>
-                ))}
-              </div>
+              {orderVolume.map((v, i) => (
+                <div key={i} className="flex justify-between mb-4">
+                  <p>{v.name}</p>
+                  <p>{v.pending} pending</p>
+                </div>
+              ))}
             </div>
 
           </div>
