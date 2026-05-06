@@ -1,8 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 
-import { FileText, IndianRupee, ShoppingCart, Clock,MoreHorizontal ,Filter
-,} from "lucide-react";
+import { FileText, IndianRupee, ShoppingCart, Clock,MoreHorizontal ,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 const dashboardCards = [
   {

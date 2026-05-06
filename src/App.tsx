@@ -2,10 +2,12 @@ import { Provider } from "react-redux";
 import AppRouter from "./AppRouter";
 import { store } from "./config/redux/store/store";
 
-
 const App = () => {
-
-  return <AppRouter />
+  return (
+    <Provider store={store}>
+      <AppRouter />
+    </Provider>
+  );
 };
 
-export default App; // ✅ MUST BE HERE
+export default App;

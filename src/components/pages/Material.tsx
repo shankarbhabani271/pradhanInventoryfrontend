@@ -10,7 +10,7 @@ const  navigate = useNavigate();
     if (!value) return "";
 
     if (value.includes("-")) {
-      const [min, max] = value.split("-").map(Number);
+      const [, max] = value.split("-").map(Number);
 
       if (max >= 20) return "Urgent";
       if (max > 10) return "High";

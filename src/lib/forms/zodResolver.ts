@@ -123,12 +123,12 @@ type UseZodFormProps<
 
 export function useZodForm<
   TFieldValues extends FieldValues,
-  TContext = unknown,
-  TTransformedValues extends FieldValues | undefined = TFieldValues,
+  TContext = unknown
 >(
   schema: z.ZodTypeAny,
-  options: UseZodFormProps<TFieldValues, TContext> = {},
-): UseFormReturn<TFieldValues, TContext, TTransformedValues> {
+  options: UseZodFormProps<TFieldValues, TContext> = {}
+): UseFormReturn<TFieldValues, TContext> {
+  
   const {
     schemaOptions,
     resolverOptions,
@@ -137,10 +137,14 @@ export function useZodForm<
     ...formOptions
   } = options;
 
-  return useForm<TFieldValues, TContext, TTransformedValues>({
+  return useForm<TFieldValues, TContext>({
     ...formOptions,
     mode,
     reValidateMode,
-    resolver: zodResolver(schema, schemaOptions, resolverOptions),
+    resolver: zodResolver<TFieldValues>(
+      schema,
+      schemaOptions,
+      resolverOptions
+    ),
   });
 }

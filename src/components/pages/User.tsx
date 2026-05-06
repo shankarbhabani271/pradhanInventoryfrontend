@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import  { useState, useEffect } from "react";
 import {
   Search,
   Plus,
@@ -47,10 +47,20 @@ const dashboardCards = [
 ];
 
 const User = () => {
+  interface UserType {
+  _id: string;
+  name: string;
+  phone: string;
+  email: string;
+  company: string;
+  description: string;
+}
+
+const [userList, setUserList] = useState<UserType[]>([]);
   const navigate = useNavigate();
 
   // ✅ State
-  const [userList, setUserList] = useState([]);
+
 
   // ✅ Fetch users from backend
   const fetchUsers = async () => {

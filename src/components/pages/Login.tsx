@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import  { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
@@ -21,9 +21,12 @@ function Login() {
       } else {
         navigate("/dashboard");
       }
-    }catch (error) {
-  console.log(error.response.data);
-  alert(error.response.data.message);
+    }catch (error: any) {
+  console.log(error.response?.data);
+
+  alert(
+    error.response?.data?.message || "Login failed"
+  );
 }
   };
 

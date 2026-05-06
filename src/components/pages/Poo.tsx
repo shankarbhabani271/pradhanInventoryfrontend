@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 
 function PurchaseRequest() {
@@ -10,7 +10,7 @@ function PurchaseRequest() {
     setItems([...items, { productName: "", qty: 1, price: 0 }]);
   };
 
-  const removeItem = (index) => {
+  const removeItem = (index:number) => {
     const updated = items.filter((_, i) => i !== index);
     setItems(updated);
   };
@@ -133,7 +133,7 @@ function PurchaseRequest() {
             Product Items
           </h2>
 
-          {items.map((item, index) => (
+          {items.map((_, index) => (
             <div
               key={index}
               className="grid grid-cols-1 md:grid-cols-5 gap-4 bg-gray-50 p-4 rounded-xl mb-4"
@@ -186,7 +186,7 @@ function PurchaseRequest() {
         />
 
         <textarea
-          rows="4"
+          rows={4}
           placeholder="Special Instructions"
           className="w-full border p-3 rounded-xl mb-6"
         ></textarea>

@@ -1,155 +1,336 @@
-import React, { useState } from "react";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
-import { Link } from "react-router-dom";
-function EmployeeDetails() {
-  const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    mobile: "",
-    department: "",
-    employeeRef: "",
-    password:"",
-    role: ""
-  });
+import {
+  ChevronRight,
+  User,
+  Building2,
+  Package,
+  Hash,
+  CheckCircle,
+  XCircle,
+  Clock,
+} from "lucide-react";
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+
+import { useState, useEffect } from "react";
+
+/* =========================
+   TYPES
+========================= */
+interface MaterialRequest {
+  _id: string;
+  referenceId: string;
+  requester: string;
+  priority: string;
+  department: string;
+  productDetails: string;
+  quantity: number;
+  status: string;
+}
+
+interface ListProps {
+  data: MaterialRequest[];
+  selected: MaterialRequest | null;
+  setSelected: React.Dispatch<
+    React.SetStateAction<MaterialRequest | null>
+  >;
+}
+
+interface DetailsProps {
+  selected: MaterialRequest | null;
+  handleApprove: (id: string) => Promise<void>;
+  handleReject: (id: string) => Promise<void>;
+}
+
+/* =========================
+   LIST COMPONENT
+========================= */
+const List = ({
+  data,
+  selected,
+  setSelected,
+}: ListProps) => {
+  return (
+    <div className="space-y-4 mt-4">
+      {data.length === 0 && <p>No Data</p>}
+
+      {data.map((item: MaterialRequest) => (
+        <div
+          key={item._id}
+          onClick={() => setSelected(item)}
+          className={`bg-[#E5EFF6] p-4 rounded-xl cursor-pointer border ${
+            selected?._id === item._id
+              ? "bg-blue-100"
+              : ""
+          }`}
+        >
+          <div className="flex justify-between">
+            <div>
+              <h2>{item.referenceId}</h2>
+              <p>{item.requester}</p>
+
+              <button className="bg-yellow-400 text-white rounded-2xl px-3 py-1 mt-2 text-xs">
+                <span>{item.priority}</span>
+              </button>
+            </div>
+
+            <ChevronRight />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+/* =========================
+   DETAILS PANEL
+========================= */
+const DetailsPanel = ({
+  selected,
+  handleApprove,
+  handleReject,
+}: DetailsProps) => {
+  if (!selected) {
+    return <div className="p-6">Select item</div>;
+  }
+
+  return (
+    <div className="w-full max-w-[850px] mx-auto mt-10">
+      <div className="bg-white/80 backdrop-blur-lg border border-gray-200 rounded-3xl shadow-xl p-8">
+        
+        <div className="flex justify-between items-start mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 tracking-wide">
+              {selected.referenceId}
+            </h1>
+
+            <p className="text-gray-500 text-sm mt-1">
+              Material Request Overview
+            </p>
+          </div>
+
+          <span
+            className={`px-4 py-1.5 text-xs font-semibold rounded-full shadow-sm ${
+              selected.status === "Pending"
+                ? "bg-yellow-100 text-yellow-700"
+                : selected.status === "Approved"
+                ? "bg-green-100 text-green-700"
+                : "bg-red-100 text-red-700"
+            }`}
+          >
+            {selected.status}
+          </span>
+        </div>
+
+        <div className="border-t mb-6"></div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5">
+          
+          <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-xl">
+            <User className="text-blue-500" />
+            <div>
+              <p className="text-xs text-gray-500">Requester</p>
+              <p className="font-semibold text-gray-800">
+                {selected.requester}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-xl">
+            <Building2 className="text-purple-500" />
+            <div>
+              <p className="text-xs text-gray-500">Department</p>
+              <p className="font-semibold text-gray-800">
+                {selected.department}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-xl">
+            <Package className="text-green-500" />
+            <div>
+              <p className="text-xs text-gray-500">Product</p>
+              <p className="font-semibold text-gray-800">
+                {selected.productDetails}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-xl">
+            <Hash className="text-orange-500" />
+            <div>
+              <p className="text-xs text-gray-500">Quantity</p>
+              <p className="font-semibold text-gray-800">
+                {selected.quantity}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {selected.status === "Pending" && (
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mt-10">
+            <p className="text-sm text-gray-500">
+              Take action on this request
+            </p>
+
+            <div className="flex gap-4">
+              <button
+                onClick={() => handleReject(selected._id)}
+                className="px-6 py-2 rounded-xl border border-red-500 text-red-600 font-medium hover:bg-red-50 transition"
+              >
+                Reject
+              </button>
+
+              <button
+                onClick={() => handleApprove(selected._id)}
+                className="px-6 py-2 rounded-xl bg-gradient-to-r from-green-500 to-green-600 text-white font-medium shadow hover:scale-105 transition"
+              >
+                Approve
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+/* =========================
+   MAIN COMPONENT
+========================= */
+const Approvals = () => {
+  const [status, setStatus] = useState<string>("Pending");
+  const [data, setData] = useState<MaterialRequest[]>([]);
+  const [selected, setSelected] =
+    useState<MaterialRequest | null>(null);
+
+  const fetchData = async (): Promise<void> => {
+    try {
+      const response = await fetch(
+        `http://localhost:8080/api/material?status=${status}`
+      );
+
+      const res = await response.json();
+
+      setData(res.data || []);
+      setSelected(res.data?.[0] || null);
+    } catch (error) {
+      console.log("Fetch error:", error);
+    }
   };
 
-const saveEmployeeDetails = async () => {
-  try {
-    const token = localStorage.getItem("token");
+  useEffect(() => {
+    fetchData();
+  }, [status]);
 
-    const res = await axios.post(
-      "http://localhost:8080/api/employee/details",
-      formData,
+  const handleApprove = async (
+    id: string
+  ): Promise<void> => {
+    await fetch(
+      `http://localhost:8080/api/material/${id}/approve`,
       {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+        method: "PUT",
       }
     );
 
-    alert(res.data.message);
+    fetchData();
+  };
 
-    //Redirect to login page after success
-    navigate("/login");
-
-  } catch (error) {
-    console.log(error.response.data);
-
-    alert(
-      error.response?.data?.message ||
-      "Something went wrong"
+  const handleReject = async (
+    id: string
+  ): Promise<void> => {
+    await fetch(
+      `http://localhost:8080/api/material/${id}/reject`,
+      {
+        method: "PUT",
+      }
     );
-  }
-};
+
+    fetchData();
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-indigo-500 to-purple-600">
-      
-      <div className="w-full max-w-5xl bg-white rounded-2xl shadow-2xl grid md:grid-cols-2 overflow-hidden">
-        
-        {/* Left Section */}
-        <div className="bg-indigo-700 text-white flex flex-col justify-center p-10">
-          
-          <Link to="/">
-  <h1 className="text-4xl font-bold mb-4">
-    Employee Registration
-  </h1>
-</Link>
-          <p className="text-lg text-gray-200">
-            Fill employee details and assign roles.
-          </p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 p-6">
+      <div className="max-w-[1200px] mx-auto grid grid-cols-1 md:grid-cols-12 gap-6">
 
-        {/* Right Section */}
-        <div className="p-10">
-          <h2 className="text-3xl font-bold text-center mb-6">
-            Employee Form
+        <div className="col-span-12 md:col-span-5 bg-white rounded-2xl shadow-lg p-4 md:p-5 border">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">
+            Material Requests
           </h2>
 
-          <input
-            type="text"
-            name="name"
-            placeholder="Enter Name"
-            value={formData.name}
-            onChange={handleChange}
-            className="w-full p-3 mb-4 border rounded-lg"
-          />
+          <Tabs defaultValue="pending" className="w-full">
+            <TabsList className="grid grid-cols-3 bg-gray-100 p-1 rounded-xl mb-4 text-xs md:text-sm">
 
-          <input
-            type="email"
-            name="email"
-            placeholder="Enter Email"
-            value={formData.email}
-            onChange={handleChange}
-            className="w-full p-3 mb-4 border rounded-lg"
-          />
+              <TabsTrigger
+                value="pending"
+                onClick={() => setStatus("Pending")}
+              >
+                <Clock size={16} /> Pending
+              </TabsTrigger>
 
-          <input
-            type="text"
-            name="mobile"
-            placeholder="Enter Mobile Number"
-            value={formData.mobile}
-            onChange={handleChange}
-            className="w-full p-3 mb-4 border rounded-lg"
-          />
+              <TabsTrigger
+                value="approved"
+                onClick={() => setStatus("Approved")}
+              >
+                <CheckCircle size={16} /> Approved
+              </TabsTrigger>
 
-          <input
-            type="text"
-            name="department"
-            placeholder="Enter Department"
-            value={formData.department}
-            onChange={handleChange}
-            className="w-full p-3 mb-4 border rounded-lg"
-          />
+              <TabsTrigger
+                value="rejected"
+                onClick={() => setStatus("Rejected")}
+              >
+                <XCircle size={16} /> Rejected
+              </TabsTrigger>
+            </TabsList>
 
-          <input
-            type="text"
-            name="employeeRef"
-            placeholder="Enter Employee Ref ID"
-            value={formData.employeeRef}
-            onChange={handleChange}
-            className="w-full p-3 mb-4 border rounded-lg"
-          />
-          <input
-            type="text"
-            name="password"
-            placeholder="Enter Password"
-            value={formData.password}
-            onChange={handleChange}
-            className="w-full p-3 mb-4 border rounded-lg"
-          />
+            <div className="max-h-[400px] md:max-h-[520px] overflow-y-auto pr-2">
+              <TabsContent value="pending">
+                <List
+                  data={data}
+                  selected={selected}
+                  setSelected={setSelected}
+                />
+              </TabsContent>
 
-          {/* Role Dropdown */}
-          <select
-            name="role"
-            value={formData.role}
-            onChange={handleChange}
-            className="w-full p-3 mb-6 border rounded-lg"
-          >
-            <option value="">Select Role</option>
-            <option value="HR">HR</option>
-            <option value="Manager">Manager</option>
-            <option value="Ticket">Ticket</option>
-          </select>
+              <TabsContent value="approved">
+                <List
+                  data={data}
+                  selected={selected}
+                  setSelected={setSelected}
+                />
+              </TabsContent>
 
-          <button
-            onClick={saveEmployeeDetails}
-            className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700"
-          >
-            Save Employee Details
-          </button>
+              <TabsContent value="rejected">
+                <List
+                  data={data}
+                  selected={selected}
+                  setSelected={setSelected}
+                />
+              </TabsContent>
+            </div>
+          </Tabs>
+        </div>
+
+        <div className="col-span-12 md:col-span-7">
+          {selected ? (
+            <DetailsPanel
+              selected={selected}
+              handleApprove={handleApprove}
+              handleReject={handleReject}
+            />
+          ) : (
+            <div className="flex items-center justify-center h-full text-gray-400 text-sm">
+              Select a request to view details
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
-}
+};
 
-export default EmployeeDetails;
+export default Approvals;

@@ -8,7 +8,7 @@ import Loader from "./components/Loader";
 
 const AuthLoader = ({ children }: { children: React.ReactNode }) => {
   const dispatch = useDispatch();
-  const { isAuthLoading, accessToken } = useSelector((state:RootState) => state.auth);
+  const { isAuthLoading } = useSelector((state:RootState) => state.auth);
 
   const { data } = useRefreshQuery();
   const isFetchingMe = useIsFetching({ queryKey: ["me"] }) > 0;

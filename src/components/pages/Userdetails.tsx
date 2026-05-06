@@ -1,7 +1,7 @@
 
-import React, { useState } from "react";
+import  { useState } from "react";
 import { User ,Phone,Mail,FileText, Building2, Send} from "lucide-react";
-import { Description } from "@radix-ui/react-dialog";
+//import { Description } from "@radix-ui/react-dialog";
 
 
 import { useNavigate } from "react-router-dom";
@@ -20,11 +20,11 @@ const Userdetails = () => {
   company: "",
   description: ""
 });
-    const handleChange = (e) =>{
+    const handleChange = (e:any) =>{
         setForm({...form,[e.target.name]:e.target.value})
     };
 
-    const handleSubmit = async (e)=>{
+    const handleSubmit = async (e:any)=>{
         e.preventDefault();
         console.log(form);
         try{

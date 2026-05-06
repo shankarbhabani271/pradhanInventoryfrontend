@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from "react";
+import  { useEffect, useState } from "react";
 import axios from "axios";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
+
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -11,7 +11,7 @@ import {
   IndianRupee,
   ShoppingCart,
   Clock,
-  Star,
+  
   Package,
   UserPlus,
   Trash2,
@@ -83,28 +83,31 @@ const requests = [
     status: "Delivered",
   },
 ];
+interface Vendor {
+  _id: string;
+  vendorName: string;
+  contactPerson: string;
+  email: string;
+  phone: string;
+  address: string;
+  gst: string;
+  productType: string;
+}
 
 
 /* ---------------- Performance Data ---------------- */
-const topPerformers = [
-  { rank: 1, name: "Prime Metals", category: "Steel & Metals", rating: 4.8 },
-  { rank: 2, name: "ABC Supplies Ltd", category: "Steel & Metals", rating: 4.5 },
-  { rank: 3, name: "XYZ Materials", category: "Construction", rating: 4.2 },
-];
 
-const orderVolume = [
-  { name: "Prime Metals", orders: 234, pending: 5 },
-  { name: "ABC Supplies Ltd", orders: 156, pending: 3 },
-  { name: "XYZ Materials", orders: 89, pending: 1 },
-];
+
+
 
 /* ---------------- Page Component ---------------- */
 const VendorsPage = () => {
-  const [vendors, setVendors] = useState([]);
+ 
   const [activeTab, setActiveTab] = useState("all-vendors");
   const navigate = useNavigate();
 
-
+ 
+ const [, setVendors] = useState<Vendor[]>([]);
   // FETCH DATA
   useEffect(() => {
     fetchVendors();
@@ -431,7 +434,7 @@ const VendorsPage = () => {
                         className="absolute left-3 top-4 text-gray-400"
                       />
                       <textarea
-                        rows="4"
+                        rows={4}
                         placeholder="Enter full address"
                         className="w-full border border-gray-300 rounded-xl pl-10 pr-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none"
                       />

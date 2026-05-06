@@ -7,63 +7,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-const rows = [
-  {
-    ref: "MR-2024-0156",
-    requester: "Sarah Johnson",
-    department: "Operations",
-    date: "2024-01-15",
-    items: 5,
-    priority: "High",
-    priorityStyle: "bg-red-100 text-red-600",
-    status: "Pending",
-    statusStyle: "bg-orange-100 text-orange-600",
-  },
-  {
-    ref: "MR-2024-0155",
-    requester: "Mike Chen",
-    department: "IT",
-    date: "2024-01-14",
-    items: 3,
-    priority: "Medium",
-    priorityStyle: "bg-yellow-100 text-yellow-600",
-    status: "Approved",
-    statusStyle: "bg-green-100 text-green-600",
-  },
-  {
-    ref: "MR-2024-0154",
-    requester: "Emily Davis",
-    department: "HR",
-    date: "2024-01-14",
-    items: 8,
-    priority: "Low",
-    priorityStyle: "bg-blue-100 text-blue-600",
-    status: "Completed",
-    statusStyle: "bg-green-100 text-green-600",
-  },
-  {
-    ref: "MR-2024-0153",
-    requester: "John Smith",
-    department: "Finance",
-    date: "2024-01-13",
-    items: 2,
-    priority: "Medium",
-    priorityStyle: "bg-yellow-100 text-yellow-600",
-    status: "Rejected",
-    statusStyle: "bg-red-100 text-red-600",
-  },
-  {
-    ref: "MR-2024-0152",
-    requester: "Lisa Wong",
-    department: "Marketing",
-    date: "2024-01-12",
-    items: 4,
-    priority: "High",
-    priorityStyle: "bg-red-100 text-red-600",
-    status: "Draft",
-    statusStyle: "bg-gray-100 text-gray-600",
-  },
-];
+
 
 
 
@@ -77,7 +21,21 @@ import { useNavigate } from "react-router-dom";
 
 
 const MaterialRequest = () => {
-    const [data, setData] = useState([]);
+  interface MaterialData {
+  _id: string;
+  referenceId: string;
+  requester: string;
+  department: string;
+  date: string;
+  productDetails: string;
+  quantity: number;
+  priority: string;
+  status?: string;
+}
+
+const [data, setData] = useState<MaterialData[]>([]);
+  
+    
 
   useEffect(() => {
     fetch("http://localhost:8080/api/material")

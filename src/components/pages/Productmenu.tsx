@@ -1,5 +1,7 @@
-import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+
+import { useState,} from "react";
+import type {  ChangeEvent ,ReactNode } from "react";
 import {
   ArrowLeft,
   Plus,
@@ -31,7 +33,7 @@ const Productmenu = () => {
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedColor, setSelectedColor] = useState("");
   const [description, setDescription] = useState("");
-  const [image, setImage] = useState(null);
+ const [, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState("");
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
@@ -47,11 +49,11 @@ const Productmenu = () => {
   ];
 
   // ================= HANDLERS =================
-  const handleChange = (e) => {
+  const handleChange = (e:any) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleImageChange = (e) => {
+  const handleImageChange = (e:any) => {
     const file = e.target.files[0];
     if (file) {
       setImage(file);
@@ -79,8 +81,9 @@ const Productmenu = () => {
     setHover(0);
     setReview("");
   };
+  
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e:any) => {
     e.preventDefault();
 
     try {
@@ -271,20 +274,59 @@ const Productmenu = () => {
 };
 
 // REUSABLE COMPONENTS
-const Section = ({ icon, title, children }) => (
+interface SectionProps {
+  icon: ReactNode;
+  title: string;
+  children: ReactNode;
+}
+
+const Section = ({
+  icon,
+  title,
+  children,
+}: SectionProps) => (
   <div className="bg-gray-100 p-6 rounded-2xl border">
     <div className="flex items-center gap-3 mb-4">
-      <div className="bg-gray-200 p-2 rounded-full">{icon}</div>
-      <h2 className="font-semibold">{title}</h2>
+      <div className="bg-gray-200 p-2 rounded-full">
+        {icon}
+      </div>
+
+      <h2 className="font-semibold">
+        {title}
+      </h2>
     </div>
+
     <hr className="mb-4" />
-    <div className="space-y-4">{children}</div>
+
+    <div className="space-y-4">
+      {children}
+    </div>
   </div>
 );
 
-const Input = (props) => (
+interface InputProps {
+  name: string;
+  value: string;
+  placeholder: string;
+  type?: string;
+  onChange: (
+    e: ChangeEvent<HTMLInputElement>
+  ) => void;
+}
+
+const Input = ({
+  name,
+  value,
+  placeholder,
+  type = "text",
+  onChange,
+}: InputProps) => (
   <input
-    {...props}
+    name={name}
+    value={value}
+    placeholder={placeholder}
+    type={type}
+    onChange={onChange}
     className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-gray-400"
   />
 );

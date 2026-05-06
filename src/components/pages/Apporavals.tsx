@@ -5,7 +5,31 @@ import { useState, useEffect } from "react";
 /* =========================
    LIST COMPONENT
 ========================= */
-const List = ({ data, selected, setSelected }) => {
+
+
+interface MaterialRequest {
+  _id: string;
+  referenceId: string;
+  requester: string;
+  priority: string;
+  department: string;
+  productDetails: string;
+  quantity: number;
+  status: string;
+}
+
+interface ListProps {
+  data: MaterialRequest[];
+  selected: MaterialRequest | null;
+  setSelected: React.Dispatch<React.SetStateAction<MaterialRequest | null>>;
+}
+
+interface DetailsProps {
+  selected: MaterialRequest | null;
+  handleApprove: (id: string) => void;
+  handleReject: (id: string) => void;
+}
+const List = ({ data, selected, setSelected }: ListProps) => {
   return (
     <div className="space-y-4 mt-4">
       {data.length === 0 && <p>No Data</p>}
@@ -35,7 +59,7 @@ const List = ({ data, selected, setSelected }) => {
 /* =========================
    DETAILS PANEL
 ========================= */
-const DetailsPanel = ({ selected, handleApprove, handleReject }) => {
+const DetailsPanel = ({ selected, handleApprove, handleReject }: DetailsProps) => {
   if (!selected) return <div className="p-6">Select item</div>;
 
   return (
@@ -154,9 +178,12 @@ const DetailsPanel = ({ selected, handleApprove, handleReject }) => {
    MAIN COMPONENT
 ========================= */
 const Approvals = () => {
-  const [status, setStatus] = useState("Pending");
-  const [data, setData] = useState([]);
-  const [selected, setSelected] = useState(null);
+const [status, setStatus] = useState<string>("Pending");
+
+const [data, setData] = useState<MaterialRequest[]>([]);
+
+const [selected, setSelected] =
+  useState<MaterialRequest | null>(null);
 
   const fetchData = () => {
     fetch(`http://localhost:8080/api/material?status=${status}`)
@@ -171,14 +198,14 @@ const Approvals = () => {
     fetchData();
   }, [status]);
 
-  const handleApprove = async (id) => {
+  const handleApprove = async (id:any) => {
     await fetch(`http://localhost:8080/api/material/${id}/approve`, {
       method: "PUT",
     });
     fetchData();
   };
 
-  const handleReject = async (id) => {
+  const handleReject = async (id:any) => {
     await fetch(`http://localhost:8080/api/material/${id}/reject`, {
       method: "PUT",
     });

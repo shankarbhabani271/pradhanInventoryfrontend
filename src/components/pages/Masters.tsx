@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import  { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -56,7 +56,17 @@ const Masters = () => {
   const navigate = useNavigate();
 
   // ✅ STATE INSIDE COMPONENT
-  const [products, setProducts] = useState([]);
+  interface ProductType {
+  _id: string;
+  name: string;
+  category: string;
+  unit: string;
+  price: number;
+  stock: number;
+}
+
+const [products, setProducts] = useState<ProductType[]>([]);
+  
 
   // ✅ FETCH FUNCTION
   const fetchProducts = async () => {
@@ -75,7 +85,9 @@ const Masters = () => {
   }, []);
 
   // ✅ DELETE
-  const handleDelete = async (id) => {
+  const handleDelete = async (
+  id: string
+): Promise<void> => {
     const confirmDelete = window.confirm("Delete this product?");
     if (!confirmDelete) return;
 
@@ -156,7 +168,7 @@ const Masters = () => {
           <tbody>
             {products.length === 0 ? (
               <tr>
-                <td colSpan="6" className="text-center p-4">
+                <td colSpan={6} className="text-center p-4">
                   No Data Found
                 </td>
               </tr>
