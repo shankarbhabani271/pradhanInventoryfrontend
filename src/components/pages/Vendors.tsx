@@ -13,7 +13,18 @@ import {
   Clock,
   Star,
   Package,
-  UserPlus
+  UserPlus,
+  Trash2,
+  Plus,
+  CalendarDays,
+  Truck,
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Building2,
+
+
 } from "lucide-react";
 
 /* ---------------- Dashboard Cards ---------------- */
@@ -52,26 +63,26 @@ const dashboardCards = [
   },
 ];
 
- const requests = [
-    {
-      id: 1,
-      product: "Laptop",
-      vendor: "Dell Technologies",
-      quantity: "10 units",
-      expectedDate: "2024-12-10",
-      notes: "Urgent — needed for new joiners",
-      status: "Pending",
-    },
-    {
-      id: 2,
-      product: "Mouse",
-      vendor: "Logitech India",
-      quantity: "25 units",
-      expectedDate: "2024-12-05",
-      notes: "Standard delivery",
-      status: "Delivered",
-    },
-  ];
+const requests = [
+  {
+    id: 1,
+    product: "Laptop",
+    vendor: "Dell Technologies",
+    quantity: "10 units",
+    expectedDate: "2024-12-10",
+    notes: "Urgent — needed for new joiners",
+    status: "Pending",
+  },
+  {
+    id: 2,
+    product: "Mouse",
+    vendor: "Logitech India",
+    quantity: "25 units",
+    expectedDate: "2024-12-05",
+    notes: "Standard delivery",
+    status: "Delivered",
+  },
+];
 
 
 /* ---------------- Performance Data ---------------- */
@@ -91,7 +102,7 @@ const orderVolume = [
 const VendorsPage = () => {
   const [vendors, setVendors] = useState([]);
   const [activeTab, setActiveTab] = useState("all-vendors");
-   const navigate = useNavigate();
+  const navigate = useNavigate();
 
 
   // FETCH DATA
@@ -120,34 +131,34 @@ const VendorsPage = () => {
 
   return (
     <div className="p-4 space-y-6 bg-blue-50 min-h-screen">
-        
 
-       <div className="flex justify-between items-center">
-  
-  {/* Left Section */}
-  <div>
-    <h1 className="text-2xl font-black">
-      Vendors Management
-    </h1>
-    <p className="text-xl text-gray-600">
-      Manage suppliers and purchase requests
-    </p>
-  </div>
 
-  {/* Right Section */}
-  <div>
-    <button 
-     onClick={() => setActiveTab("add-vendor")}
-    className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
-      <UserPlus className="text-white" size={20} />
-      
-      <span>
-        Add Vendors
-      </span>
-    </button>
-  </div>
+      <div className="flex justify-between items-center">
 
-</div>
+        {/* Left Section */}
+        <div>
+          <h1 className="text-2xl font-black">
+            Vendors Management
+          </h1>
+          <p className="text-xl text-gray-600">
+            Manage suppliers and purchase requests
+          </p>
+        </div>
+
+        {/* Right Section */}
+        <div>
+          <button
+            onClick={() => setActiveTab("add-vendor")}
+            className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
+            <UserPlus className="text-white" size={20} />
+
+            <span>
+              Add Vendors
+            </span>
+          </button>
+        </div>
+
+      </div>
       {/* Dashboard Cards */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {dashboardCards.map((card, index) => {
@@ -170,300 +181,418 @@ const VendorsPage = () => {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="all-vendors"  value={activeTab} onValueChange={setActiveTab}>
+      <Tabs defaultValue="all-vendors" value={activeTab} onValueChange={setActiveTab}>
 
-  <TabsList className="bg-slate-300 text-black">
+        <TabsList className="bg-slate-300 text-black">
 
-    <TabsTrigger value="all-vendors">
-      All Vendors
-    </TabsTrigger>
+          <TabsTrigger value="all-vendors">
+            All Vendors
+          </TabsTrigger>
 
-    <TabsTrigger value="add-vendor">
-      Add Vendor
-    </TabsTrigger>
+          <TabsTrigger value="add-vendor">
+            Add Vendor
+          </TabsTrigger>
 
-    <TabsTrigger value="purchase-request">
-      Purchase Request
-    </TabsTrigger>
+          <TabsTrigger value="purchase-request">
+            Purchase Request
+          </TabsTrigger>
 
-  </TabsList>
+        </TabsList>
 
-  {/* -------- All Vendors Tab -------- */}
-  <TabsContent value="all-vendors" className="mt-6">
-      <div className="max-w-6xl mx-auto border rounded-2xl p-6 bg-white shadow-sm">
+        {/* -------- All Vendors Tab -------- */}
+        <TabsContent value="all-vendors" className="mt-6">
+          <div className="min-h-screen p-4">
+            <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-md border overflow-hidden">
 
-      {/* Top Section */}
-      <div className="flex justify-between items-start">
-        
-        {/* Left Side */}
-        <div className="flex items-center gap-4">
-          
-          {/* Avatar */}
-          <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xl">
-            DT
+              {/* Header */}
+              <div className="bg-gradient-to-r from-blue-500 to-indigo-500 p-4 text-white">
+                <div className="flex justify-between items-center">
+
+                  <div className="flex items-center gap-3">
+                    {/* Avatar */}
+                    <div className="w-12 h-12 rounded-full bg-white text-blue-600 flex items-center justify-center font-bold text-lg">
+                      DT
+                    </div>
+
+                    {/* Vendor Info */}
+                    <div>
+                      <h2 className="text-xl font-semibold">
+                        Dell Technologies
+                      </h2>
+                      <p className="text-sm text-blue-100">
+                        Laptops & Computers
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Status */}
+                  <span className="bg-green-500 px-3 py-1 rounded-full text-xs font-medium">
+                    Active
+                  </span>
+                </div>
+              </div>
+
+              {/* Details */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
+
+                <div className="space-y-3">
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <p className="text-xs text-gray-500">Contact</p>
+                    <h3 className="text-sm font-medium">Rajesh Kumar</h3>
+                  </div>
+
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <p className="text-xs text-gray-500">Email</p>
+                    <h3 className="text-sm font-medium">rajesh@dell.com</h3>
+                  </div>
+
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <p className="text-xs text-gray-500">Address</p>
+                    <h3 className="text-sm font-medium">
+                      Bangalore, India
+                    </h3>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <p className="text-xs text-gray-500">Phone</p>
+                    <h3 className="text-sm font-medium">
+                      +91-9876543210
+                    </h3>
+                  </div>
+
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <p className="text-xs text-gray-500">GST</p>
+                    <h3 className="text-sm font-medium">
+                      29DELL1234F1Z5
+                    </h3>
+                  </div>
+                </div>
+              </div>
+
+              {/* Buttons */}
+              <div className="border-t p-4 flex gap-3 justify-end bg-gray-50">
+                <button
+                  onClick={() => navigate("/poo")}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700"
+                >
+                  <FileText size={16} />
+                  Create PO
+                </button>
+
+                <button className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg text-sm hover:bg-red-600">
+                  <Trash2 size={16} />
+                  Remove
+                </button>
+              </div>
+            </div>
           </div>
+        </TabsContent>
 
-          {/* Vendor Info */}
-          <div>
-            <h2 className="text-3xl font-semibold">
-              Dell Technologies
-            </h2>
-            <p className="text-gray-600 text-xl">
-              Laptops & Computers
-            </p>
-          </div>
-        </div>
+        {/* -------- Add Vendor Tab -------- */}
+        <TabsContent value="add-vendor" className="mt-6">
+          <div className="min-h-screen  p-4 md:p-8">
 
-        {/* Status */}
-        <span className="bg-green-100 text-green-700 px-4 py-1 rounded-full font-medium">
-          Active
-        </span>
-      </div>
+            {/* Main Card */}
+            <div className="max-w-5xl mx-auto bg-white shadow-xl rounded-3xl overflow-hidden">
 
-      {/* Middle Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
-        
-        <div>
-          <p className="text-gray-500 text-lg">Contact person</p>
-          <h3 className="font-semibold text-xl">Rajesh Kumar</h3>
-
-          <p className="text-gray-500 text-lg mt-4">Email</p>
-          <h3 className="font-semibold text-xl">rajesh@dell.com</h3>
-
-          <p className="text-gray-500 text-lg mt-4">Address</p>
-          <h3 className="font-semibold text-xl">
-            Bangalore, Karnataka, India
-          </h3>
-        </div>
-
-        <div>
-          <p className="text-gray-500 text-lg">Phone</p>
-          <h3 className="font-semibold text-xl">
-            +91-9876543210
-          </h3>
-
-          <p className="text-gray-500 text-lg mt-4">GST</p>
-          <h3 className="font-semibold text-xl">
-            29DELL1234F1Z5
-          </h3>
-        </div>
-      </div>
-
-      {/* Divider */}
-      <hr className="my-6" />
-
-      {/* Buttons */}
-      <div className="flex gap-4">
-        
-        <button 
-        onClick={() => navigate("/poo")}
-
-        className="px-6 py-3 border rounded-xl hover:bg-gray-100">
-          Create PO
-        </button>
-
-        <button className="px-6 py-3 border rounded-xl hover:bg-red-100 text-red-600">
-          Remove
-        </button>
-      </div>
-    </div>
-  </TabsContent>
-
-  {/* -------- Add Vendor Tab -------- */}
-  <TabsContent value="add-vendor" className="mt-6">
-  <div className="w-full min-h-screen  p-3 sm:p-4 md:p-6">
-  
-  <div className="w-full max-w-5xl mx-auto bg-white border rounded-2xl shadow-sm p-4 sm:p-5 md:p-6 lg:p-8">
-
-    {/* Heading */}
-    <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold mb-6 text-center sm:text-left">
-      Add New Vendor
-    </h1>
-
-    <form>
-      
-      {/* Form Fields */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-
-        <div>
-          <label className="block text-sm sm:text-base md:text-lg font-medium mb-2">
-            Vendor Name *
-          </label>
-          <input
-            type="text"
-            placeholder="Dell Technologies"
-            className="w-full border rounded-lg px-4 py-3 text-sm sm:text-base"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm sm:text-base md:text-lg font-medium mb-2">
-            Contact Person
-          </label>
-          <input
-            type="text"
-            placeholder="Rajesh Kumar"
-            className="w-full border rounded-lg px-4 py-3 text-sm sm:text-base"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm sm:text-base md:text-lg font-medium mb-2">
-            Email *
-          </label>
-          <input
-            type="email"
-            placeholder="vendor@gmail.com"
-            className="w-full border rounded-lg px-4 py-3 text-sm sm:text-base"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm sm:text-base md:text-lg font-medium mb-2">
-            Phone *
-          </label>
-          <input
-            type="text"
-            placeholder="+91 9876543210"
-            className="w-full border rounded-lg px-4 py-3 text-sm sm:text-base"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm sm:text-base md:text-lg font-medium mb-2">
-            Product Type *
-          </label>
-          <select className="w-full border rounded-lg px-4 py-3 text-sm sm:text-base">
-            <option>Select Category</option>
-            <option>Laptop</option>
-            <option>Monitor</option>
-            <option>Keyboard</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm sm:text-base md:text-lg font-medium mb-2">
-            GST Number
-          </label>
-          <input
-            type="text"
-            placeholder="29ABCDE1234F1Z5"
-            className="w-full border rounded-lg px-4 py-3 text-sm sm:text-base"
-          />
-        </div>
-      </div>
-
-      {/* Address */}
-      <div className="mt-6">
-        <label className="block text-sm sm:text-base md:text-lg font-medium mb-2">
-          Address *
-        </label>
-        <textarea
-          rows="4"
-          placeholder="Enter full address"
-          className="w-full border rounded-lg px-4 py-3 text-sm sm:text-base"
-        />
-      </div>
-
-      {/* Buttons */}
-      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-end mt-6">
-        <button
-          type="button"
-          className="w-full sm:w-auto px-6 py-3 border rounded-lg"
-        >
-          Cancel
-        </button>
-
-        <button
-          type="submit"
-          className="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white rounded-lg"
-        >
-          Save Vendor
-        </button>
-      </div>
-
-    </form>
-  </div>
-</div>
-  </TabsContent>
-
-  {/* -------- Purchase Request Tab -------- */}
-  <TabsContent value="purchase-request" className="mt-6">
-    <div className="p-4 md:p-6 min-h-screen">
-
-      {/* Top Button */}
-      <div className="flex justify-end mb-6">
-        <button className="border px-5 py-2 rounded-xl text-lg font-medium hover:bg-gray-100">
-          + New Purchase Request
-        </button>
-      </div>
-
-      {/* Request Cards */}
-      <div className="space-y-6">
-        {requests.map((item) => (
-          <div
-            key={item.id}
-            className="bg-white border rounded-2xl p-4 md:p-6"
-          >
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
-              <div>
-                <h2 className="text-2xl font-bold">
-                  {item.product}
-                </h2>
-                <p className="text-gray-600">
-                  Vendor: {item.vendor}
+              {/* Header */}
+              <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 md:p-8">
+                <h1 className="text-2xl md:text-3xl font-bold">
+                  Add New Vendor
+                </h1>
+                <p className="text-sm md:text-base mt-2 text-blue-100">
+                  Manage supplier details for your inventory system
                 </p>
               </div>
 
-              <span
-                className={`px-4 py-1 rounded-full font-medium w-fit ${
-                  item.status === "Pending"
-                    ? "bg-yellow-100 text-yellow-700"
-                    : "bg-green-100 text-green-700"
-                }`}
-              >
-                {item.status}
-              </span>
+              {/* Form Section */}
+              <div className="p-6 md:p-8">
+                <form>
+
+                  {/* Grid Inputs */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                    {/* Vendor Name */}
+                    <div>
+                      <label className="font-medium text-gray-700 mb-2 block">
+                        Vendor Name *
+                      </label>
+                      <div className="relative">
+                        <Building2
+                          size={18}
+                          className="absolute left-3 top-4 text-gray-400"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Dell Technologies"
+                          className="w-full border border-gray-300 rounded-xl pl-10 pr-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Contact Person */}
+                    <div>
+                      <label className="font-medium text-gray-700 mb-2 block">
+                        Contact Person
+                      </label>
+                      <div className="relative">
+                        <User
+                          size={18}
+                          className="absolute left-3 top-4 text-gray-400"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Rajesh Kumar"
+                          className="w-full border border-gray-300 rounded-xl pl-10 pr-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Email */}
+                    <div>
+                      <label className="font-medium text-gray-700 mb-2 block">
+                        Email *
+                      </label>
+                      <div className="relative">
+                        <Mail
+                          size={18}
+                          className="absolute left-3 top-4 text-gray-400"
+                        />
+                        <input
+                          type="email"
+                          placeholder="vendor@gmail.com"
+                          className="w-full border border-gray-300 rounded-xl pl-10 pr-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Phone */}
+                    <div>
+                      <label className="font-medium text-gray-700 mb-2 block">
+                        Phone *
+                      </label>
+                      <div className="relative">
+                        <Phone
+                          size={18}
+                          className="absolute left-3 top-4 text-gray-400"
+                        />
+                        <input
+                          type="text"
+                          placeholder="+91 9876543210"
+                          className="w-full border border-gray-300 rounded-xl pl-10 pr-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Product Type */}
+                    <div>
+                      <label className="font-medium text-gray-700 mb-2 block">
+                        Product Type *
+                      </label>
+                      <select className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option>Select Category</option>
+                        <option>Laptop</option>
+                        <option>Monitor</option>
+                        <option>Keyboard</option>
+                        <option>Mouse</option>
+                        <option>Printer</option>
+                      </select>
+                    </div>
+
+                    {/* GST */}
+                    <div>
+                      <label className="font-medium text-gray-700 mb-2 block">
+                        GST Number
+                      </label>
+                      <div className="relative">
+                        <FileText
+                          size={18}
+                          className="absolute left-3 top-4 text-gray-400"
+                        />
+                        <input
+                          type="text"
+                          placeholder="29ABCDE1234F1Z5"
+                          className="w-full border border-gray-300 rounded-xl pl-10 pr-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Address */}
+                  <div className="mt-6">
+                    <label className="font-medium text-gray-700 mb-2 block">
+                      Address *
+                    </label>
+                    <div className="relative">
+                      <MapPin
+                        size={18}
+                        className="absolute left-3 top-4 text-gray-400"
+                      />
+                      <textarea
+                        rows="4"
+                        placeholder="Enter full address"
+                        className="w-full border border-gray-300 rounded-xl pl-10 pr-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Buttons */}
+                  <div className="flex flex-col sm:flex-row justify-end gap-4 mt-8">
+                    <button
+                      type="button"
+                      className="px-6 py-3 rounded-xl border border-gray-300 hover:bg-gray-100 transition"
+                    >
+                      Cancel
+                    </button>
+
+                    <button
+                      type="submit"
+                      className="px-6 py-3 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition shadow-md"
+                    >
+                      Save Vendor
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
-
-            {/* Details */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-              <div className="bg-gray-100 p-4 rounded-xl">
-                <p className="text-gray-600">Quantity</p>
-                <h3 className="font-bold">{item.quantity}</h3>
-              </div>
-
-              <div className="bg-gray-100 p-4 rounded-xl">
-                <p className="text-gray-600">Expected By</p>
-                <h3 className="font-bold">{item.expectedDate}</h3>
-              </div>
-
-              <div className="bg-gray-100 p-4 rounded-xl">
-                <p className="text-gray-600">Notes</p>
-                <h3 className="font-bold">{item.notes}</h3>
-              </div>
-            </div>
-
-            {/* Buttons only for Pending */}
-            {item.status === "Pending" && (
-              <div className="flex flex-col sm:flex-row gap-4 mt-6 border-t pt-4">
-                <button className="px-5 py-2 border border-green-500 text-green-600 rounded-xl hover:bg-green-50">
-                  Mark Delivered
-                </button>
-
-                <button className="px-5 py-2 border rounded-xl hover:bg-gray-100">
-                  Cancel
-                </button>
-              </div>
-            )}
           </div>
-        ))}
-      </div>
-    </div>
-  </TabsContent>
+        </TabsContent>
 
-</Tabs>
+        {/* -------- Purchase Request Tab -------- */}
+        <TabsContent value="purchase-request" className="mt-6">
+          <div className="min-h-screen  p-4 md:p-6">
+
+            {/* Top Header */}
+            <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+
+              <div>
+                <h1 className="text-3xl font-bold text-gray-800">
+                  Purchase Requests
+                </h1>
+                <p className="text-gray-500">
+                  Manage all procurement requests
+                </p>
+              </div>
+
+              <button className="flex items-center gap-2 bg-blue-600 text-white px-5 py-3 rounded-xl shadow hover:bg-blue-700">
+                <Plus size={18} />
+                New Request
+              </button>
+            </div>
+
+            {/* Summary Cards */}
+            <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+
+              <div className="bg-white p-5 rounded-2xl shadow-sm">
+                <p className="text-gray-500">Total Requests</p>
+                <h2 className="text-2xl font-bold">{requests.length}</h2>
+              </div>
+
+              <div className="bg-white p-5 rounded-2xl shadow-sm">
+                <p className="text-gray-500">Pending Orders</p>
+                <h2 className="text-2xl font-bold text-yellow-600">
+                  {requests.filter((r) => r.status === "Pending").length}
+                </h2>
+              </div>
+
+              <div className="bg-white p-5 rounded-2xl shadow-sm">
+                <p className="text-gray-500">Delivered Orders</p>
+                <h2 className="text-2xl font-bold text-green-600">
+                  {requests.filter((r) => r.status === "Delivered").length}
+                </h2>
+              </div>
+            </div>
+
+            {/* Request Cards */}
+            <div className="max-w-7xl mx-auto space-y-5">
+              {requests.map((item) => (
+                <div
+                  key={item.id}
+                  className="bg-white rounded-2xl shadow-sm border hover:shadow-md transition duration-300 p-6"
+                >
+                  {/* Header */}
+                  <div className="flex flex-col md:flex-row justify-between gap-4">
+
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center">
+                        <Package className="text-blue-600" />
+                      </div>
+
+                      <div>
+                        <h2 className="text-xl font-bold text-gray-800">
+                          {item.product}
+                        </h2>
+                        <p className="text-gray-500">
+                          Vendor: {item.vendor}
+                        </p>
+                      </div>
+                    </div>
+
+                    <span
+                      className={`px-4 py-2 rounded-full text-sm font-medium h-fit ${item.status === "Pending"
+                        ? "bg-yellow-100 text-yellow-700"
+                        : "bg-green-100 text-green-700"
+                        }`}
+                    >
+                      {item.status}
+                    </span>
+                  </div>
+
+                  {/* Details */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+
+                    <div className="bg-gray-50 p-4 rounded-xl flex items-center gap-3">
+                      <Package className="text-gray-500" size={18} />
+                      <div>
+                        <p className="text-gray-500 text-sm">Quantity</p>
+                        <h3 className="font-semibold">{item.quantity}</h3>
+                      </div>
+                    </div>
+
+                    <div className="bg-gray-50 p-4 rounded-xl flex items-center gap-3">
+                      <CalendarDays className="text-gray-500" size={18} />
+                      <div>
+                        <p className="text-gray-500 text-sm">Expected Date</p>
+                        <h3 className="font-semibold">
+                          {item.expectedDate}
+                        </h3>
+                      </div>
+                    </div>
+
+                    <div className="bg-gray-50 p-4 rounded-xl flex items-center gap-3">
+                      <FileText className="text-gray-500" size={18} />
+                      <div>
+                        <p className="text-gray-500 text-sm">Notes</p>
+                        <h3 className="font-semibold">
+                          {item.notes}
+                        </h3>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  {item.status === "Pending" && (
+                    <div className="flex flex-wrap gap-4 mt-6 pt-4 border-t">
+
+                      <button className="flex items-center gap-2 bg-green-600 text-white px-5 py-2 rounded-xl hover:bg-green-700">
+                        <Truck size={18} />
+                        Mark Delivered
+                      </button>
+
+                      <button className="px-5 py-2 border rounded-xl hover:bg-gray-100">
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </TabsContent>
+
+      </Tabs>
     </div>
   );
 };
