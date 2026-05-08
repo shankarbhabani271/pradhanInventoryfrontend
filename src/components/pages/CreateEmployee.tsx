@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { User, Phone, Mail, Building2, BadgeCheck } from "lucide-react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 export default function EmployeeForm() {
   // Generate serial employee ID
   const generateEmployeeId = () => {
@@ -61,20 +62,38 @@ export default function EmployeeForm() {
       alert(error.response?.data?.message);
     }
   };
+const navigate = useNavigate();
+ 
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-yellow-50 flex items-center justify-center p-6">
       <div className="w-full max-w-4xl bg-white shadow-xl rounded-3xl p-8">
         <form onSubmit={handleSubmit}>
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">
-            Employee Registration
-          </h1>
-          <p className="text-gray-500">
-            Inventory Management System
-          </p>
-        </div>
+       <div className="flex justify-between items-center mb-8">
+  
+  {/* Left Side */}
+  <div>
+    <h1 className="text-3xl font-bold text-gray-800">
+      Employee Registration
+    </h1>
+    <p className="text-gray-500">
+      Inventory Management System
+    </p>
+  </div>
+
+  {/* Right Side */}
+  <div>
+    <button
+      type="button"
+     onClick={() => navigate("/adddepartment")}
+      className="px-6 py-3 bg-yellow-500 text-white rounded-xl hover:bg-yellow-600"
+    >
+        Add Department
+    </button>
+  </div>
+
+</div>
 
         {/* Form Grid */}
         <div className="grid md:grid-cols-2 gap-6">
@@ -194,6 +213,7 @@ export default function EmployeeForm() {
           </button>
           <button
            type="submit"
+             onClick={() => navigate("/VerifyOtp")}
           className="px-6 py-3 bg-yellow-500 text-white rounded-xl hover:bg-yellow-600">
             Register Employee
           </button>
