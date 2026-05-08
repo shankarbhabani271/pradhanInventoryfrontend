@@ -36,15 +36,38 @@ export default function EmployeeForm() {
   // Submit form
   const handleSubmit = async (e: any) => {
     e.preventDefault();
+ const { name, mobile, email, department, blood, role } = formData;
 
+  // Validation
+  if (
+    !name ||
+    !mobile ||
+    !email ||
+    !department ||
+    !blood ||
+    !role
+  ) {
+    alert("Please fill all required fields");
+    return;
+  }
     try {
       const res = await axios.post(
         "http://localhost:8080/api/employees/register",
         formData
       );
 
-      alert("Employee Registered Successfully");
+      
       console.log(res.data);
+    
+if (res.data.success) {   // <-- changed
+  alert("Employee Registered & OTP sent successfully");
+
+  navigate("/VerifyOtp", {   // <-- changed
+    state: {
+      email: formData.email   // <-- changed
+    }
+  });
+}
 
       // Reset form with next employee ID
       setFormData({
@@ -213,7 +236,7 @@ const navigate = useNavigate();
           </button>
           <button
            type="submit"
-             onClick={() => navigate("/VerifyOtp")}
+            
           className="px-6 py-3 bg-yellow-500 text-white rounded-xl hover:bg-yellow-600">
             Register Employee
           </button>
