@@ -4,6 +4,7 @@ import { ShieldCheck } from "lucide-react";
 import bgImage from "../../assets/otp-bg.png";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
+import { toast } from "sonner";
 const VerifyOtp = () => {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [timeLeft, setTimeLeft] = useState(300);
@@ -51,11 +52,11 @@ const handleVerify = async () => {
   }
 );
 
-    if (res.data.success) {
-      alert("OTP Verified Successfully");
+  if (res.data.success) {
+  toast.success("OTP Verified Successfully");
 
-      navigate("/");
-    }
+  navigate("/");
+}
 
   } catch (error: any) {
     alert(

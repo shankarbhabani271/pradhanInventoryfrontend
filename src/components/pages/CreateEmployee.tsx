@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { User, Phone, Mail, Building2, BadgeCheck } from "lucide-react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 export default function EmployeeForm() {
   // Generate serial employee ID
   const generateEmployeeId = () => {
@@ -59,12 +60,12 @@ export default function EmployeeForm() {
       
       console.log(res.data);
     
-if (res.data.success) {   // <-- changed
-  alert("Employee Registered & OTP sent successfully");
+if (res.data.success) {
+  toast.success("Employee Registered & OTP sent successfully");
 
-  navigate("/VerifyOtp", {   // <-- changed
+  navigate("/VerifyOtp", {
     state: {
-      email: formData.email   // <-- changed
+      email: formData.email
     }
   });
 }
