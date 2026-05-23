@@ -17,6 +17,7 @@ import VerifyOtp from "./components/pages/VerifyOtp"
 import Adddepartment from "./components/pages/Adddepartment"
 import Password from "./components/pages/Password"
 import Frontend from "./components/pages/Frontend"
+import SetPassword from "./components/pages/SetPassword"
 // Lazy imports
 const Dashboard = lazy(() => import("./components/pages/Dashboard"));
 const MaterialRequest = lazy(() => import("./components/pages/MaterialRequest"));
@@ -49,6 +50,7 @@ const AppRouter = () => {
      <Route path="adddepartment" element={<Adddepartment/>}/>
      <Route path="password" element={<Password/>}/>
      <Route path="Frontend" element={<Frontend/>}/>
+     <Route path="/set-password" element={<SetPassword/>}/>
       {/* Main Layout Routes */}
       <Route
         path="/"
@@ -236,6 +238,8 @@ const AppRouter = () => {
         }
       />
     </Routes>
+    
+
   );
 };
 

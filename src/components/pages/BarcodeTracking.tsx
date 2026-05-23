@@ -1,8 +1,6 @@
 import QRCode from "react-qr-code";
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-
 import {
   FileText,
   IndianRupee,
@@ -13,6 +11,11 @@ import {
   ScanLine,
   Search,
 } from "lucide-react";
+
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
 
 const dashboardCards = [
   {
@@ -46,7 +49,6 @@ const dashboardCards = [
     icon: Clock,
     iconBg: "bg-orange-100",
     iconColor: "text-orange-600",
-    valueSize: "text-5xl",
   },
 ];
 
@@ -55,10 +57,9 @@ const inventoryData = [
     code: "4589172131",
     name: "Steel Pipes 2inch",
     category: "Batch-2024-001 SN-78945",
-    warehouse: " Warehouse A-Rack 3",
-
+    warehouse: "Warehouse A-Rack 3",
     value: "2024-01-15 10:30 AM",
-    Status: "in",
+    status: "in",
   },
   {
     code: "ITM-002",
@@ -76,241 +77,167 @@ const inventoryData = [
     value: "2024-01-13 09:45 AM",
     status: "low",
   },
-  {
-    code: "ITM-003",
-    name: "Work Gloves",
-    category: "Safety Equipment",
-    warehouse: "Site B",
-    value: "2024-01-13 09:45 AM",
-    status: "low",
-  },
 ];
 
-import {
-  NativeSelect,
-  NativeSelectOption,
-} from "@/components/ui/native-select";
-
-export function NativeSelectDemo() {
+function NativeSelectDemo() {
   return (
     <NativeSelect className="w-80">
       <NativeSelectOption value="">Select status</NativeSelectOption>
-      <NativeSelectOption value="todo">Standard (2"x1")</NativeSelectOption>
-      <NativeSelectOption value="in-progress">
-        Large (3" x 1")
+      <NativeSelectOption value="standard">
+        Standard (2x1)
       </NativeSelectOption>
-      <NativeSelectOption value="done">Small (3"x1")</NativeSelectOption>
+      <NativeSelectOption value="large">
+        Large (3x1)
+      </NativeSelectOption>
+      <NativeSelectOption value="small">
+        Small (1x1)
+      </NativeSelectOption>
     </NativeSelect>
   );
 }
 
-{
-  /* */
-}
-
 const BarcodeTracking = () => {
   return (
-    <div className="p-4 space-y-4 bg-blue-50 min-h-screen">
-      {/* Cards */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="p-4 bg-blue-50 min-h-screen space-y-4">
+
+      {/* Dashboard Cards */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {dashboardCards.map((card, index) => {
           const Icon = card.icon;
 
           return (
-            <Card key={index} className="rounded-xl">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  {card.title}
-                </CardTitle>
-
-                <div
-                  className={`h-10 w-10 rounded-lg flex items-center justify-center ${card.iconBg}`}
-                >
-                  <Icon className={`h-5 w-5 ${card.iconColor}`} />
-                </div>
+            <Card key={index}>
+              <CardHeader className="flex flex-row justify-between items-center">
+                <CardTitle className="text-sm">{card.title}</CardTitle>
+                <Icon className={`h-5 w-5 ${card.iconColor}`} />
               </CardHeader>
 
               <CardContent>
-                <div className={`font-bold ${card.valueSize ?? "text-3xl"}`}>
-                  {card.value}
-                </div>
-
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {card.subtitle}
-                </p>
+                <h2 className="text-3xl font-bold">{card.value}</h2>
+                <p className="text-sm text-gray-500">{card.subtitle}</p>
               </CardContent>
             </Card>
           );
         })}
       </div>
-      <div>
-        <Tabs defaultValue="overview">
-          <div className="flex items-center justify-between">
-            <TabsList className="bg-[#94A3B8] h-12 rounded-xl p-1 text-black">
-              <TabsTrigger
-                value="Registry"
-                className="flex-1 flex items-center justify-center
-             h-full text-black rounded-sm
-              hover:bg-white data-[state=active]:bg-white
-               data-[state=active]:text-black data-[state=active]:shadow-md 
-               transition-all"
-              >
-                Barcode Registry
-              </TabsTrigger>
-              <TabsTrigger
-                value="movements"
-                className="px-6 rounded-lg data-[state=active]:bg-white"
-              >
-                Movements
-              </TabsTrigger>
-              <TabsTrigger
-                value="adjustments"
-                className="px-6 rounded-lg data-[state=active]:bg-white"
-              >
-                Adjustments
-              </TabsTrigger>
-            </TabsList>
-          </div>
 
-          <TabsContent value="Registry">
-            <div className="bg-white rounded-xl shadow-sm border overflow-hidden mt-4">
+      {/* Tabs */}
+      <Tabs defaultValue="Registry">
+
+        <TabsList className="bg-gray-200">
+          <TabsTrigger value="Registry">Barcode Registry</TabsTrigger>
+          <TabsTrigger value="movements">Movements</TabsTrigger>
+          <TabsTrigger value="adjustments">Adjustments</TabsTrigger>
+        </TabsList>
+
+        {/* Registry */}
+        <TabsContent value="Registry">
+          <div className="bg-white rounded-xl mt-4 p-4">
+
+            <div className="grid grid-cols-7 font-bold border-b pb-3">
+              <div>Barcode</div>
+              <div>Item</div>
+              <div>Batch</div>
+              <div>Location</div>
+              <div>Status</div>
+              <div>Last Scan</div>
+              <div>Action</div>
+            </div>
+
+            {inventoryData.map((item, i) => (
               <div
-                className="grid grid-cols-8 bg-gray-50 px-6 py-3 text-sm 
-                          font-semibold text-gray-600"
+                key={i}
+                className="grid grid-cols-7 py-4 border-b items-center"
               >
-                <div>Barcode</div>
-                <div>Itemname</div>
+                <div>{item.code}</div>
+                <div>{item.name}</div>
+                <div>{item.category}</div>
+                <div>{item.warehouse}</div>
+
                 <div>
-                  <p>Batch/Serial</p>
+                  {item.status === "in" ? (
+                    <span className="bg-green-100 text-green-700 px-2 py-1 rounded">
+                      In Stock
+                    </span>
+                  ) : (
+                    <span className="bg-orange-100 text-orange-700 px-2 py-1 rounded">
+                      Low Stock
+                    </span>
+                  )}
                 </div>
-                <div>Location</div>
 
-                <div>Status</div>
-                <div>Last Scanned</div>
+                <div>{item.value}</div>
 
-                <div>Actions</div>
+                <div>
+                  <Printer className="cursor-pointer h-5 w-5" />
+                </div>
               </div>
+            ))}
+          </div>
+        </TabsContent>
 
-              {inventoryData.map((item, i) => {
-                return (
-                  <div
-                    key={i}
-                    className="grid grid-cols-8 items-center px-6 py-4 border-t hover:bg-gray-50"
-                  >
-                    <div className="font-mono pr-8">{item.code}</div>
-                    <div className="">{item.name}</div>
-                    <div>{item.category}</div>
-                    <div>{item.warehouse}</div>
-                    <div>
-                      {item.status === "in" ? (
-                        <span className="px-3 py-1 text-xs rounded-full bg-emerald-100 text-emerald-700">
-                          In Stock
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-3 py-1 text-xs rounded-full bg-orange-100 text-orange-700">
-                          <AlertTriangle className="h-4 w-4" />
-                          Low Stock
-                        </span>
-                      )}
-                    </div>
+        {/* Movements */}
+        <TabsContent value="movements">
+          <div className="bg-white rounded-xl p-6 mt-4">
+            <h1 className="text-2xl mb-4">Barcode Scanner</h1>
 
-                    <div className="font-semibold  ">{item.value}</div>
-
-                    <div>
-                      {/* {item.action} */}
-                      <div className="flex justify-center pl-25">
-                        <Printer className="h-4 w-4 cursor-pointer text-black " />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="bg-gray-200 h-40 rounded-xl flex flex-col justify-center items-center">
+              <ScanLine className="h-12 w-12" />
+              <p>Point camera at barcode</p>
             </div>
-          </TabsContent>
-          <TabsContent value="movements">
-            <div className="bg-white rounded-xl shadow-sm border overflow-hidden h-100 mt-4">
+
+            <div className="flex gap-4 mt-6">
+              <input
+                type="text"
+                placeholder="Enter barcode"
+                className="border p-3 rounded-lg w-80"
+              />
+
+              <button className="bg-blue-600 text-white px-5 rounded-lg flex items-center gap-2">
+                <Search className="h-4 w-4" />
+                Search
+              </button>
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* Adjustments */}
+        <TabsContent value="adjustments">
+          <div className="bg-white rounded-xl p-6 mt-4">
+            <h1 className="text-2xl mb-4">Generate Barcode Label</h1>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              
               <div>
-                <h1 className="text-2xl pl-4 pt-4">Barcode Scanner</h1>
-              </div>
-              <div className="pl-60 pt-8">
-                <div className="bg-[#C5CED9] rounded-xl shadow-sm border overflow-auto w-110 h-50 ">
-                  <div className="pl-45 pt-15">
-                    <ScanLine className="w-15 h-15" />
-                  </div>
-                  <h1 className="pl-15 pt-4">
-                    Point camera at barcode or enter manually
-                  </h1>
-                </div>
-                <div>
-                  <div className="flex gap-7">
-                    <div>
-                      <h1 className="text-xl">Manual Entry</h1>
+                <input
+                  type="text"
+                  placeholder="Search items"
+                  className="border p-3 rounded-lg w-full"
+                />
 
-                      <input
-                        type="text"
-                        placeholder="Enter barcode number....."
-                        className="flex-1 px-4 py-3 text-sm focus:outline-none text-black bg-blue-100 rounded-xl w-80"
-                      />
-                    </div>
-                    <div className="pr-6 pt-7">
-                      <button className="flex items-center gap-3 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                        <Search className="h-4 w-4" />
-                        <span>Print</span>
-                      </button>
-                    </div>
-                  </div>
+                <div className="mt-4">
+                  <NativeSelectDemo />
                 </div>
+
+                <button className="mt-4 bg-blue-600 text-white px-5 py-2 rounded-lg flex items-center gap-2">
+                  <Printer className="h-4 w-4" />
+                  Generate Label
+                </button>
+              </div>
+
+              <div className="bg-gray-200 rounded-xl p-6 text-center">
+                <QRCode value="ITM-002" size={120} />
+                <h2 className="mt-4 text-xl font-bold">
+                  4589712345001
+                </h2>
+                <p>Steel Pipes 2inch</p>
+                <p>BATCH-2024-001</p>
               </div>
             </div>
-          </TabsContent>
-          <TabsContent value="adjustments">
-            <div className="bg-white rounded-xl shadow-sm border overflow-hidden h-100 mt-4">
-              <h1 className="text-2xl pl-4 pt-4">Generate Barcode Labels</h1>
-              <div className="flex gap-8">
-                <div className="pl-4">
-                  <br />
-                  <h2>select Items</h2>
-                  <input
-                    type="text"
-                    placeholder="search items....."
-                    className="flex-1 px-4 py-3 text-sm focus:outline-none text-black bg-blue-100 rounded-xl w-80"
-                  />
-                  <br />
-                  <h1 className="pt-5">Label format</h1>
+          </div>
+        </TabsContent>
 
-                  <div className="rounded-xl w-90">
-                    <NativeSelectDemo />
-                  </div>
-                  <br />
-                  <div>
-                    <h2>Quantity</h2>
-                    <div className="rounded-xl w-90">
-                      <NativeSelectDemo />
-                    </div>
-                    <br />
-                    <button className="w-90 flex items-center justify-center gap-3 px-5.5 py-2.5 bg-sky-600 text-white font-semibold rounded-xl hover:bg-sky-700 transition shadow">
-                      <Printer className="h-4 w-4" />
-                      <span>Generate Labels</span>
-                    </button>
-                  </div>
-                </div>
-                <div className="rounded-xl w-120 h-80 bg-[#C5CED9] pl-4">
-                  <div className="rounded-xl w-120 h-80 bg-[#C5CED9]">
-                    <div className="bg-[#C5CED9] pl-40 pt-12 rounded-xl">
-                      <QRCode value="ITM-002" size={120} />
-                    </div>
-                    <div className=" pt-4">
-                      <h2 className="text-2xl pl-36">4589712345001</h2>
-                      <p className="pl-40">Steel Pipes 2inch</p>
-                      <p className="pl-40">BATCH-2024-001</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </div>
+      </Tabs>
     </div>
   );
 };

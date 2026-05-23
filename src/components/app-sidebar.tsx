@@ -89,10 +89,10 @@ const items = [
     icon: ClipboardCheck,
   },
   {
-    title: "Barcode & Tracking",
-    url: "/barcode&tracking",
-    icon: Scan,
-  },
+  title: "Barcode & Tracking",
+  url: "/barcode-tracking",
+  icon: Scan,
+},
    {
     title: "Returns (RTV)",
     url: "/returns",
