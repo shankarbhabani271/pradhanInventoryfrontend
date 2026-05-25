@@ -47,16 +47,16 @@ const items = [
 
     children: [
       {
-        title: "Purchase requisition",
+        title: "Purchase Requisition",
         url: "/procurement",
       },
       {
-        title: "RFQ & Quotations",
-        url: "/rfq-request/list",
+        title: "Purchase Request Center",
+        url: "/poo",
       },
       {
-        title: "Purchase Order",
-        url: "/purchase-request/create",
+        title: "Purchase Requests List",
+        url: "/purchase-request-list",
       },
     ],
   },

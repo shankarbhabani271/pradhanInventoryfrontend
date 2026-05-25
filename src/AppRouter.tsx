@@ -32,6 +32,7 @@ const User = lazy(() => import("./components/pages/User"));
 const Settings = lazy(() => import("./components/pages/Settings"));
 const Reports = lazy(() => import("./components/pages/Reports"));
 const Masters = lazy(() => import("./components/pages/Masters"));
+const PurchaseRequestList = lazy(() => import("./components/pages/PurchaseRequestList"));
 
 const SuspenseGate = ({ children }: { children: React.ReactNode }) => (
   <Suspense fallback={<Loader />}>
@@ -69,6 +70,17 @@ const AppRouter = () => {
           <Poo/>
         </Layout>
       }/>
+
+      <Route
+        path="/purchase-request-list"
+        element={
+          <Layout>
+            <SuspenseGate>
+              <PurchaseRequestList />
+            </SuspenseGate>
+          </Layout>
+        }
+      />
 
       <Route
         path="/userdetails"

@@ -46,6 +46,15 @@ const STATIC_VENDORS: Vendor[] = [
     gst: "07LOGI5678B2",
     location: "Mumbai, India",
     logo: "LOGI"
+  },
+  {
+    id: 4,
+    name: "Bhabani Traders",
+    category: "Stationery & Office Supplies",
+    phone: "+91-9876543210",
+    gst: "21BHAB8765C1Z9",
+    location: "Bhubaneswar, Odisha",
+    logo: "BT"
   }
 ];
 
@@ -401,7 +410,18 @@ function PurchaseRequest() {
         }
 
         if (loaded.length > 0) {
-          setVendors(loaded);
+          const merged = [...STATIC_VENDORS];
+          loaded.forEach(v => {
+            const exists = merged.some(m => 
+              (m.id?.toString() === v.id?.toString()) || 
+              (m._id && v._id && m._id === v._id) ||
+              ((m.vendorName || m.name || "").toLowerCase() === (v.vendorName || v.name || "").toLowerCase())
+            );
+            if (!exists) {
+              merged.push(v);
+            }
+          });
+          setVendors(merged);
         } else {
           setVendors(STATIC_VENDORS);
         }
