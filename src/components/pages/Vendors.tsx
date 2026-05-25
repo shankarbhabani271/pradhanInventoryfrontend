@@ -4,7 +4,8 @@ import axios from "axios";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
-import { useNavigate } from "react-router-dom";
+
+import { PurchaseRequestForm } from "./Poo";
 
 import {
   FileText,
@@ -15,9 +16,7 @@ import {
   Package,
   UserPlus,
   Trash2,
-  Plus,
   CalendarDays,
-  Truck,
   User,
   Mail,
   Phone,
@@ -63,26 +62,7 @@ const dashboardCards = [
   },
 ];
 
-const requests = [
-  {
-    id: 1,
-    product: "Laptop",
-    vendor: "Dell Technologies",
-    quantity: "10 units",
-    expectedDate: "2024-12-10",
-    notes: "Urgent — needed for new joiners",
-    status: "Pending",
-  },
-  {
-    id: 2,
-    product: "Mouse",
-    vendor: "Logitech India",
-    quantity: "25 units",
-    expectedDate: "2024-12-05",
-    notes: "Standard delivery",
-    status: "Delivered",
-  },
-];
+
 interface Vendor {
   _id?: string;
   id?: number;
@@ -98,6 +78,7 @@ interface Vendor {
   category?: string;
   location?: string;
   logo?: string;
+  status?: string;
 }
 
 const STATIC_VENDORS: Vendor[] = [
@@ -161,14 +142,128 @@ const STATIC_VENDORS: Vendor[] = [
 const VendorsPage = () => {
  
   const [activeTab, setActiveTab] = useState("all-vendors");
-  const navigate = useNavigate();
 
  
  const [vendors, setVendors] = useState<Vendor[]>([]);
+ const [purchaseRequests, setPurchaseRequests] = useState<any[]>([]);
+
+  // Add Vendor Form States
+  const [newVendorName, setNewVendorName] = useState("");
+  const [contactPerson, setContactPerson] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [productType, setProductType] = useState("");
+  const [gst, setGst] = useState("");
+  const [address, setAddress] = useState("");
+  const [openVendorId, setOpenVendorId] = useState<string | null>(null);
+  const [status, setStatus] = useState("Active");
+
+  const handleAddVendor = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newVendorName || !email || !phone || !address) {
+      alert("❌ Please fill in all required fields marked with *");
+      return;
+    }
+
+    try {
+      const payload = {
+        name: newVendorName,
+        email,
+        phone,
+        secondphone: phone, // required by backend Mongoose schema
+        primaryaddress: address,
+        // Optional custom properties mapping to frontend Vendor interface
+        vendorName: newVendorName,
+        contactPerson,
+        gst,
+        productType,
+        address,
+        status
+      };
+
+      const response = await axios.post("http://localhost:8080/api/vendor/create", payload);
+      
+      if (response.data && response.data.success) {
+        // Map database response to frontend Vendor format
+        const createdVendor = {
+          ...response.data.data,
+          vendorName: response.data.data.name,
+          address: response.data.data.primaryaddress,
+          category: response.data.data.productType || productType,
+          gst: response.data.data.gst || gst,
+          status: response.data.data.status || status
+        };
+        
+        // Dynamic frontend update (instantly update state without page refresh)
+        setVendors((prev) => [createdVendor, ...prev]);
+
+        alert("🎉 Vendor successfully created");
+        
+        // Reset form
+        setNewVendorName("");
+        setContactPerson("");
+        setEmail("");
+        setPhone("");
+        setProductType("");
+        setGst("");
+        setAddress("");
+        setStatus("Active");
+
+        // Switch tab back to All Vendors to show the new vendor instantly!
+        setActiveTab("all-vendors");
+      }
+    } catch (err: any) {
+      console.error("Add vendor error:", err);
+      const errMsg = err.response?.data?.message || "Failed to add vendor.";
+      alert(`❌ ${errMsg}`);
+    }
+  };
   // FETCH DATA
   useEffect(() => {
     fetchVendors();
+    fetchPurchaseRequests();
   }, []);
+
+  const fetchPurchaseRequests = async () => {
+    try {
+      const res = await axios.get("http://localhost:8080/api/purchase-request/get");
+      let dbRequests = [];
+      if (Array.isArray(res.data)) {
+        dbRequests = res.data;
+      }
+      
+      const saved = localStorage.getItem("purchase_requests");
+      let localRequests = [];
+      if (saved) {
+        try {
+          localRequests = JSON.parse(saved);
+        } catch {
+          localRequests = [];
+        }
+      }
+      
+      const merged = [...dbRequests];
+      localRequests.forEach((localIt: any) => {
+        const exists = merged.some(m => m.id === localIt.id || (m._id && localIt._id && m._id === localIt._id));
+        if (!exists) {
+          merged.push(localIt);
+        }
+      });
+      setPurchaseRequests(merged);
+    } catch (err) {
+      console.warn("Axios request fetch failed:", err);
+      const saved = localStorage.getItem("purchase_requests");
+      if (saved) {
+        try {
+          setPurchaseRequests(JSON.parse(saved));
+        } catch {
+          setPurchaseRequests([]);
+        }
+      } else {
+        setPurchaseRequests([]);
+      }
+    }
+  };
 
   const fetchVendors = async () => {
     try {
@@ -202,6 +297,29 @@ const VendorsPage = () => {
     } catch (error) {
       console.log("ERROR:", error);
       setVendors(STATIC_VENDORS);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Are you sure you want to remove this vendor?")) {
+      return;
+    }
+
+    try {
+      const vendorToDelete = vendors.find(v => (v._id || v.id?.toString()) === id);
+      if (vendorToDelete && vendorToDelete._id) {
+        await axios.delete(`http://localhost:8080/api/vendor/${vendorToDelete._id}`);
+      }
+
+      setVendors((prev) => prev.filter((vendor) => {
+        const vendorId = vendor._id || vendor.id?.toString() || "";
+        return vendorId !== id;
+      }));
+
+      alert("🎉 Vendor successfully deleted");
+    } catch (error) {
+      console.error("Delete failed:", error);
+      alert("❌ Failed to delete vendor from the database.");
     }
   };
 
@@ -280,6 +398,7 @@ const VendorsPage = () => {
           <div className="min-h-screen p-4 space-y-6">
             {vendors.map((vendor) => {
               const vendorId = vendor._id || vendor.id?.toString() || "";
+
               const name = vendor.vendorName || vendor.name || "Unknown Supplier";
               const category = vendor.productType || vendor.category || "General Supplier";
               const contact = vendor.contactPerson || "Authorized Representative";
@@ -287,6 +406,7 @@ const VendorsPage = () => {
               const phone = vendor.phone || "N/A";
               const gst = vendor.gst || "N/A";
               const locationVal = vendor.primaryaddress || vendor.address || vendor.location || "N/A";
+              const vendorStatus = vendor.status || "Active";
               const logo = name.split(" ").map(w => w.charAt(0)).join("").substring(0, 2).toUpperCase() || "V";
 
               return (
@@ -312,8 +432,12 @@ const VendorsPage = () => {
                       </div>
 
                       {/* Status */}
-                      <span className="bg-green-500 px-3 py-1 rounded-full text-xs font-medium">
-                        Active
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold border uppercase tracking-wider ${
+                        vendorStatus.toLowerCase() === "active"
+                          ? "bg-emerald-500/20 text-white border-emerald-500"
+                          : "bg-rose-500/20 text-white border-rose-500"
+                      }`}>
+                        {vendorStatus}
                       </span>
                     </div>
                   </div>
@@ -351,20 +475,33 @@ const VendorsPage = () => {
                   </div>
 
                   {/* Buttons */}
-                  <div className="border-t p-4 flex gap-3 justify-end bg-gray-50">
+                  <div className="border-t p-4 flex gap-3 justify-end bg-gray-50/80">
                     <button
-                      onClick={() => navigate(`/poo?vendorId=${vendorId}`)}
-                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 font-semibold"
+                      onClick={() => setOpenVendorId(vendorId)}
+                      className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white rounded-xl text-xs sm:text-sm font-bold shadow-md shadow-indigo-100 hover:shadow-indigo-200 transition-all duration-300"
                     >
                       <FileText size={16} />
                       Create PO
                     </button>
 
-                    <button className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg text-sm hover:bg-red-600 font-semibold">
+                    <button 
+                      onClick={() => handleDelete(vendorId)}
+                      className="flex items-center gap-2 px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 border border-rose-100"
+                    >
                       <Trash2 size={16} />
                       Remove
                     </button>
                   </div>
+
+                  {/* Dynamic inline purchase request form */}
+                  {openVendorId === vendorId && (
+                    <div className="border-t p-6 bg-slate-50/50">
+                      <PurchaseRequestForm
+                        vendor={vendor}
+                        onBack={() => setOpenVendorId(null)}
+                      />
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -390,7 +527,7 @@ const VendorsPage = () => {
 
               {/* Form Section */}
               <div className="p-6 md:p-8">
-                <form>
+                <form onSubmit={handleAddVendor}>
 
                   {/* Grid Inputs */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -407,6 +544,9 @@ const VendorsPage = () => {
                         />
                         <input
                           type="text"
+                          required
+                          value={newVendorName}
+                          onChange={(e) => setNewVendorName(e.target.value)}
                           placeholder="Dell Technologies"
                           className="w-full border border-gray-300 rounded-xl pl-10 pr-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none"
                         />
@@ -425,6 +565,8 @@ const VendorsPage = () => {
                         />
                         <input
                           type="text"
+                          value={contactPerson}
+                          onChange={(e) => setContactPerson(e.target.value)}
                           placeholder="Rajesh Kumar"
                           className="w-full border border-gray-300 rounded-xl pl-10 pr-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none"
                         />
@@ -443,6 +585,9 @@ const VendorsPage = () => {
                         />
                         <input
                           type="email"
+                          required
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
                           placeholder="vendor@gmail.com"
                           className="w-full border border-gray-300 rounded-xl pl-10 pr-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none"
                         />
@@ -461,6 +606,9 @@ const VendorsPage = () => {
                         />
                         <input
                           type="text"
+                          required
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
                           placeholder="+91 9876543210"
                           className="w-full border border-gray-300 rounded-xl pl-10 pr-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none"
                         />
@@ -472,13 +620,18 @@ const VendorsPage = () => {
                       <label className="font-medium text-gray-700 mb-2 block">
                         Product Type *
                       </label>
-                      <select className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none">
-                        <option>Select Category</option>
-                        <option>Laptop</option>
-                        <option>Monitor</option>
-                        <option>Keyboard</option>
-                        <option>Mouse</option>
-                        <option>Printer</option>
+                      <select 
+                        value={productType}
+                        onChange={(e) => setProductType(e.target.value)}
+                        required
+                        className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                      >
+                        <option value="">Select Category</option>
+                        <option value="Laptop">Laptop</option>
+                        <option value="Monitor">Monitor</option>
+                        <option value="Keyboard">Keyboard</option>
+                        <option value="Mouse">Mouse</option>
+                        <option value="Printer">Printer</option>
                       </select>
                     </div>
 
@@ -494,10 +647,27 @@ const VendorsPage = () => {
                         />
                         <input
                           type="text"
+                          value={gst}
+                          onChange={(e) => setGst(e.target.value)}
                           placeholder="29ABCDE1234F1Z5"
                           className="w-full border border-gray-300 rounded-xl pl-10 pr-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none"
                         />
                       </div>
+                    </div>
+
+                    {/* Vendor Status */}
+                    <div>
+                      <label className="font-medium text-gray-700 mb-2 block">
+                        Vendor Status
+                      </label>
+                      <select 
+                        value={status}
+                        onChange={(e) => setStatus(e.target.value)}
+                        className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none bg-white font-semibold"
+                      >
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                      </select>
                     </div>
                   </div>
 
@@ -513,6 +683,9 @@ const VendorsPage = () => {
                       />
                       <textarea
                         rows={4}
+                        required
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
                         placeholder="Enter full address"
                         className="w-full border border-gray-300 rounded-xl pl-10 pr-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none"
                       />
@@ -523,14 +696,24 @@ const VendorsPage = () => {
                   <div className="flex flex-col sm:flex-row justify-end gap-4 mt-8">
                     <button
                       type="button"
-                      className="px-6 py-3 rounded-xl border border-gray-300 hover:bg-gray-100 transition"
+                      onClick={() => {
+                        setNewVendorName("");
+                        setContactPerson("");
+                        setEmail("");
+                        setPhone("");
+                        setProductType("");
+                        setGst("");
+                        setAddress("");
+                        setStatus("Active");
+                      }}
+                      className="px-6 py-3 rounded-xl border border-gray-300 hover:bg-gray-100 transition font-semibold text-sm"
                     >
                       Cancel
                     </button>
 
                     <button
                       type="submit"
-                      className="px-6 py-3 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition shadow-md"
+                      className="px-6 py-3 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition shadow-md font-semibold text-sm"
                     >
                       Save Vendor
                     </button>
@@ -543,7 +726,7 @@ const VendorsPage = () => {
 
         {/* -------- Purchase Request Tab -------- */}
         <TabsContent value="purchase-request" className="mt-6">
-          <div className="min-h-screen  p-4 md:p-6">
+          <div className="min-h-screen p-4 md:p-6">
 
             {/* Top Header */}
             <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
@@ -556,120 +739,126 @@ const VendorsPage = () => {
                   Manage all procurement requests
                 </p>
               </div>
-
-              <button className="flex items-center gap-2 bg-blue-600 text-white px-5 py-3 rounded-xl shadow hover:bg-blue-700">
-                <Plus size={18} />
-                New Request
-              </button>
             </div>
 
-            {/* Summary Cards */}
-            <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            {purchaseRequests.length > 0 ? (
+              <>
+                {/* Summary Cards */}
+                <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
 
-              <div className="bg-white p-5 rounded-2xl shadow-sm">
-                <p className="text-gray-500">Total Requests</p>
-                <h2 className="text-2xl font-bold">{requests.length}</h2>
-              </div>
-
-              <div className="bg-white p-5 rounded-2xl shadow-sm">
-                <p className="text-gray-500">Pending Orders</p>
-                <h2 className="text-2xl font-bold text-yellow-600">
-                  {requests.filter((r) => r.status === "Pending").length}
-                </h2>
-              </div>
-
-              <div className="bg-white p-5 rounded-2xl shadow-sm">
-                <p className="text-gray-500">Delivered Orders</p>
-                <h2 className="text-2xl font-bold text-green-600">
-                  {requests.filter((r) => r.status === "Delivered").length}
-                </h2>
-              </div>
-            </div>
-
-            {/* Request Cards */}
-            <div className="max-w-7xl mx-auto space-y-5">
-              {requests.map((item) => (
-                <div
-                  key={item.id}
-                  className="bg-white rounded-2xl shadow-sm border hover:shadow-md transition duration-300 p-6"
-                >
-                  {/* Header */}
-                  <div className="flex flex-col md:flex-row justify-between gap-4">
-
-                    <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center">
-                        <Package className="text-blue-600" />
-                      </div>
-
-                      <div>
-                        <h2 className="text-xl font-bold text-gray-800">
-                          {item.product}
-                        </h2>
-                        <p className="text-gray-500">
-                          Vendor: {item.vendor}
-                        </p>
-                      </div>
-                    </div>
-
-                    <span
-                      className={`px-4 py-2 rounded-full text-sm font-medium h-fit ${item.status === "Pending"
-                        ? "bg-yellow-100 text-yellow-700"
-                        : "bg-green-100 text-green-700"
-                        }`}
-                    >
-                      {item.status}
-                    </span>
+                  <div className="bg-white p-5 rounded-2xl shadow-sm">
+                    <p className="text-gray-500">Total Requests</p>
+                    <h2 className="text-2xl font-bold">{purchaseRequests.length}</h2>
                   </div>
 
-                  {/* Details */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-
-                    <div className="bg-gray-50 p-4 rounded-xl flex items-center gap-3">
-                      <Package className="text-gray-500" size={18} />
-                      <div>
-                        <p className="text-gray-500 text-sm">Quantity</p>
-                        <h3 className="font-semibold">{item.quantity}</h3>
-                      </div>
-                    </div>
-
-                    <div className="bg-gray-50 p-4 rounded-xl flex items-center gap-3">
-                      <CalendarDays className="text-gray-500" size={18} />
-                      <div>
-                        <p className="text-gray-500 text-sm">Expected Date</p>
-                        <h3 className="font-semibold">
-                          {item.expectedDate}
-                        </h3>
-                      </div>
-                    </div>
-
-                    <div className="bg-gray-50 p-4 rounded-xl flex items-center gap-3">
-                      <FileText className="text-gray-500" size={18} />
-                      <div>
-                        <p className="text-gray-500 text-sm">Notes</p>
-                        <h3 className="font-semibold">
-                          {item.notes}
-                        </h3>
-                      </div>
-                    </div>
+                  <div className="bg-white p-5 rounded-2xl shadow-sm">
+                    <p className="text-gray-500">Pending Orders</p>
+                    <h2 className="text-2xl font-bold text-yellow-600">
+                      {purchaseRequests.filter((r) => r.status === "Pending").length}
+                    </h2>
                   </div>
 
-                  {/* Action Buttons */}
-                  {item.status === "Pending" && (
-                    <div className="flex flex-wrap gap-4 mt-6 pt-4 border-t">
-
-                      <button className="flex items-center gap-2 bg-green-600 text-white px-5 py-2 rounded-xl hover:bg-green-700">
-                        <Truck size={18} />
-                        Mark Delivered
-                      </button>
-
-                      <button className="px-5 py-2 border rounded-xl hover:bg-gray-100">
-                        Cancel
-                      </button>
-                    </div>
-                  )}
+                  <div className="bg-white p-5 rounded-2xl shadow-sm">
+                    <p className="text-gray-500">Delivered Orders</p>
+                    <h2 className="text-2xl font-bold text-green-600">
+                      {purchaseRequests.filter((r) => r.status === "Delivered" || r.status === "Approved").length}
+                    </h2>
+                  </div>
                 </div>
-              ))}
-            </div>
+
+                {/* Request Cards */}
+                <div className="max-w-7xl mx-auto space-y-5">
+                  {purchaseRequests.map((item) => {
+                    const prProduct = item.product || (Array.isArray(item.products) && item.products[0]?.name) || "General Items";
+                    const prVendor = item.vendor || item.vendorName || "Unknown Supplier";
+                    const prQty = item.quantity || item.totalQty || (Array.isArray(item.products) && item.products[0]?.quantity) || 0;
+                    const prDate = item.expectedDate || item.createdDate || item.createdAt?.split("T")[0] || new Date().toISOString().split("T")[0];
+                    const prNotes = item.notes || item.specialInstructions || "Standard Request";
+                    const prStatus = item.status || "Pending";
+
+                    return (
+                      <div
+                        key={item._id || item.id}
+                        className="bg-white rounded-2xl shadow-sm border hover:shadow-md transition duration-300 p-6"
+                      >
+                        {/* Header */}
+                        <div className="flex flex-col md:flex-row justify-between gap-4">
+
+                          <div className="flex items-center gap-4">
+                            <div className="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center">
+                              <Package className="text-blue-600" />
+                            </div>
+
+                            <div>
+                              <h2 className="text-xl font-bold text-gray-800">
+                                {prProduct}
+                              </h2>
+                              <p className="text-gray-500">
+                                Vendor: {prVendor}
+                              </p>
+                            </div>
+                          </div>
+
+                          <span
+                            className={`px-4 py-2 rounded-full text-sm font-medium h-fit ${
+                              prStatus === "Pending"
+                                ? "bg-yellow-100 text-yellow-750"
+                                : prStatus === "Delivered" || prStatus === "Approved"
+                                ? "bg-green-100 text-green-750"
+                                : "bg-red-100 text-red-750"
+                            }`}
+                          >
+                            {prStatus}
+                          </span>
+                        </div>
+
+                        {/* Details */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+
+                          <div className="bg-gray-50 p-4 rounded-xl flex items-center gap-3">
+                            <Package className="text-gray-500" size={18} />
+                            <div>
+                              <p className="text-gray-500 text-sm">Quantity</p>
+                              <h3 className="font-semibold">{prQty} units</h3>
+                            </div>
+                          </div>
+
+                          <div className="bg-gray-50 p-4 rounded-xl flex items-center gap-3">
+                            <CalendarDays className="text-gray-500" size={18} />
+                            <div>
+                              <p className="text-gray-500 text-sm">Expected Date</p>
+                              <h3 className="font-semibold">
+                                {prDate}
+                              </h3>
+                            </div>
+                          </div>
+
+                          <div className="bg-gray-50 p-4 rounded-xl flex items-center gap-3">
+                            <FileText className="text-gray-500" size={18} />
+                            <div>
+                              <p className="text-gray-500 text-sm">Notes</p>
+                              <h3 className="font-semibold">
+                                {prNotes}
+                              </h3>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center p-12 bg-white rounded-3xl border border-dashed border-gray-300 text-center max-w-xl mx-auto my-12 shadow-sm animate-fade-in">
+                <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 mb-4 border shadow-inner">
+                  <FileText size={28} />
+                </div>
+                <h3 className="text-lg font-black text-slate-800 tracking-tight">No Purchase Requests Found</h3>
+                <p className="text-slate-400 text-xs font-semibold mt-2 max-w-sm leading-relaxed">
+                  Create a new request to begin. Real-time requests will appear here automatically.
+                </p>
+              </div>
+            )}
           </div>
         </TabsContent>
 

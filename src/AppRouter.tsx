@@ -13,11 +13,12 @@ import Po from "./components/pages/Po";
 import Login from "./components/pages/Login";
 import CreateEmployee from "./components/pages/CreateEmployee";
 import Poo from "./components/pages/Poo"
-import VerifyOtp from "./components/pages/VerifyOtp"
+// import VerifyOtp from "./components/pages/VerifyOtp"
 import Adddepartment from "./components/pages/Adddepartment"
 import Password from "./components/pages/Password"
 import Frontend from "./components/pages/Frontend"
 import SetPassword from "./components/pages/SetPassword"
+import RegisterEmployee from "./components/pages/RegisterEmployee"
 // Lazy imports
 const Dashboard = lazy(() => import("./components/pages/Dashboard"));
 const MaterialRequest = lazy(() => import("./components/pages/MaterialRequest"));
@@ -47,11 +48,12 @@ const AppRouter = () => {
       {/* Login Page */}
      <Route path="login" element={<Login/>}/>
      <Route path="createemployee" element={<CreateEmployee/>}/>
-     <Route path="VerifyOtp" element={<VerifyOtp/>}/>
      <Route path="adddepartment" element={<Adddepartment/>}/>
+     <Route path="registeremployee" element={<RegisterEmployee/>}/>
      <Route path="password" element={<Password/>}/>
      <Route path="Frontend" element={<Frontend/>}/>
      <Route path="/set-password" element={<SetPassword/>}/>
+     <Route path="/set-password/:token" element={<SetPassword/>}/>
       {/* Main Layout Routes */}
       <Route
         path="/"

@@ -1,24 +1,24 @@
 import { useState, useEffect } from "react";
-import { Plus, Trash2, Heart } from "lucide-react";
+import { Plus, Trash2, Heart, CheckCircle2, ChevronRight, Store, ArrowLeft, Send, Sparkles, Building, MapPin, Phone, FileSpreadsheet } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 
-interface Vendor {
+export interface Vendor {
   _id?: string;
   id?: number;
   name?: string;
   vendorName?: string;
   category?: string;
   productType?: string;
-  phone: string;
+  phone?: string;
   gst?: string;
   location?: string;
   address?: string;
   primaryaddress?: string;
   logo?: string;
+  status?: string;
 }
 
-// Fallback static list in case API is empty or offline
 const STATIC_VENDORS: Vendor[] = [
   {
     id: 1,
@@ -58,24 +58,109 @@ const STATIC_VENDORS: Vendor[] = [
   }
 ];
 
-interface Item {
+export interface Item {
   productName: string;
   qty: number;
   price: number;
 }
 
-function PurchaseRequestForm({ vendor }: { vendor: Vendor }) {
+// PREMIUM CUSTOM SUCCESS POPUP DIALOG (ENGLISH)
+interface SuccessModalProps {
+  isOpen: boolean;
+  vendorName: string;
+  requestId: string;
+  totalItems: number;
+  totalQty: number;
+  totalAmount: number;
+  priority: string;
+  department: string;
+  onClose: () => void;
+}
+
+function SuccessModal({ isOpen, vendorName, requestId, totalItems, totalQty, totalAmount, priority, department, onClose }: SuccessModalProps) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+      <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 p-8 max-w-md w-full text-center space-y-6 transform scale-100 transition-all duration-300 animate-scale-up">
+        {/* Animated Check Circle */}
+        <div className="mx-auto w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-500 animate-bounce">
+          <CheckCircle2 size={48} className="stroke-[2.5]" />
+        </div>
+
+        {/* Localized Titles */}
+        <div className="space-y-1">
+          <h2 className="text-2xl font-black text-slate-800 tracking-tight">
+            Purchase Request Created
+          </h2>
+          <p className="text-slate-400 text-xs font-semibold">
+            Purchase Request successfully generated for {vendorName}
+          </p>
+        </div>
+
+        {/* Detailed Grid Table matching user specification */}
+        <div className="bg-slate-50 rounded-2xl p-5 text-left border border-slate-100/80 space-y-3 text-xs font-semibold text-slate-500">
+          <div className="flex justify-between border-b border-slate-200/50 pb-2">
+            <span>Vendor:</span>
+            <span className="text-slate-800 font-extrabold">{vendorName}</span>
+          </div>
+          <div className="flex justify-between border-b border-slate-200/50 pb-2">
+            <span>Request ID:</span>
+            <span className="text-slate-800 font-extrabold">{requestId}</span>
+          </div>
+          <div className="flex justify-between border-b border-slate-200/50 pb-2">
+            <span>Total Items:</span>
+            <span className="text-slate-800 font-extrabold">{totalItems} products</span>
+          </div>
+          <div className="flex justify-between border-b border-slate-200/50 pb-2">
+            <span>Total Quantity:</span>
+            <span className="text-slate-800 font-extrabold">{totalQty} units</span>
+          </div>
+          <div className="flex justify-between border-b border-slate-200/50 pb-2">
+            <span>Total Amount:</span>
+            <span className="text-indigo-600 font-black text-sm">₹{totalAmount.toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between border-b border-slate-200/50 pb-2">
+            <span>Priority:</span>
+            <span className="text-slate-800 font-extrabold">{priority}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Department:</span>
+            <span className="text-slate-800 font-extrabold">{department}</span>
+          </div>
+        </div>
+
+        {/* Navigation Action */}
+        <div className="pt-2">
+          <button
+            onClick={onClose}
+            className="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-bold rounded-2xl shadow-lg shadow-indigo-150 hover:shadow-indigo-250 transition-all duration-300"
+          >
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function PurchaseRequestForm({ vendor, onBack }: { vendor: Vendor; onBack?: () => void }) {
   const navigate = useNavigate();
   const [items, setItems] = useState<Item[]>([
     { productName: "", qty: 1, price: 0 }
   ]);
   const [department, setDepartment] = useState("IT");
-  const [requestedBy, setRequestedBy] = useState("");
+  const [requestedBy, setRequestedBy] = useState("Admin");
   const [priority, setPriority] = useState("Medium");
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [specialInstructions, setSpecialInstructions] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // Success Modal state
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [generatedId, setGeneratedId] = useState("");
 
   const displayName = vendor.vendorName || vendor.name || "Unknown Supplier";
 
@@ -84,6 +169,7 @@ function PurchaseRequestForm({ vendor }: { vendor: Vendor }) {
   };
 
   const removeItem = (index: number) => {
+    if (items.length === 1) return;
     const updated = items.filter((_, i) => i !== index);
     setItems(updated);
   };
@@ -104,288 +190,395 @@ function PurchaseRequestForm({ vendor }: { vendor: Vendor }) {
     0
   );
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    if (items.some(item => !item.productName.trim())) {
+      alert("❌ Please enter a valid product name for all items.");
+      return;
+    }
+
+    setLoading(true);
     const requestNumber = "PR-" + Math.floor(1000 + Math.random() * 9000);
     const todayStr = new Date().toISOString().split("T")[0];
 
-    // Constructing the complete structured output from the form inputs
-    const newRequest = {
-      id: requestNumber,
-      vendorId: vendor._id || vendor.id?.toString() || "1",
-      vendorName: displayName,
-      startDate,
-      endDate,
+    const prPayload = {
       department,
-      requestedBy: requestedBy || "Authorized Representative",
-      priority,
-      items,
-      deliveryAddress: deliveryAddress || "Corporate Head Office",
-      specialInstructions,
-      totalQty,
+      vendor: displayName,
+      products: items.map(it => ({
+        name: it.productName,
+        quantity: Number(it.qty) || 1,
+        price: Number(it.price) || 0
+      })),
       totalAmount,
-      status: "Pending" as const,
+      requestedBy: requestedBy || "Admin",
+      status: "Pending",
       createdDate: todayStr
     };
 
-    console.log("====== Purchase Request Submitting ======");
-    console.log("Output Payload (Input Data):", newRequest);
-    console.log("========================================");
+    // Full custom construct for localStorage compatibility
+    const fullLocalPR = {
+      ...prPayload,
+      id: requestNumber,
+      vendorId: vendor._id || vendor.id?.toString() || "1",
+      startDate: startDate || todayStr,
+      endDate: endDate || todayStr,
+      deliveryAddress: deliveryAddress || "Corporate Head Office",
+      specialInstructions,
+      totalQty
+    };
 
-    // Save to localStorage
-    const saved = localStorage.getItem("purchase_requests");
-    let requestsList = [];
-    if (saved) {
-      try {
-        requestsList = JSON.parse(saved);
-      } catch (err) {
-        requestsList = [];
+    try {
+      // 1. POST to database
+      const response = await axios.post("http://localhost:8080/api/purchase-request/create", prPayload);
+      console.log("DB Success Response:", response.data);
+
+      const dbPR = response.data?.data;
+      if (dbPR) {
+        // Map database ID or response attributes to local format
+        fullLocalPR.id = dbPR.id || "PR-" + dbPR._id.substring(dbPR._id.length - 4).toUpperCase();
       }
+    } catch (err) {
+      console.warn("⚠️ Backend API unreachable or failed. Falling back to local Storage save only.", err);
+    } finally {
+      // 2. Sync to local Storage (always happens so data is 100% available and secure)
+      const saved = localStorage.getItem("purchase_requests");
+      let requestsList = [];
+      if (saved) {
+        try {
+          requestsList = JSON.parse(saved);
+        } catch (err) {
+          requestsList = [];
+        }
+      }
+      requestsList.unshift(fullLocalPR);
+      localStorage.setItem("purchase_requests", JSON.stringify(requestsList));
+
+      // 3. Trigger premium Success Popup Dialog
+      setGeneratedId(fullLocalPR.id);
+      setLoading(false);
+      setShowSuccess(true);
     }
-    requestsList.unshift(newRequest);
-    localStorage.setItem("purchase_requests", JSON.stringify(requestsList));
-
-    // Show Success Popup exactly as required by the user
-    alert(
-      `🎉 Purchase Request Successfully Created\n\n` +
-      `Vendor:\n${displayName}\n\n` +
-      `Request Details:\n` +
-      `• Total Items: ${items.length}\n` +
-      `• Total Quantity: ${totalQty}\n` +
-      `• Total Amount: ₹${totalAmount.toLocaleString()}\n` +
-      `• Priority: ${priority}\n` +
-      `• Department: ${department}\n\n` +
-      `Click OK to continue to Purchase Request List Page.`
-    );
-
-    // Redirect to Purchase Request List Page
-    navigate("/purchase-request-list");
   };
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-6xl mx-auto bg-white rounded-2xl shadow-md p-6 border border-gray-100/80 transition-all duration-300">
-      <h3 className="text-xl font-bold mb-6 text-slate-800">
-        Create Purchase Request: {displayName}
-      </h3>
+    <div className="space-y-6">
+      {/* Back button */}
+      {onBack && (
+        <button
+          onClick={onBack}
+          className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-800 transition duration-200 text-sm font-semibold"
+        >
+          <ArrowLeft size={16} />
+          Back to Vendors List
+        </button>
+      )}
 
-      {/* Dates */}
-      <div className="grid md:grid-cols-2 gap-4 mb-5">
-        <div className="flex flex-col">
-          <label className="text-sm font-medium text-slate-600 mb-1">Start Date</label>
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            className="border p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-slate-800"
-          />
-        </div>
-        <div className="flex flex-col">
-          <label className="text-sm font-medium text-slate-600 mb-1">End Date</label>
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            className="border p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-slate-800"
-          />
-        </div>
-      </div>
+      {/* SUCCESS POPUP MODAL */}
+      <SuccessModal
+        isOpen={showSuccess}
+        vendorName={displayName}
+        requestId={generatedId}
+        totalItems={items.length}
+        totalQty={totalQty}
+        totalAmount={totalAmount}
+        priority={priority}
+        department={department}
+        onClose={() => navigate("/purchase-request-list")}
+      />
 
-      {/* Department & Requested By */}
-      <div className="grid md:grid-cols-2 gap-4 mb-5">
-        <div className="flex flex-col">
-          <label className="text-sm font-medium text-slate-600 mb-1">Department</label>
-          <select 
-            value={department} 
-            onChange={(e) => setDepartment(e.target.value)}
-            className="border p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-slate-800 bg-white"
-          >
-            <option value="">Select Department</option>
-            <option value="IT">IT</option>
-            <option value="HR">HR</option>
-            <option value="Finance">Finance</option>
-          </select>
-        </div>
-
-        <div className="flex flex-col">
-          <label className="text-sm font-medium text-slate-600 mb-1">Requested By</label>
-          <input
-            type="text"
-            placeholder="Requested By"
-            value={requestedBy}
-            onChange={(e) => setRequestedBy(e.target.value)}
-            className="border p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-slate-800"
-          />
-        </div>
-      </div>
-
-      {/* Priority */}
-      <div className="mb-6">
-        <p className="font-semibold mb-3 text-slate-700">Priority</p>
-        <div className="flex gap-4 flex-wrap">
-          {["Low", "Medium", "High"].map((p) => {
-            const isSelected = priority === p;
-            let btnClass = "";
-            if (p === "Low") {
-              btnClass = isSelected 
-                ? "bg-green-600 text-white shadow-md shadow-green-150" 
-                : "bg-green-50 text-green-700 hover:bg-green-100";
-            } else if (p === "Medium") {
-              btnClass = isSelected 
-                ? "bg-yellow-500 text-white shadow-md shadow-yellow-150" 
-                : "bg-yellow-50 text-yellow-700 hover:bg-yellow-100";
-            } else {
-              btnClass = isSelected 
-                ? "bg-red-600 text-white shadow-md shadow-red-150" 
-                : "bg-red-50 text-red-700 hover:bg-red-100";
-            }
-            return (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setPriority(p)}
-                className={`px-5 py-2 rounded-full font-medium transition-all duration-200 ${btnClass}`}
-              >
-                {p}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Items */}
-      <div className="mb-6">
-        <h4 className="text-lg font-semibold mb-4 text-slate-800">
-          Product Items
-        </h4>
-
-        {items.map((item, index) => (
-          <div
-            key={index}
-            className="grid grid-cols-1 md:grid-cols-5 gap-4 bg-slate-50 p-4 rounded-xl mb-4 border border-slate-100 items-end"
-          >
-            <div className="flex flex-col">
-              <label className="text-xs font-semibold text-slate-500 mb-1">Product Name</label>
-              <input
-                type="text"
-                placeholder="Product Name"
-                value={item.productName}
-                onChange={(e) => updateItem(index, "productName", e.target.value)}
-                className="border p-2.5 rounded-lg text-slate-800 focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
-              />
-            </div>
-
-            <div className="flex flex-col">
-              <label className="text-xs font-semibold text-slate-500 mb-1">Qty</label>
-              <input
-                type="number"
-                placeholder="Qty"
-                value={item.qty}
-                onChange={(e) => updateItem(index, "qty", parseInt(e.target.value) || 0)}
-                className="border p-2.5 rounded-lg text-slate-800 focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
-              />
-            </div>
-
-            <div className="flex flex-col">
-              <label className="text-xs font-semibold text-slate-500 mb-1">Price</label>
-              <input
-                type="number"
-                placeholder="Price"
-                value={item.price}
-                onChange={(e) => updateItem(index, "price", parseFloat(e.target.value) || 0)}
-                className="border p-2.5 rounded-lg text-slate-800 focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
-              />
-            </div>
-
-            <div className="flex flex-col">
-              <label className="text-xs font-semibold text-slate-500 mb-1">Subtotal</label>
-              <div className="flex items-center font-bold text-indigo-600 p-2 text-base">
-                ₹{item.qty * item.price}
+      <form onSubmit={handleSubmit} className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
+        {/* Vendor Header Card */}
+        <div className="bg-gradient-to-r from-indigo-600 to-blue-600 p-6 md:p-8 text-white relative">
+          <div className="absolute right-6 top-6 opacity-10">
+            <Building size={120} />
+          </div>
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative z-10">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-md text-white flex items-center justify-center font-black text-2xl border border-white/20 shrink-0 shadow-inner">
+                {displayName.split(" ").map(w => w.charAt(0)).join("").substring(0, 2).toUpperCase()}
+              </div>
+              <div>
+                <span className="bg-white/20 text-white border border-white/30 px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-sm">
+                  Selected Supplier
+                </span>
+                <h2 className="text-2xl md:text-3xl font-black tracking-tight mt-1">
+                  {displayName}
+                </h2>
+                <p className="text-xs text-indigo-100 font-medium tracking-wide">
+                  {vendor.productType || vendor.category || "General Supplier"}
+                </p>
               </div>
             </div>
+            
+            {/* Quick Stats */}
+            <div className="flex flex-wrap gap-4 text-xs font-semibold bg-white/10 p-3 rounded-2xl border border-white/10 backdrop-blur-sm">
+              <div className="flex items-center gap-1.5">
+                <MapPin size={14} className="text-indigo-200" />
+                <span>{vendor.primaryaddress || vendor.address || vendor.location || "N/A"}</span>
+              </div>
+              <div className="flex items-center gap-1.5 border-l border-white/20 pl-4">
+                <Phone size={14} className="text-indigo-200" />
+                <span>{vendor.phone}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-6 md:p-8 space-y-6">
+          <h3 className="text-lg font-black text-slate-800 flex items-center gap-2 border-b pb-3">
+            <Sparkles size={18} className="text-indigo-600" />
+            Purchase Request Form
+          </h3>
+
+          {/* Department & Requested By */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-col">
+              <label className="text-sm font-bold text-slate-700 mb-1.5">
+                Department <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={department}
+                onChange={(e) => setDepartment(e.target.value)}
+                required
+                className="border border-slate-200 p-3 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-slate-800 bg-white font-semibold transition"
+              >
+                <option value="IT">IT</option>
+                <option value="HR">HR</option>
+                <option value="Finance">Finance</option>
+                <option value="Operations">Operations</option>
+              </select>
+            </div>
+
+            <div className="flex flex-col">
+              <label className="text-sm font-bold text-slate-700 mb-1.5">
+                Requested By <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                placeholder="Name of requester"
+                value={requestedBy}
+                onChange={(e) => setRequestedBy(e.target.value)}
+                required
+                className="border border-slate-200 p-3 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none text-slate-800 font-medium transition"
+              />
+            </div>
+          </div>
+
+          {/* Dates */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-col">
+              <label className="text-sm font-bold text-slate-700 mb-1.5">
+                Start Date
+              </label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="border border-slate-200 p-3 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none text-slate-800 transition"
+              />
+            </div>
+            <div className="flex flex-col">
+              <label className="text-sm font-bold text-slate-700 mb-1.5">
+                End Date
+              </label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="border border-slate-200 p-3 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none text-slate-800 transition"
+              />
+            </div>
+          </div>
+
+          {/* Priority */}
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-slate-700">
+              Priority <span className="text-red-500">*</span>
+            </label>
+            <div className="flex gap-4 flex-wrap">
+              {[
+                { label: "Low", val: "Low" },
+                { label: "Medium", val: "Medium" },
+                { label: "High", val: "High" }
+              ].map((p) => {
+                const isSelected = priority === p.val;
+                let activeStyle = "";
+                if (p.val === "Low") {
+                  activeStyle = isSelected 
+                    ? "bg-green-600 border-green-600 text-white shadow-md shadow-green-200" 
+                    : "bg-green-50/50 border-green-200 text-green-700 hover:bg-green-100/50";
+                } else if (p.val === "Medium") {
+                  activeStyle = isSelected 
+                    ? "bg-amber-500 border-amber-500 text-white shadow-md shadow-amber-200" 
+                    : "bg-amber-50/50 border-amber-200 text-amber-700 hover:bg-amber-100/50";
+                } else {
+                  activeStyle = isSelected 
+                    ? "bg-rose-600 border-rose-600 text-white shadow-md shadow-rose-200" 
+                    : "bg-rose-50/50 border-rose-200 text-rose-700 hover:bg-rose-100/50";
+                }
+
+                return (
+                  <button
+                    key={p.val}
+                    type="button"
+                    onClick={() => setPriority(p.val)}
+                    className={`px-5 py-2.5 rounded-2xl font-bold border text-sm transition-all duration-200 ${activeStyle}`}
+                  >
+                    {p.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Items Section */}
+          <div className="space-y-4 pt-4 border-t">
+            <div className="flex justify-between items-center">
+              <h4 className="text-md font-black text-slate-800 flex items-center gap-1.5">
+                <FileSpreadsheet size={16} className="text-indigo-600" />
+                Product Items
+              </h4>
+            </div>
+
+            {items.map((item, index) => (
+              <div
+                key={index}
+                className="grid grid-cols-1 md:grid-cols-12 gap-4 bg-slate-50/70 p-4 rounded-3xl border border-slate-100 items-end relative hover:bg-slate-50 transition"
+              >
+                <div className="md:col-span-5 flex flex-col">
+                  <label className="text-xs font-bold text-slate-500 mb-1.5">
+                    Product Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Enter item name"
+                    value={item.productName}
+                    onChange={(e) => updateItem(index, "productName", e.target.value)}
+                    className="border border-slate-200 p-2.5 rounded-xl text-slate-800 focus:ring-2 focus:ring-indigo-500 outline-none bg-white text-sm"
+                  />
+                </div>
+
+                <div className="md:col-span-2 flex flex-col">
+                  <label className="text-xs font-bold text-slate-500 mb-1.5">
+                    Qty <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    required
+                    value={item.qty}
+                    onChange={(e) => updateItem(index, "qty", parseInt(e.target.value) || 0)}
+                    className="border border-slate-200 p-2.5 rounded-xl text-slate-800 focus:ring-2 focus:ring-indigo-500 outline-none bg-white text-sm font-bold"
+                  />
+                </div>
+
+                <div className="md:col-span-2 flex flex-col">
+                  <label className="text-xs font-bold text-slate-500 mb-1.5">
+                    Price (₹) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    required
+                    value={item.price}
+                    onChange={(e) => updateItem(index, "price", parseFloat(e.target.value) || 0)}
+                    className="border border-slate-200 p-2.5 rounded-xl text-slate-800 focus:ring-2 focus:ring-indigo-500 outline-none bg-white text-sm font-bold"
+                  />
+                </div>
+
+                <div className="md:col-span-2 flex flex-col">
+                  <span className="text-xs font-bold text-slate-500 mb-1.5">Subtotal</span>
+                  <div className="font-extrabold text-indigo-600 py-2.5 text-sm">
+                    ₹{(item.qty * item.price).toLocaleString()}
+                  </div>
+                </div>
+
+                <div className="md:col-span-1 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => removeItem(index)}
+                    disabled={items.length === 1}
+                    className="bg-rose-50 text-rose-600 hover:bg-rose-100 disabled:opacity-30 disabled:pointer-events-none w-11 h-11 rounded-xl flex items-center justify-center transition-colors border border-rose-100"
+                    title="Remove Item"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+            ))}
 
             <button
               type="button"
-              onClick={() => removeItem(index)}
-              className="bg-red-50 text-red-600 hover:bg-red-100 w-12 h-11 rounded-lg flex items-center justify-center transition-colors self-end md:self-auto border border-red-100"
-              title="Remove Item"
+              onClick={addItem}
+              className="inline-flex items-center gap-1.5 px-4 py-2 border border-slate-200 hover:border-slate-300 rounded-2xl hover:bg-slate-50 text-slate-700 transition font-bold text-xs"
             >
-              <Trash2 size={18} />
+              <Plus size={16} />
+              Add Item
             </button>
           </div>
-        ))}
 
-        <button
-          type="button"
-          onClick={addItem}
-          className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-700 hover:text-black transition-all font-medium text-sm"
-        >
-          <Plus size={18} />
-          Add Item
-        </button>
-      </div>
+          {/* Delivery Address */}
+          <div className="flex flex-col pt-4 border-t">
+            <label className="text-sm font-bold text-slate-700 mb-1.5">
+              Delivery Address
+            </label>
+            <input
+              type="text"
+              placeholder="Enter exact delivery location"
+              value={deliveryAddress}
+              onChange={(e) => setDeliveryAddress(e.target.value)}
+              className="border border-slate-200 p-3 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none text-slate-800 font-medium transition"
+            />
+          </div>
 
-      {/* Delivery */}
-      <div className="mb-4 flex flex-col">
-        <label className="text-sm font-medium text-slate-600 mb-1">Delivery Address</label>
-        <input
-          type="text"
-          placeholder="Delivery Address"
-          value={deliveryAddress}
-          onChange={(e) => setDeliveryAddress(e.target.value)}
-          className="border p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-slate-800"
-        />
-      </div>
+          {/* Special Instructions */}
+          <div className="flex flex-col">
+            <label className="text-sm font-bold text-slate-700 mb-1.5">
+              Special Instructions
+            </label>
+            <textarea
+              rows={3}
+              placeholder="Any handle with care notes, delivery time requests..."
+              value={specialInstructions}
+              onChange={(e) => setSpecialInstructions(e.target.value)}
+              className="border border-slate-200 p-3 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none text-slate-800 transition"
+            ></textarea>
+          </div>
 
-      <div className="mb-6 flex flex-col">
-        <label className="text-sm font-medium text-slate-600 mb-1">Special Instructions</label>
-        <textarea
-          rows={3}
-          placeholder="Special Instructions"
-          value={specialInstructions}
-          onChange={(e) => setSpecialInstructions(e.target.value)}
-          className="border p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-slate-800"
-        ></textarea>
-      </div>
+          {/* Calculations Summary Card */}
+          <div className="bg-slate-50 rounded-3xl border border-slate-100 p-5 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <span className="font-bold text-slate-600 text-sm">
+              Total Quantity: <strong className="text-slate-800 text-base">{totalQty} units</strong>
+            </span>
+            <span className="font-bold text-slate-600 text-sm">
+              Total Amount: <strong className="text-indigo-600 text-xl font-black">₹{totalAmount.toLocaleString()}</strong>
+            </span>
+          </div>
 
-      {/* Summary */}
-      <div className="bg-indigo-50/50 border border-indigo-100/50 p-5 rounded-xl mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
-        <h3 className="font-semibold text-indigo-900">
-          Total Quantity: {totalQty}
-        </h3>
+          {/* Submit Actions */}
+          <div className="flex justify-end gap-3 flex-wrap border-t pt-4">
+            <button
+              type="button"
+              onClick={onBack}
+              className="px-6 py-3 border border-slate-200 hover:bg-slate-50 rounded-2xl text-slate-600 font-bold text-sm transition"
+            >
+              Cancel
+            </button>
 
-        <h3 className="font-bold text-indigo-700 text-lg">
-          Total Amount: ₹{totalAmount}
-        </h3>
-      </div>
-
-      {/* Buttons */}
-      <div className="flex justify-end gap-4 flex-wrap border-t pt-4">
-        <button 
-          type="button"
-          onClick={() => {
-            setItems([{ productName: "", qty: 1, price: 0 }]);
-            setDepartment("IT");
-            setRequestedBy("");
-            setPriority("Medium");
-            setDeliveryAddress("");
-            setSpecialInstructions("");
-            setStartDate("");
-            setEndDate("");
-          }}
-          className="px-6 py-3 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors text-slate-700 font-medium text-sm"
-        >
-          Reset Form
-        </button>
-
-        <button 
-          type="submit"
-          className="px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition shadow-md shadow-indigo-100 hover:shadow-indigo-200 font-medium text-sm"
-        >
-          Send Request
-        </button>
-      </div>
-    </form>
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white rounded-2xl font-bold text-sm shadow-lg shadow-indigo-100 hover:shadow-indigo-250 transition-all duration-300 flex items-center gap-2 disabled:opacity-50"
+            >
+              <Send size={16} />
+              {loading ? "Sending..." : "Send Request"}
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
   );
 }
 
@@ -400,8 +593,6 @@ function PurchaseRequest() {
     const fetchVendors = async () => {
       try {
         const res = await axios.get("http://localhost:8080/api/vendor/get");
-        console.log("Axios API response inside PurchaseRequest page:", res.data);
-        
         let loaded: Vendor[] = [];
         if (Array.isArray(res.data)) {
           loaded = res.data;
@@ -458,122 +649,113 @@ function PurchaseRequest() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50/30 flex items-center justify-center">
-        <div className="text-center">
+      <div className="min-h-screen bg-slate-50/30 flex items-center justify-center p-4">
+        <div className="text-center space-y-3">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="text-slate-500 mt-4 font-medium">Loading registered vendors...</p>
+          <p className="text-slate-500 font-bold">Loading Suppliers...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/30 p-4 md:p-8">
-      {/* Top Welcome Section */}
-      <div className="max-w-6xl mx-auto mb-8">
-        <h1 className="text-3xl font-black text-slate-800 tracking-tight">
+    <div className="min-h-screen bg-slate-50/20 p-4 md:p-8">
+      {/* Title Header */}
+      <div className="max-w-6xl mx-auto mb-8 space-y-1">
+        <h1 className="text-3xl font-black text-slate-800 tracking-tight flex items-center gap-2">
+          <Store className="text-indigo-600" />
           Purchase Request Center
         </h1>
-        <p className="text-slate-500 mt-1">
-          Create and manage purchase orders individually for registered suppliers.
+        <p className="text-slate-500 text-sm font-semibold">
+          Select a vendor below to create a new purchase request.
         </p>
       </div>
 
-      {/* Vendor Sections List */}
-      <div className="space-y-6">
+      {/* Vendors Selection Grid */}
+      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
         {vendors.map((vendor) => {
           const vendorId = vendor._id || vendor.id?.toString() || "";
-          const isPOOpen = openVendorId === vendorId;
           const isLiked = !!likedVendors[vendorId];
-
           const name = vendor.vendorName || vendor.name || "Unknown Supplier";
           const category = vendor.productType || vendor.category || "General Supplier";
           const gst = vendor.gst || "N/A";
           const locationVal = vendor.primaryaddress || vendor.address || vendor.location || "N/A";
-          const logo = name.charAt(0).toUpperCase();
+          const logo = name.split(" ").map(w => w.charAt(0)).join("").substring(0, 2).toUpperCase() || "V";
 
           return (
-            <div 
-              key={vendorId} 
-              className="max-w-6xl mx-auto bg-white rounded-2xl shadow-sm overflow-hidden mb-8 border border-slate-100 hover:shadow-md transition-all duration-300"
+            <div
+              key={vendorId}
+              className={`bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between ${
+                openVendorId === vendorId ? "col-span-1 md:col-span-2 border-indigo-200 shadow-md" : "hover:border-indigo-100"
+              }`}
             >
-              {/* Header */}
-              <div className="bg-gradient-to-r from-indigo-600 to-blue-600 p-5 text-white">
-                <div className="flex justify-between items-center flex-wrap gap-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-full bg-white text-indigo-600 flex items-center justify-center font-black text-xl shadow-sm shrink-0">
+              {/* Card Top */}
+              <div className="p-6 space-y-4">
+                <div className="flex justify-between items-start">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black text-lg">
                       {logo}
                     </div>
-
                     <div>
-                      <h2 className="text-xl font-bold tracking-tight">
-                        {name}
-                      </h2>
-                      <p className="text-sm text-blue-100">
-                        {category}
-                      </p>
+                      <h3 className="font-black text-slate-800 text-base leading-tight">{name}</h3>
+                      <span className="text-xs text-slate-400 font-semibold">{category}</span>
                     </div>
                   </div>
-
-                  <span className="bg-green-500/20 text-green-200 border border-green-500/30 px-4 py-1 rounded-full text-xs font-semibold backdrop-blur-sm">
-                    Active Vendor
+                  <span className="bg-emerald-50 text-emerald-700 border border-emerald-100 px-2.5 py-0.5 rounded-full text-[10px] font-bold">
+                    Active
                   </span>
                 </div>
-              </div>
 
-              {/* Info grid */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-5 bg-white">
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100/50">
-                  <p className="text-slate-400 text-xs uppercase tracking-wider font-semibold">Phone</p>
-                  <h3 className="font-semibold text-slate-800 mt-1">{vendor.phone}</h3>
-                </div>
-
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100/50">
-                  <p className="text-slate-400 text-xs uppercase tracking-wider font-semibold">GST Number</p>
-                  <h3 className="font-semibold text-slate-800 mt-1">{gst}</h3>
-                </div>
-
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100/50">
-                  <p className="text-slate-400 text-xs uppercase tracking-wider font-semibold">Location</p>
-                  <h3 className="font-semibold text-slate-800 mt-1">{locationVal}</h3>
+                {/* Details list */}
+                <div className="space-y-1.5 text-xs font-semibold text-slate-500">
+                  <div className="flex justify-between">
+                    <span>GST:</span>
+                    <span className="text-slate-700 font-bold">{gst}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Phone:</span>
+                    <span className="text-slate-700 font-bold">{vendor.phone}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Location:</span>
+                    <span className="text-slate-700 font-bold truncate max-w-[200px]">{locationVal}</span>
+                  </div>
                 </div>
               </div>
 
-              {/* Footer Actions */}
-              <div className="border-t border-slate-100 p-4 flex gap-4 justify-between bg-slate-50/50 items-center flex-wrap">
-                {/* Like Button */}
+              {/* Action area */}
+              <div className="bg-slate-50/70 border-t border-slate-100 p-4 flex gap-2 justify-between items-center">
+                {/* Like trigger */}
                 <button
                   type="button"
                   onClick={() => toggleLike(vendorId)}
-                  className={`flex items-center gap-2 px-5 py-2.5 rounded-xl border text-sm font-semibold transition-all duration-300 ${
+                  className={`p-2.5 rounded-xl border transition flex items-center justify-center ${
                     isLiked 
-                      ? "bg-rose-50 border-rose-200 text-rose-600 shadow-sm" 
-                      : "bg-white hover:bg-slate-50 text-slate-600 border-slate-200 hover:text-slate-900"
+                      ? "bg-rose-50 border-rose-100 text-rose-500" 
+                      : "bg-white border-slate-200 text-slate-400 hover:text-slate-600 hover:bg-slate-50"
                   }`}
                 >
-                  <Heart size={18} className={isLiked ? "fill-rose-500 stroke-rose-500" : ""} />
-                  {isLiked ? "Liked" : "Like"}
+                  <Heart size={16} className={isLiked ? "fill-rose-500" : ""} />
                 </button>
 
-                {/* Create PO Button */}
+                {/* Create PO trigger */}
                 <button
                   type="button"
-                  onClick={() => setOpenVendorId(isPOOpen ? null : vendorId)}
-                  className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-all duration-300 ${
-                    isPOOpen 
-                      ? "bg-slate-800 hover:bg-slate-900 text-white shadow-slate-100" 
-                      : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-100 hover:shadow-md"
-                  }`}
+                  onClick={() => setOpenVendorId(vendorId)}
+                  className="flex-1 max-w-[220px] flex items-center justify-center gap-1.5 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs shadow-md shadow-indigo-50 hover:shadow-indigo-150 transition"
                 >
-                  <Plus size={18} className={isPOOpen ? "rotate-45 transition-transform duration-300 animate-pulse" : "transition-transform duration-300"} />
-                  {isPOOpen ? "Close PO" : "Create PO"}
+                  Create PO
+                  <ChevronRight size={14} />
                 </button>
               </div>
 
-              {/* PO Form Drawer / Section */}
-              {isPOOpen && (
-                <div className="border-t border-slate-100 bg-slate-50/30 p-5 transition-all duration-500 ease-in-out">
-                  <PurchaseRequestForm vendor={vendor} />
+              {/* Dynamic inline purchase request form */}
+              {openVendorId === vendorId && (
+                <div className="border-t p-6 bg-slate-50/50">
+                  <PurchaseRequestForm
+                    vendor={vendor}
+                    onBack={() => setOpenVendorId(null)}
+                  />
                 </div>
               )}
             </div>

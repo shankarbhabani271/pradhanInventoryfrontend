@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate, useParams } from "react-router-dom";
 import { Lock, User, Phone, CheckCircle, XCircle } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
 
 export default function SetPassword() {
   const [searchParams] = useSearchParams();
-  const token = searchParams.get("token");
+  const { token: pathToken } = useParams();
+  const token = searchParams.get("token") || pathToken;
   const navigate = useNavigate();
 
   const [isLoading, setIsLoading] = useState(true);

@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Mail, Building2, UserCog } from "lucide-react";
+import { useState } from "react";
+import { Mail, Building2, UserCog, CheckCircle } from "lucide-react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -11,13 +11,15 @@ export default function EmployeeForm() {
     role: "",
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [generatedLink, setGeneratedLink] = useState("");
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState("");
   const navigate = useNavigate();
 
   const handleChange = (e: any) => {
+    setIsSuccess(false); // Reset success box on input change
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [e.target.name]: e.target.value
     });
   };
 
@@ -31,7 +33,7 @@ export default function EmployeeForm() {
     }
 
     setIsLoading(true);
-    setGeneratedLink(""); // Reset previous link
+    setIsSuccess(false);
     try {
       const res = await axios.post(
         "http://localhost:8080/api/employees/send-invite",
@@ -39,12 +41,9 @@ export default function EmployeeForm() {
       );
 
       if (res.data.success) {
-        toast.success(`Invite generated for ${formData.email}`);
-        
-        // Display the link on the screen so the admin can copy it!
-        if (res.data.link) {
-          setGeneratedLink(res.data.link);
-        }
+        toast.success("Employee registered successfully!");
+        setRegisteredEmail(formData.email);
+        setIsSuccess(true);
         
         setFormData({
           email: "",
@@ -78,7 +77,7 @@ export default function EmployeeForm() {
               <button
                 type="button"
                 onClick={() => navigate("/adddepartment")}
-                className="px-6 py-3 bg-yellow-500 text-white rounded-xl hover:bg-yellow-600 transition"
+                className="px-6 py-3 bg-yellow-500 text-white rounded-xl hover:bg-yellow-600 transition font-semibold"
               >
                 Add Department
               </button>
@@ -148,7 +147,7 @@ export default function EmployeeForm() {
           <div className="flex justify-end gap-4 mt-8">
             <button
               type="button"
-              className="px-6 py-3 border rounded-xl hover:bg-gray-50 transition"
+              className="px-6 py-3 border rounded-xl hover:bg-gray-100 transition font-semibold"
               onClick={() => navigate(-1)}
             >
               Cancel
@@ -156,36 +155,26 @@ export default function EmployeeForm() {
             <button
               type="submit"
               disabled={isLoading}
-              className="px-6 py-3 bg-yellow-500 text-white rounded-xl hover:bg-yellow-600 transition disabled:opacity-50 flex items-center gap-2"
+              className="px-6 py-3 bg-yellow-500 text-white rounded-xl hover:bg-yellow-600 transition disabled:opacity-50 flex items-center gap-2 font-semibold"
             >
-              {isLoading ? "Generating..." : "Register Employee"}
+              {isLoading ? "Registering..." : "Register Employee"}
             </button>
           </div>
           
-          {/* Output Link */}
-          {generatedLink && (
-            <div className="mt-8 p-4 bg-green-50 border border-green-200 rounded-xl">
-              <h3 className="text-green-800 font-semibold mb-2">Invitation Link Generated!</h3>
-              <p className="text-green-700 text-sm mb-3">
-                Since email is not set up, please copy this link and send it to the employee, or open it yourself to continue the flow:
-              </p>
-              <div className="flex items-center gap-2">
-                <input 
-                  type="text" 
-                  readOnly 
-                  value={generatedLink} 
-                  className="w-full p-2 bg-white border border-green-300 rounded text-gray-700 font-mono text-sm"
-                />
-                <button 
-                  type="button"
-                  onClick={() => {
-                    navigator.clipboard.writeText(generatedLink);
-                    toast.success("Link copied to clipboard!");
-                  }}
-                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition text-sm font-medium"
-                >
-                  Copy
-                </button>
+          {/* Premium Success Feedback */}
+          {isSuccess && (
+            <div className="mt-8 p-6 bg-emerald-50/80 border border-emerald-200/80 rounded-2xl flex items-start gap-4 shadow-sm backdrop-blur-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="p-2 bg-emerald-500 text-white rounded-xl shadow-md shadow-emerald-500/20">
+                <CheckCircle className="animate-pulse" size={24} />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-emerald-900 font-bold text-lg mb-1">
+                  Employee Registered Successfully
+                </h3>
+                <p className="text-emerald-700/90 text-sm leading-relaxed">
+                  An invitation email with a secure setup link has been dispatched to{" "}
+                  <span className="font-semibold text-emerald-800">{registeredEmail}</span>. The employee will be able to set their password and activate their account.
+                </p>
               </div>
             </div>
           )}
