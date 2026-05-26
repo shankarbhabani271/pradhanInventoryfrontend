@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../../config/http";
 
 type ProductUI = {
   _id: string;
@@ -29,7 +30,7 @@ const Inventory = () => {
   // ✅ FETCH PRODUCTS
   const fetchProducts = async () => {
     try {
-      const res = await fetch("http://localhost:8080/api/productmenu");
+      const res = await fetch(`${API_BASE_URL}/productmenu`);
       const data = await res.json();
       setProducts(data);
     } catch (err) {
@@ -47,7 +48,7 @@ const Inventory = () => {
     if (!confirmDelete) return;
 
     try {
-      await fetch(`http://localhost:8080/api/productmenu/${id}`, {
+      await fetch(`${API_BASE_URL}/productmenu/${id}`, {
         method: "DELETE",
       });
       fetchProducts();

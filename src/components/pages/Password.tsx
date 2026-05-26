@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { Lock, Eye, Phone, Camera, Droplet } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
+import { API_BASE_URL } from "../../config/http";
+
 const UpdatePasswordProfile = () => {
   const [showOld, setShowOld] = useState(false);
   const [showNew, setShowNew] = useState(false);
@@ -43,7 +45,7 @@ const UpdatePasswordProfile = () => {
   const handleSubmit = async () => {
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/password/create-profile",
+        `${API_BASE_URL}/password/create-profile`,
         {
           profileImage,
           mobile,

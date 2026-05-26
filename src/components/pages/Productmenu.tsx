@@ -1,7 +1,9 @@
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../../config/http";
+import { toast } from "sonner";
 
-import { useState,} from "react";
-import type {  ChangeEvent ,ReactNode } from "react";
+import { useState } from "react";
+import type { ChangeEvent, ReactNode } from "react";
 import {
   ArrowLeft,
   Plus,
@@ -98,7 +100,7 @@ const Productmenu = () => {
 
       console.log("Sending:", data);
 
-      const res = await fetch("http://localhost:8080/api/productmenu", {
+      const res = await fetch(`${API_BASE_URL}/productmenu`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -107,13 +109,14 @@ const Productmenu = () => {
       });
 
       if (res.ok) {
-        alert("Product added successfully! 🎉");
+        toast.success("Product added successfully! 🎉");
         navigate("/masters");
       } else {
-        alert("Failed ❌");
+        toast.error("Failed to add product ❌");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      toast.error(err.message || "An unexpected error occurred");
     }
   };
 

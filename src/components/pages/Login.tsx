@@ -1,33 +1,64 @@
-import  { useState } from "react";
+import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../../config/http";
+import { AlertCircle, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async () => {
+    if (!email || !password) {
+      setError("Please fill in all fields.");
+      toast.warning("Please fill in all fields.");
+      return;
+    }
+
+    setError(null);
+    setIsLoading(true);
+
     try {
       const res = await axios.post(
-        "http://localhost:8080/api/auth/login",
+        `${API_BASE_URL}/auth/login`,
         { email, password }
       );
 
       localStorage.setItem("token", res.data.token);
-
-      if (res.data.role === "admin") {
-        navigate("/createemployee");
-      } else {
-        navigate("/dashboard");
+      localStorage.setItem("role", res.data.user.role);
+      localStorage.setItem("user", JSON.stringify(res.data.user));
+      if (res.data.user.department) {
+        localStorage.setItem("department", res.data.user.department);
       }
-    }catch (error: any) {
-  console.log(error.response?.data);
 
-  alert(
-    error.response?.data?.message || "Login failed"
-  );
-}
+      const role = res.data.user.role;
+      toast.success("Welcome back! Logging in...");
+
+      setTimeout(() => {
+        if (role === "admin") {
+          navigate("/admin-dashboard");
+        } else if (role === "manager") {
+          navigate("/manager-dashboard");
+        } else if (role === "procurement") {
+          navigate("/procurement-dashboard");
+        } else if (role === "inventory") {
+          navigate("/inventory-dashboard");
+        } else {
+          navigate("/employee-dashboard");
+        }
+      }, 600);
+    } catch (error: any) {
+      console.log(error.response?.data);
+      const errMsg = error.response?.data?.message || "Invalid login credentials";
+      setError(errMsg);
+      toast.error(errMsg);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -51,27 +82,47 @@ function Login() {
             Login
           </h2>
 
+          {error && (
+            <div className="mb-5 p-4 rounded-xl bg-rose-50 border border-rose-100 text-rose-800 flex items-start gap-3 text-sm animate-error-entry shadow-sm">
+              <AlertCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="font-bold text-rose-900 leading-none mb-1">Login Attempt Failed</p>
+                <p className="text-rose-600/90 text-xs font-semibold leading-relaxed">{error}</p>
+              </div>
+            </div>
+          )}
+
           <input
             type="email"
             placeholder="Enter Email"
             value={email}
+            disabled={isLoading}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-3 mb-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full p-3 mb-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
           />
 
           <input
             type="password"
             placeholder="Enter Password"
             value={password}
+            disabled={isLoading}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-3 mb-6 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full p-3 mb-6 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
           />
 
           <button
             onClick={handleLogin}
-            className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition duration-300"
+            disabled={isLoading}
+            className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition duration-300 disabled:opacity-75 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-semibold"
           >
-            Login
+            {isLoading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span>Authenticating...</span>
+              </>
+            ) : (
+              <span>Login</span>
+            )}
           </button>
         </div>
       </div>

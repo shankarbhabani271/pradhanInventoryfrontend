@@ -1,6 +1,7 @@
 import {  ChevronRight, User,Building2, Package, Hash,CheckCircle, XCircle, Clock  } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState, useEffect } from "react";
+import { API_BASE_URL } from "../../config/http";
 
 /* =========================
    LIST COMPONENT
@@ -186,7 +187,7 @@ const [selected, setSelected] =
   useState<MaterialRequest | null>(null);
 
   const fetchData = () => {
-    fetch(`http://localhost:8080/api/material?status=${status}`)
+    fetch(`${API_BASE_URL}/material?status=${status}`)
       .then((res) => res.json())
       .then((res) => {
         setData(res.data || []);
@@ -199,14 +200,14 @@ const [selected, setSelected] =
   }, [status]);
 
   const handleApprove = async (id:any) => {
-    await fetch(`http://localhost:8080/api/material/${id}/approve`, {
+    await fetch(`${API_BASE_URL}/material/${id}/approve`, {
       method: "PUT",
     });
     fetchData();
   };
 
   const handleReject = async (id:any) => {
-    await fetch(`http://localhost:8080/api/material/${id}/reject`, {
+    await fetch(`${API_BASE_URL}/material/${id}/reject`, {
       method: "PUT",
     });
     fetchData();

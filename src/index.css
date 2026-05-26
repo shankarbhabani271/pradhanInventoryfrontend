@@ -122,3 +122,27 @@
     @apply bg-background text-foreground;
   }
 }
+
+@keyframes slideDownShake {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(0) translateX(4px);
+  }
+  65% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(2px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.animate-error-entry {
+  animation: slideDownShake 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

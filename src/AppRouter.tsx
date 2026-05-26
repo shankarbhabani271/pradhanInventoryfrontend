@@ -1,10 +1,10 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import React from "react";
 import Layout from "./Layout";
 import Loader from "./components/Loader";
-//import Login from "./components/pages/Login";
-//import CreateEmployee from "./components/pages/Createemployee";
+import ProtectedRoute from "./components/ProtectedRoute";
+
 // Normal imports
 import Productmenu from "./components/pages/Productmenu";
 import Userdetails from "./components/pages/Userdetails";
@@ -12,13 +12,19 @@ import Material from "./components/pages/Material";
 import Po from "./components/pages/Po";
 import Login from "./components/pages/Login";
 import CreateEmployee from "./components/pages/CreateEmployee";
-import Poo from "./components/pages/Poo"
-// import VerifyOtp from "./components/pages/VerifyOtp"
-import Adddepartment from "./components/pages/Adddepartment"
-import Password from "./components/pages/Password"
-import Frontend from "./components/pages/Frontend"
-import SetPassword from "./components/pages/SetPassword"
-import RegisterEmployee from "./components/pages/RegisterEmployee"
+import Poo from "./components/pages/Poo";
+import Adddepartment from "./components/pages/Adddepartment";
+import Password from "./components/pages/Password";
+import Frontend from "./components/pages/Frontend";
+import SetPassword from "./components/pages/SetPassword";
+import RegisterEmployee from "./components/pages/RegisterEmployee";
+
+// Custom Dashboards
+import ManagerDashboard from "./components/pages/ManagerDashboard";
+import ProcurementDashboard from "./components/pages/ProcurementDashboard";
+import InventoryDashboard from "./components/pages/InventoryDashboard";
+import EmployeeDashboard from "./components/pages/EmployeeDashboard";
+
 // Lazy imports
 const Dashboard = lazy(() => import("./components/pages/Dashboard"));
 const MaterialRequest = lazy(() => import("./components/pages/MaterialRequest"));
@@ -41,219 +47,368 @@ const SuspenseGate = ({ children }: { children: React.ReactNode }) => (
   </Suspense>
 );
 
+const DashboardRedirect = () => {
+  const role = localStorage.getItem("role") || "employee";
+  
+  if (role === "admin") {
+    return <Navigate to="/admin-dashboard" replace />;
+  } else if (role === "manager") {
+    return <Navigate to="/manager-dashboard" replace />;
+  } else if (role === "procurement") {
+    return <Navigate to="/procurement-dashboard" replace />;
+  } else if (role === "inventory") {
+    return <Navigate to="/inventory-dashboard" replace />;
+  } else {
+    return <Navigate to="/employee-dashboard" replace />;
+  }
+};
+
 const AppRouter = () => {
   return (
     <Routes>
-      
-      {/* Login Page */}
-     <Route path="login" element={<Login/>}/>
-     <Route path="createemployee" element={<CreateEmployee/>}/>
-     <Route path="adddepartment" element={<Adddepartment/>}/>
-     <Route path="registeremployee" element={<RegisterEmployee/>}/>
-     <Route path="password" element={<Password/>}/>
-     <Route path="Frontend" element={<Frontend/>}/>
-     <Route path="/set-password" element={<SetPassword/>}/>
-     <Route path="/set-password/:token" element={<SetPassword/>}/>
-      {/* Main Layout Routes */}
+      {/* Public / Auth Setup Routes */}
+      <Route path="login" element={<Login />} />
+      <Route path="/set-password" element={<SetPassword />} />
+      <Route path="/set-password/:token" element={<SetPassword />} />
+
+      {/* Root Path Dynamic Redirect */}
       <Route
         path="/"
         element={
-          <Layout>
-            <Suspense fallback={<Loader />}>
-              <Dashboard />
-            </Suspense>
-          </Layout>
+          <ProtectedRoute>
+            <DashboardRedirect />
+          </ProtectedRoute>
         }
       />
+
+      {/* Protected Dashboards */}
       <Route
-      path="/poo"
-      element={
-        <Layout>
-          <Poo/>
-        </Layout>
-      }/>
+        path="/admin-dashboard"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <Layout>
+              <SuspenseGate>
+                <Dashboard />
+              </SuspenseGate>
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/manager-dashboard"
+        element={
+          <ProtectedRoute allowedRoles={["admin", "manager"]}>
+            <Layout>
+              <ManagerDashboard />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/procurement-dashboard"
+        element={
+          <ProtectedRoute allowedRoles={["admin", "procurement"]}>
+            <Layout>
+              <ProcurementDashboard />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/inventory-dashboard"
+        element={
+          <ProtectedRoute allowedRoles={["admin", "inventory"]}>
+            <Layout>
+              <InventoryDashboard />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/employee-dashboard"
+        element={
+          <ProtectedRoute allowedRoles={["admin", "employee"]}>
+            <Layout>
+              <EmployeeDashboard />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Standard Protected Routes */}
+      <Route
+        path="createemployee"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <CreateEmployee />
+          </ProtectedRoute>
+        }
+      />
+      
+      <Route
+        path="adddepartment"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <Adddepartment />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="registeremployee"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <RegisterEmployee />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="password"
+        element={
+          <ProtectedRoute>
+            <Password />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="Frontend"
+        element={
+          <ProtectedRoute>
+            <Frontend />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/poo"
+        element={
+          <ProtectedRoute allowedRoles={["admin", "procurement"]}>
+            <Layout>
+              <Poo />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
 
       <Route
         path="/purchase-request-list"
         element={
-          <Layout>
-            <SuspenseGate>
-              <PurchaseRequestList />
-            </SuspenseGate>
-          </Layout>
+          <ProtectedRoute allowedRoles={["admin", "procurement", "manager"]}>
+            <Layout>
+              <SuspenseGate>
+                <PurchaseRequestList />
+              </SuspenseGate>
+            </Layout>
+          </ProtectedRoute>
         }
       />
 
       <Route
         path="/userdetails"
         element={
-          <Layout>
-            <Userdetails />
-          </Layout>
+          <ProtectedRoute>
+            <Layout>
+              <Userdetails />
+            </Layout>
+          </ProtectedRoute>
         }
       />
 
       <Route
         path="/material"
         element={
-          <Layout>
-            <Material />
-          </Layout>
+          <ProtectedRoute allowedRoles={["admin", "inventory"]}>
+            <Layout>
+              <Material />
+            </Layout>
+          </ProtectedRoute>
         }
       />
 
       <Route
         path="/po"
         element={
-          <Layout>
-            <Po />
-          </Layout>
+          <ProtectedRoute allowedRoles={["admin", "procurement"]}>
+            <Layout>
+              <Po />
+            </Layout>
+          </ProtectedRoute>
         }
       />
 
       <Route
         path="/productmenu"
         element={
-          <Layout>
-            <Productmenu />
-          </Layout>
+          <ProtectedRoute allowedRoles={["admin", "inventory"]}>
+            <Layout>
+              <Productmenu />
+            </Layout>
+          </ProtectedRoute>
         }
       />
 
       <Route
         path="/material-request"
         element={
-          <Layout>
-            <SuspenseGate>
-              <MaterialRequest />
-            </SuspenseGate>
-          </Layout>
+          <ProtectedRoute allowedRoles={["admin", "employee", "manager"]}>
+            <Layout>
+              <SuspenseGate>
+                <MaterialRequest />
+              </SuspenseGate>
+            </Layout>
+          </ProtectedRoute>
         }
       />
 
       <Route
         path="/apporavals"
         element={
-          <Layout>
-            <SuspenseGate>
-              <Apporavals />
-            </SuspenseGate>
-          </Layout>
+          <ProtectedRoute allowedRoles={["admin", "manager"]}>
+            <Layout>
+              <SuspenseGate>
+                <Apporavals />
+              </SuspenseGate>
+            </Layout>
+          </ProtectedRoute>
         }
       />
 
       <Route
         path="/procurement"
         element={
-          <Layout>
-            <SuspenseGate>
-              <Procurement />
-            </SuspenseGate>
-          </Layout>
+          <ProtectedRoute allowedRoles={["admin", "procurement"]}>
+            <Layout>
+              <SuspenseGate>
+                <Procurement />
+              </SuspenseGate>
+            </Layout>
+          </ProtectedRoute>
         }
       />
 
       <Route
         path="/inventory"
         element={
-          <Layout>
-            <SuspenseGate>
-              <Inventory />
-            </SuspenseGate>
-          </Layout>
+          <ProtectedRoute allowedRoles={["admin", "inventory"]}>
+            <Layout>
+              <SuspenseGate>
+                <Inventory />
+              </SuspenseGate>
+            </Layout>
+          </ProtectedRoute>
         }
       />
 
       <Route
         path="/qcmanagement"
         element={
-          <Layout>
-            <SuspenseGate>
-              <QcManagement />
-            </SuspenseGate>
-          </Layout>
+          <ProtectedRoute allowedRoles={["admin", "inventory", "procurement"]}>
+            <Layout>
+              <SuspenseGate>
+                <QcManagement />
+              </SuspenseGate>
+            </Layout>
+          </ProtectedRoute>
         }
       />
 
       <Route
         path="/barcode-tracking"
         element={
-          <Layout>
-            <SuspenseGate>
-              <BarcodeTracking />
-            </SuspenseGate>
-          </Layout>
+          <ProtectedRoute allowedRoles={["admin", "inventory"]}>
+            <Layout>
+              <SuspenseGate>
+                <BarcodeTracking />
+              </SuspenseGate>
+            </Layout>
+          </ProtectedRoute>
         }
       />
 
       <Route
         path="/returns"
         element={
-          <Layout>
-            <SuspenseGate>
-              <Returns />
-            </SuspenseGate>
-          </Layout>
+          <ProtectedRoute allowedRoles={["admin", "inventory"]}>
+            <Layout>
+              <SuspenseGate>
+                <Returns />
+              </SuspenseGate>
+            </Layout>
+          </ProtectedRoute>
         }
       />
 
       <Route
         path="/vendors"
         element={
-          <Layout>
-            <SuspenseGate>
-              <Vendors />
-            </SuspenseGate>
-          </Layout>
+          <ProtectedRoute allowedRoles={["admin", "procurement"]}>
+            <Layout>
+              <SuspenseGate>
+                <Vendors />
+              </SuspenseGate>
+            </Layout>
+          </ProtectedRoute>
         }
       />
 
       <Route
         path="/reports"
         element={
-          <Layout>
-            <SuspenseGate>
-              <Reports />
-            </SuspenseGate>
-          </Layout>
+          <ProtectedRoute allowedRoles={["admin", "manager"]}>
+            <Layout>
+              <SuspenseGate>
+                <Reports />
+              </SuspenseGate>
+            </Layout>
+          </ProtectedRoute>
         }
       />
 
       <Route
         path="/settings"
         element={
-          <Layout>
-            <SuspenseGate>
-              <Settings />
-            </SuspenseGate>
-          </Layout>
+          <ProtectedRoute>
+            <Layout>
+              <SuspenseGate>
+                <Settings />
+              </SuspenseGate>
+            </Layout>
+          </ProtectedRoute>
         }
       />
 
       <Route
         path="/user"
         element={
-          <Layout>
-            <SuspenseGate>
-              <User />
-            </SuspenseGate>
-          </Layout>
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <Layout>
+              <SuspenseGate>
+                <User />
+              </SuspenseGate>
+            </Layout>
+          </ProtectedRoute>
         }
       />
 
       <Route
         path="/masters"
         element={
-          <Layout>
-            <SuspenseGate>
-              <Masters />
-            </SuspenseGate>
-          </Layout>
+          <ProtectedRoute allowedRoles={["admin", "inventory"]}>
+            <Layout>
+              <SuspenseGate>
+                <Masters />
+              </SuspenseGate>
+            </Layout>
+          </ProtectedRoute>
         }
       />
     </Routes>
-    
-
   );
 };
 

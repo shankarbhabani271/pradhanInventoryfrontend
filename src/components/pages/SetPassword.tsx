@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate, useParams } from "react-router-dom";
 import { Lock, User, Phone, CheckCircle, XCircle } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
+import { API_BASE_URL } from "../../config/http";
 
 export default function SetPassword() {
   const [searchParams] = useSearchParams();
@@ -33,7 +34,7 @@ export default function SetPassword() {
 
       try {
         const res = await axios.get(
-          `http://localhost:8080/api/employees/verify-token?token=${token}`
+          `${API_BASE_URL}/employees/verify-token?token=${token}`
         );
         if (res.data.success) {
           setIsValidToken(true);
@@ -78,7 +79,7 @@ export default function SetPassword() {
 
     setIsSubmitting(true);
     try {
-      const res = await axios.post("http://localhost:8080/api/employees/set-password", {
+      const res = await axios.post(`${API_BASE_URL}/employees/set-password`, {
         token,
         ...formData
       });

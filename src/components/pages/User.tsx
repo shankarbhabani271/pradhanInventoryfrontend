@@ -9,6 +9,7 @@ import {
   Clock,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../../config/http";
 
 // ✅ Dashboard Cards
 const dashboardCards = [
@@ -65,7 +66,7 @@ const [userList, setUserList] = useState<UserType[]>([]);
   // ✅ Fetch users from backend
   const fetchUsers = async () => {
     try {
-      const res = await fetch("http://localhost:8080/api/userdetails");
+      const res = await fetch(`${API_BASE_URL}/userdetails`);
       const data = await res.json();
       setUserList(data);
     } catch (error) {
@@ -122,6 +123,13 @@ const [userList, setUserList] = useState<UserType[]>([]);
               className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700"
             >
               <Plus size={16} /> Add User
+            </button>
+
+            <button
+              onClick={() => navigate("/createemployee")}
+              className="bg-yellow-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-yellow-600 transition"
+            >
+              <Plus size={16} /> Invite Employee
             </button>
           </div>
         </div>

@@ -3,6 +3,7 @@ import { Mail, Building2, UserCog, CheckCircle } from "lucide-react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { API_BASE_URL } from "../../config/http";
 
 export default function EmployeeForm() {
   const [formData, setFormData] = useState({
@@ -36,7 +37,7 @@ export default function EmployeeForm() {
     setIsSuccess(false);
     try {
       const res = await axios.post(
-        "http://localhost:8080/api/employees/send-invite",
+        `${API_BASE_URL}/employees/send-invite`,
         formData
       );
 
@@ -133,11 +134,11 @@ export default function EmployeeForm() {
                   required
                 >
                   <option value="">Select Role</option>
-                  <option>Admin</option>
-                  <option>Manager</option>
-                  <option>Employee</option>
-                  <option>Vendor Manager</option>
-                  <option>Store Keeper</option>
+                  <option value="admin">Admin</option>
+                  <option value="manager">Manager</option>
+                  <option value="employee">Employee</option>
+                  <option value="procurement">Procurement (Vendor Manager)</option>
+                  <option value="inventory">Inventory (Store Keeper)</option>
                 </select>
               </div>
             </div>

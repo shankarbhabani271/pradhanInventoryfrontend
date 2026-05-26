@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { BookCopy } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../../config/http";
 export default function MaterialForm() {
 const  navigate = useNavigate();
   // Priority Logic
@@ -78,7 +79,7 @@ const  navigate = useNavigate();
      if(! formData.referenceId || ! formData.requester || !formData.quantity)
         return toast.error("please fill all required fields ")
     try {
-      const res = await fetch("http://localhost:8080/api/material/", {
+      const res = await fetch(`${API_BASE_URL}/material/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

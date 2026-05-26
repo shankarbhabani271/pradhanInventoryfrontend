@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { Plus, Trash2, Heart, CheckCircle2, ChevronRight, Store, ArrowLeft, Send, Sparkles, Building, MapPin, Phone, FileSpreadsheet } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { API_BASE_URL } from "../../config/http";
+import { toast } from "sonner";
 
 export interface Vendor {
   _id?: string;
@@ -194,7 +196,7 @@ export function PurchaseRequestForm({ vendor, onBack }: { vendor: Vendor; onBack
     e.preventDefault();
 
     if (items.some(item => !item.productName.trim())) {
-      alert("❌ Please enter a valid product name for all items.");
+      toast.error("Please enter a valid product name for all items.");
       return;
     }
 
@@ -230,7 +232,7 @@ export function PurchaseRequestForm({ vendor, onBack }: { vendor: Vendor; onBack
 
     try {
       // 1. POST to database
-      const response = await axios.post("http://localhost:8080/api/purchase-request/create", prPayload);
+      const response = await axios.post(`${API_BASE_URL}/purchase-request/create`, prPayload);
       console.log("DB Success Response:", response.data);
 
       const dbPR = response.data?.data;
@@ -592,7 +594,7 @@ function PurchaseRequest() {
   useEffect(() => {
     const fetchVendors = async () => {
       try {
-        const res = await axios.get("http://localhost:8080/api/vendor/get");
+        const res = await axios.get(`${API_BASE_URL}/vendor/get`);
         let loaded: Vendor[] = [];
         if (Array.isArray(res.data)) {
           loaded = res.data;

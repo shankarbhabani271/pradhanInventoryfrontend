@@ -1,6 +1,8 @@
-import  { useState } from "react";
+import { useState } from "react";
 import { Lock, Eye, EyeOff } from "lucide-react";
 import axios from "axios";
+import { API_BASE_URL } from "../../config/http";
+import { toast } from "sonner";
 
 const ResetPassword = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -13,19 +15,20 @@ const ResetPassword = () => {
     e.preventDefault();
 
     if (password !== confirmPassword) {
-      alert("Passwords do not match");
+      toast.error("Passwords do not match");
       return;
     }
 
     try {
       await axios.post(
-        "http://localhost:8080/api/employees/register",
+        `${API_BASE_URL}/employees/register`,
         { password }
       );
 
-      alert("Password Reset Successfully");
-    } catch (error) {
+      toast.success("Password Reset Successfully");
+    } catch (error: any) {
       console.log(error);
+      toast.error(error.response?.data?.message || "Failed to reset password");
     }
   };
 

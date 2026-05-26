@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Search, Filter, Eye, Printer, Download, Check, X, FileText, Calendar, AlertCircle, Sparkles, SlidersHorizontal } from "lucide-react";
 import axios from "axios";
+import { API_BASE_URL } from "../../config/http";
+import { toast } from "sonner";
 
 interface PurchaseRequestItem {
   id: string; // PR-1001 etc.
@@ -64,7 +66,7 @@ export default function PurchaseRequestList() {
 
     // 1. Fetch from Mongo database API
     try {
-      const response = await axios.get("http://localhost:8080/api/purchase-request/get");
+      const response = await axios.get(`${API_BASE_URL}/purchase-request/get`);
       if (Array.isArray(response.data)) {
         dbItems = response.data.map(mapDbToLocal);
       }
@@ -110,7 +112,7 @@ export default function PurchaseRequestList() {
     try {
       // 1. If item has database MongoDB ID, update status in database
       if (item._id) {
-        await axios.put(`http://localhost:8080/api/purchase-request/status/${item._id}`, {
+        await axios.put(`${API_BASE_URL}/purchase-request/status/${item._id}`, {
           status: newStatus,
           approvedBy: "Admin"
         });
@@ -222,7 +224,9 @@ export default function PurchaseRequestList() {
   };
 
   const handleDownload = (request: PurchaseRequestItem) => {
-    alert(`📥 PDF format for ${request.id} prepared for download!\nVendor: ${request.vendorName}\nAmount: ₹${request.totalAmount.toLocaleString()}`);
+    toast.success(`📥 PDF for ${request.id} prepared for download!`, {
+      description: `Vendor: ${request.vendorName} | Amount: ₹${request.totalAmount.toLocaleString()}`,
+    });
   };
 
   // Get unique vendors list for filtering

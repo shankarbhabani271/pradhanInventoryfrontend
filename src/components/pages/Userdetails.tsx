@@ -1,7 +1,7 @@
-
 import  { useState } from "react";
 import { User ,Phone,Mail,FileText, Building2, Send} from "lucide-react";
 //import { Description } from "@radix-ui/react-dialog";
+import { API_BASE_URL } from "../../config/http";
 
 
 import { useNavigate } from "react-router-dom";
@@ -28,7 +28,7 @@ const Userdetails = () => {
         e.preventDefault();
         console.log(form);
         try{
-            const res = await fetch("http://localhost:8080/api/userdetails",{
+            const res = await fetch(`${API_BASE_URL}/userdetails`,{
                 method:"POST",
                 headers:{
                     "Content-Type":"application/json"
@@ -55,7 +55,7 @@ const Userdetails = () => {
     
 
         }catch(error){
-            alert("Error saving data");
+            toast.error("Error saving data");
         }
     
     };

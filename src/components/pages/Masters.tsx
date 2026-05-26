@@ -15,6 +15,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../../config/http";
 
 // dashboard cards
 const dashboardCards = [
@@ -71,7 +72,7 @@ const [products, setProducts] = useState<ProductType[]>([]);
   // ✅ FETCH FUNCTION
   const fetchProducts = async () => {
     try {
-      const res = await fetch("http://localhost:8080/api/productmenu");
+      const res = await fetch(`${API_BASE_URL}/productmenu`);
       const data = await res.json();
       setProducts(data);
     } catch (err) {
@@ -92,7 +93,7 @@ const [products, setProducts] = useState<ProductType[]>([]);
     if (!confirmDelete) return;
 
     try {
-      await fetch(`http://localhost:8080/api/productmenu/${id}`, {
+      await fetch(`${API_BASE_URL}/productmenu/${id}`, {
         method: "DELETE",
       });
       fetchProducts();

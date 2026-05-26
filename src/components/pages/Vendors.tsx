@@ -1,5 +1,7 @@
-import  { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
+import { API_BASE_URL } from "../../config/http";
+import { toast } from "sonner";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -208,7 +210,7 @@ const VendorsPage = () => {
   const handleSaveEdit = async (e: React.FormEvent, vendorId: string) => {
     e.preventDefault();
     if (!editVendorName || !editEmail || !editPhone || !editAddress) {
-      alert("❌ Please fill in all required fields marked with *");
+      toast.error("Please fill in all required fields marked with *");
       return;
     }
 
@@ -230,7 +232,7 @@ const VendorsPage = () => {
           status: editStatus
         };
 
-        const response = await axios.put(`http://localhost:8080/api/vendor/${vendorToUpdate._id}`, payload);
+        const response = await axios.put(`${API_BASE_URL}/vendor/${vendorToUpdate._id}`, payload);
         
         if (response.data && response.data.success) {
           updatedVendorData = {
@@ -268,19 +270,19 @@ const VendorsPage = () => {
         })
       );
 
-      alert("🎉 Vendor updated successfully");
+      toast.success("Vendor updated successfully! 🎉");
       setEditingVendorId(null);
     } catch (err: any) {
       console.error("Update vendor error:", err);
       const errMsg = err.response?.data?.message || "Failed to update vendor.";
-      alert(`❌ ${errMsg}`);
+      toast.error(errMsg);
     }
   };
 
   const handleAddVendor = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newVendorName || !email || !phone || !address) {
-      alert("❌ Please fill in all required fields marked with *");
+      toast.error("Please fill in all required fields marked with *");
       return;
     }
 
@@ -300,7 +302,7 @@ const VendorsPage = () => {
         status
       };
 
-      const response = await axios.post("http://localhost:8080/api/vendor/create", payload);
+      const response = await axios.post(`${API_BASE_URL}/vendor/create`, payload);
       
       if (response.data && response.data.success) {
         // Map database response to frontend Vendor format
@@ -316,7 +318,7 @@ const VendorsPage = () => {
         // Dynamic frontend update (instantly update state without page refresh)
         setVendors((prev) => [createdVendor, ...prev]);
 
-        alert("🎉 Vendor successfully created");
+        toast.success("Vendor successfully created! 🎉");
         
         // Reset form
         setNewVendorName("");
@@ -334,7 +336,7 @@ const VendorsPage = () => {
     } catch (err: any) {
       console.error("Add vendor error:", err);
       const errMsg = err.response?.data?.message || "Failed to add vendor.";
-      alert(`❌ ${errMsg}`);
+      toast.error(errMsg);
     }
   };
   // FETCH DATA
@@ -345,7 +347,7 @@ const VendorsPage = () => {
 
   const fetchPurchaseRequests = async () => {
     try {
-      const res = await axios.get("http://localhost:8080/api/purchase-request/get");
+      const res = await axios.get(`${API_BASE_URL}/purchase-request/get`);
       let dbRequests = [];
       if (Array.isArray(res.data)) {
         dbRequests = res.data;
@@ -386,7 +388,7 @@ const VendorsPage = () => {
 
   const fetchVendors = async () => {
     try {
-      const res = await axios.get("http://localhost:8080/api/vendor/get");
+      const res = await axios.get(`${API_BASE_URL}/vendor/get`);
 
       console.log("API:", res.data);
 
@@ -427,7 +429,7 @@ const VendorsPage = () => {
     try {
       const vendorToDelete = vendors.find(v => (v._id || v.id?.toString()) === id);
       if (vendorToDelete && vendorToDelete._id) {
-        await axios.delete(`http://localhost:8080/api/vendor/${vendorToDelete._id}`);
+        await axios.delete(`${API_BASE_URL}/vendor/${vendorToDelete._id}`);
       }
 
       setVendors((prev) => prev.filter((vendor) => {
@@ -435,17 +437,17 @@ const VendorsPage = () => {
         return vendorId !== id;
       }));
 
-      alert("🎉 Vendor successfully deleted");
-    } catch (error) {
+      toast.success("Vendor successfully deleted! 🎉");
+    } catch (error: any) {
       console.error("Delete failed:", error);
-      alert("❌ Failed to delete vendor from the database.");
+      toast.error(error.response?.data?.message || "Failed to delete vendor from the database.");
     }
   };
 
   // UPDATE PURCHASE REQUEST STATUS / DELIVERY STATUS DYNAMIC SYNC
   const handlePRStatusUpdate = async (id: string, updateFields: { status?: string; deliveryStatus?: string }) => {
     try {
-      const response = await axios.put(`http://localhost:8080/api/purchase-request/status/${id}`, updateFields);
+      const response = await axios.put(`${API_BASE_URL}/purchase-request/status/${id}`, updateFields);
       if (response.data && response.data.success) {
         const updated = response.data.data;
         
@@ -486,11 +488,11 @@ const VendorsPage = () => {
           }
         }
 
-        alert(`🎉 Purchase request successfully updated`);
+        toast.success("Purchase request successfully updated! 🎉");
       }
     } catch (err: any) {
       console.error("PR update failed:", err);
-      alert(`❌ Failed to update purchase request: ${err.response?.data?.message || err.message}`);
+      toast.error(`Failed to update purchase request: ${err.response?.data?.message || err.message}`);
     }
   };
 
@@ -503,7 +505,7 @@ const VendorsPage = () => {
     try {
       const target = purchaseRequests.find(r => (r._id || r.id) === id);
       if (target && target._id) {
-        await axios.delete(`http://localhost:8080/api/purchase-request/${target._id}`);
+        await axios.delete(`${API_BASE_URL}/purchase-request/${target._id}`);
       }
 
       // Update state
@@ -521,10 +523,10 @@ const VendorsPage = () => {
         }
       }
 
-      alert("🎉 Purchase request deleted successfully");
+      toast.success("Purchase request deleted successfully! 🎉");
     } catch (err: any) {
       console.error("PR delete failed:", err);
-      alert(`❌ Failed to delete purchase request: ${err.message}`);
+      toast.error(`Failed to delete purchase request: ${err.message}`);
     }
   };
 
@@ -532,7 +534,7 @@ const VendorsPage = () => {
   const handlePrintPR = (req: any) => {
     const printWindow = window.open("", "_blank");
     if (!printWindow) {
-      alert("❌ Popups blocked! Please allow popups for printing PO invoices.");
+      toast.error("Popups blocked! Please allow popups for printing PO invoices.");
       return;
     }
 

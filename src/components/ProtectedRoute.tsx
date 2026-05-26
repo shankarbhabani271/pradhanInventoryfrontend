@@ -1,29 +1,31 @@
 import { Navigate } from "react-router-dom";
-import { useSelector } from "react-redux";
-import type { RootState } from "@/config/redux/reducers/rootReducer";
+import React from "react";
 
-const TEN_MIN = 10 * 60 * 1000;
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+  allowedRoles?: string[];
+}
 
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const token = useSelector((state: RootState) => state.auth.accessToken);
-
-  const loginTime = localStorage.getItem("loginTime");
+const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
+  const token = localStorage.getItem("token");
+  const role = localStorage.getItem("role");
 
   // ❌ no token
-  if (!token || !loginTime) {
+  if (!token) {
     return <Navigate to="/login" replace />;
   }
 
-  const diff = Date.now() - Number(loginTime);
-
-  // ❌ expired
-  if (diff > TEN_MIN) {
-    localStorage.removeItem("token");
-    localStorage.removeItem("loginTime");
-    return <Navigate to="/login" replace />;
+  // ❌ unauthorized role
+  if (allowedRoles && (!role || !allowedRoles.includes(role))) {
+    // Redirect to their default dashboard
+    if (role === "admin") return <Navigate to="/admin-dashboard" replace />;
+    if (role === "manager") return <Navigate to="/manager-dashboard" replace />;
+    if (role === "procurement") return <Navigate to="/procurement-dashboard" replace />;
+    if (role === "inventory") return <Navigate to="/inventory-dashboard" replace />;
+    return <Navigate to="/employee-dashboard" replace />;
   }
 
-  return children;
+  return <>{children}</>;
 };
 
 export default ProtectedRoute;

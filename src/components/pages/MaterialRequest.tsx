@@ -6,7 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-
+import { API_BASE_URL } from "../../config/http";
 
 
 
@@ -38,7 +38,7 @@ const [data, setData] = useState<MaterialData[]>([]);
     
 
   useEffect(() => {
-    fetch("http://localhost:8080/api/material")
+    fetch(`${API_BASE_URL}/material`)
       .then((res) => res.json())
       .then((res) => {
         console.log("API DATA",res);
