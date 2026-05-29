@@ -879,7 +879,13 @@ const Approvals = () => {
   };
 
   const handleMoveToProcurement = async (req: MaterialRequest) => {
-    const toastId = toast.loading(`Transferring ${req.referenceId} to Vendor module...`);
+    let toastId: any = null;
+    try {
+      toastId = toast.loading(`Transferring ${req.referenceId} to Vendor module...`);
+    } catch {
+      toastId = toast.info ? toast.info(`Transferring ${req.referenceId} to Vendor module...`) : toast(`Transferring ${req.referenceId}...`);
+    }
+    
     try {
       // 1. Fetch available vendors to pick one
       let vendorName = "HP Solutions";
@@ -963,7 +969,15 @@ const Approvals = () => {
       requestsList.unshift(fullLocalPR);
       localStorage.setItem("purchase_requests", JSON.stringify(requestsList));
 
-      toast.success(`Request ${req.referenceId} successfully moved to Vendor module! 🎉`, { id: toastId });
+      try {
+        if (toastId && typeof toastId !== "object" && toast.success) {
+          toast.success(`Request ${req.referenceId} successfully moved to Vendor module! 🎉`, { id: toastId });
+        } else {
+          toast.success(`Request ${req.referenceId} successfully moved to Vendor module! 🎉`);
+        }
+      } catch {
+        toast.success(`Request ${req.referenceId} successfully moved to Vendor module! 🎉`);
+      }
 
       // 5. Refresh approvals state dynamically
       await fetchAllCounts();
@@ -974,7 +988,15 @@ const Approvals = () => {
 
     } catch (error) {
       console.error("Move to procurement failed:", error);
-      toast.error("Failed to transfer request to Vendor module.", { id: toastId });
+      try {
+        if (toastId && typeof toastId !== "object" && toast.error) {
+          toast.error("Failed to transfer request to Vendor module.", { id: toastId });
+        } else {
+          toast.error("Failed to transfer request to Vendor module.");
+        }
+      } catch {
+        toast.error("Failed to transfer request to Vendor module.");
+      }
     }
   };
 
@@ -985,14 +1007,28 @@ const Approvals = () => {
 
   const handleConfirmDelete = async () => {
     if (!requestToDelete) return;
-    const toastId = toast.loading(`Deleting Procurement Request ${requestToDelete.referenceId}...`);
+    let toastId: any = null;
+    try {
+      toastId = toast.loading(`Deleting Procurement Request ${requestToDelete.referenceId}...`);
+    } catch {
+      toastId = toast.info ? toast.info(`Deleting Procurement Request ${requestToDelete.referenceId}...`) : toast(`Deleting request ${requestToDelete.referenceId}...`);
+    }
+
     try {
       const res = await fetch(`${API_BASE_URL}/material/${requestToDelete._id}`, {
         method: "DELETE",
       });
       const json = await res.json();
       if (json.success) {
-        toast.success(`Request ${requestToDelete.referenceId} permanently deleted! 🗑️`, { id: toastId });
+        try {
+          if (toastId && typeof toastId !== "object" && toast.success) {
+            toast.success(`Request ${requestToDelete.referenceId} permanently deleted! 🗑️`, { id: toastId });
+          } else {
+            toast.success(`Request ${requestToDelete.referenceId} permanently deleted! 🗑️`);
+          }
+        } catch {
+          toast.success(`Request ${requestToDelete.referenceId} permanently deleted! 🗑️`);
+        }
         
         // Clean up local storage purchase_requests as well
         try {
@@ -1011,13 +1047,30 @@ const Approvals = () => {
         await fetchAllCounts();
         await fetchRequests();
       } else {
-        toast.error(json.message || "Failed to delete request.", { id: toastId });
+        try {
+          if (toastId && typeof toastId !== "object" && toast.error) {
+            toast.error(json.message || "Failed to delete request.", { id: toastId });
+          } else {
+            toast.error(json.message || "Failed to delete request.");
+          }
+        } catch {
+          toast.error(json.message || "Failed to delete request.");
+        }
       }
     } catch (err) {
       console.error("Delete request error:", err);
-      toast.error("Failed to delete request due to server or network error.", { id: toastId });
+      try {
+        if (toastId && typeof toastId !== "object" && toast.error) {
+          toast.error("Failed to delete request due to server or network error.", { id: toastId });
+        } else {
+          toast.error("Failed to delete request due to server or network error.");
+        }
+      } catch {
+        toast.error("Failed to delete request due to server or network error.");
+      }
     }
   };
+
 
   /* ── Filtered + paginated list ── */
   const filtered = requests.filter((r) => {
