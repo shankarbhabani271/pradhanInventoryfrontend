@@ -39,7 +39,7 @@ const dashboardCards = [
 
 const InventoryDashboard = () => {
   return (
-    <div className="p-6 space-y-6 bg-slate-50 min-h-screen">
+    <div className=" space-y-6 bg-slate-50 min-h-screen">
       {/* Banner */}
       <div className="bg-gradient-to-r from-blue-600 to-cyan-800 text-white rounded-3xl p-8 shadow-xl relative overflow-hidden">
         <div className="absolute right-0 top-0 bottom-0 opacity-10 flex items-center pr-12">

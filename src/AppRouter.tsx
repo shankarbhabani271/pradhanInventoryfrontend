@@ -18,6 +18,9 @@ import Password from "./components/pages/Password";
 import Frontend from "./components/pages/Frontend";
 import SetPassword from "./components/pages/SetPassword";
 import RegisterEmployee from "./components/pages/RegisterEmployee";
+//import IssueMaterial from "./pages/IssueMaterial";
+//import CreatePurchaseRequisition from "./pages/CreatePurchaseRequisition";
+
 
 // Custom Dashboards
 import ManagerDashboard from "./components/pages/ManagerDashboard";
@@ -70,6 +73,8 @@ const AppRouter = () => {
       <Route path="login" element={<Login />} />
       <Route path="/set-password" element={<SetPassword />} />
       <Route path="/set-password/:token" element={<SetPassword />} />
+      
+
 
       {/* Root Path Dynamic Redirect */}
       <Route

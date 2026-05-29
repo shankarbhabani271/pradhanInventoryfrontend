@@ -1,13 +1,30 @@
-import {  ChevronRight, User,Building2, Package, Hash,CheckCircle, XCircle, Clock  } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import {
+  ChevronRight,
+  User,
+  Building2,
+  Package,
+  Hash,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Search,
+  AlertTriangle,
+  Boxes,
+  Warehouse,
+  RefreshCcw,
+  BadgeCheck,
+  ShieldCheck,
+  TrendingDown,
+  BarChart3,
+  ArrowRight,
+  ArrowDown,
+} from "lucide-react";
 import { API_BASE_URL } from "../../config/http";
 
-/* =========================
-   LIST COMPONENT
-========================= */
-
-
+/* ================================================================
+   TYPES
+================================================================ */
 interface MaterialRequest {
   _id: string;
   referenceId: string;
@@ -17,289 +34,995 @@ interface MaterialRequest {
   productDetails: string;
   quantity: number;
   status: string;
+  createdAt?: string;
 }
 
-interface ListProps {
-  data: MaterialRequest[];
-  selected: MaterialRequest | null;
-  setSelected: React.Dispatch<React.SetStateAction<MaterialRequest | null>>;
+interface StockResult {
+  found: boolean;
+  stock: number;
+  itemName: string;
+  inventoryId: string;
+  isAvailable: boolean;
+  remaining: number;
 }
 
-interface DetailsProps {
-  selected: MaterialRequest | null;
-  handleApprove: (id: string) => void;
-  handleReject: (id: string) => void;
-}
-const List = ({ data, selected, setSelected }: ListProps) => {
+type ApiStatus =
+  | "Pending"
+  | "Approved"
+  | "Completed"
+  | "Rejected"
+  | "Procurement Required";
+
+type TabSlug =
+  | "pending"
+  | "approved"
+  | "completed"
+  | "rejected"
+  | "procurement-required";
+
+type CountsMap = Record<ApiStatus, number>;
+
+/* ================================================================
+   TAB DEFINITIONS
+================================================================ */
+const TABS: {
+  slug: TabSlug;
+  label: string;
+  apiStatus: ApiStatus;
+  icon: React.ElementType;
+  /* active pill */
+  activeBg: string;
+  activeText: string;
+  activeShadow: string;
+  /* inactive pill */
+  inactiveBorder: string;
+  inactiveText: string;
+  inactiveHover: string;
+  /* count badge */
+  countBg: string;
+  countText: string;
+  countActiveBg: string;
+  countActiveText: string;
+}[] = [
+  {
+    slug: "pending",
+    label: "Pending",
+    apiStatus: "Pending",
+    icon: Clock,
+    activeBg: "bg-amber-400",
+    activeText: "text-white",
+    activeShadow: "shadow-amber-200",
+    inactiveBorder: "border-amber-200",
+    inactiveText: "text-amber-700",
+    inactiveHover: "hover:bg-amber-50",
+    countBg: "bg-amber-100",
+    countText: "text-amber-800",
+    countActiveBg: "bg-white/30",
+    countActiveText: "text-white",
+  },
+  {
+    slug: "approved",
+    label: "Approved",
+    apiStatus: "Approved",
+    icon: CheckCircle,
+    activeBg: "bg-emerald-500",
+    activeText: "text-white",
+    activeShadow: "shadow-emerald-200",
+    inactiveBorder: "border-emerald-200",
+    inactiveText: "text-emerald-700",
+    inactiveHover: "hover:bg-emerald-50",
+    countBg: "bg-emerald-100",
+    countText: "text-emerald-800",
+    countActiveBg: "bg-white/30",
+    countActiveText: "text-white",
+  },
+  {
+    slug: "completed",
+    label: "Completed",
+    apiStatus: "Completed",
+    icon: BadgeCheck,
+    activeBg: "bg-blue-500",
+    activeText: "text-white",
+    activeShadow: "shadow-blue-200",
+    inactiveBorder: "border-blue-200",
+    inactiveText: "text-blue-700",
+    inactiveHover: "hover:bg-blue-50",
+    countBg: "bg-blue-100",
+    countText: "text-blue-800",
+    countActiveBg: "bg-white/30",
+    countActiveText: "text-white",
+  },
+  {
+    slug: "rejected",
+    label: "Rejected",
+    apiStatus: "Rejected",
+    icon: XCircle,
+    activeBg: "bg-red-500",
+    activeText: "text-white",
+    activeShadow: "shadow-red-200",
+    inactiveBorder: "border-red-200",
+    inactiveText: "text-red-600",
+    inactiveHover: "hover:bg-red-50",
+    countBg: "bg-red-100",
+    countText: "text-red-800",
+    countActiveBg: "bg-white/30",
+    countActiveText: "text-white",
+  },
+  {
+    slug: "procurement-required",
+    label: "Procurement",
+    apiStatus: "Procurement Required",
+    icon: AlertTriangle,
+    activeBg: "bg-orange-500",
+    activeText: "text-white",
+    activeShadow: "shadow-orange-200",
+    inactiveBorder: "border-orange-200",
+    inactiveText: "text-orange-600",
+    inactiveHover: "hover:bg-orange-50",
+    countBg: "bg-orange-100",
+    countText: "text-orange-800",
+    countActiveBg: "bg-white/30",
+    countActiveText: "text-white",
+  },
+];
+
+/* ================================================================
+   STATUS BADGE
+================================================================ */
+const STATUS_STYLES: Record<string, { bg: string; border: string; text: string; dot: string }> = {
+  Pending:                { bg: "bg-amber-50",  border: "border-amber-200",  text: "text-amber-700",  dot: "bg-amber-400"  },
+  Approved:               { bg: "bg-emerald-50",border: "border-emerald-200",text: "text-emerald-700",dot: "bg-emerald-500"},
+  Rejected:               { bg: "bg-red-50",    border: "border-red-200",    text: "text-red-600",    dot: "bg-red-500"    },
+  "Procurement Required": { bg: "bg-orange-50", border: "border-orange-200", text: "text-orange-700", dot: "bg-orange-500" },
+  Completed:              { bg: "bg-blue-50",   border: "border-blue-200",   text: "text-blue-700",   dot: "bg-blue-500"   },
+};
+
+const StatusBadge = ({ status }: { status: string }) => {
+  const s = STATUS_STYLES[status] ?? { bg: "bg-gray-50", border: "border-gray-200", text: "text-gray-600", dot: "bg-gray-400" };
   return (
-    <div className="space-y-4 mt-4">
-      {data.length === 0 && <p>No Data</p>}
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border ${s.bg} ${s.border} ${s.text}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
+      {status}
+    </span>
+  );
+};
 
-      {data.map((item) => (
-        <div
-          key={item._id}
-          onClick={() => setSelected(item)}
-          className={`bg-[#E5EFF6] p-4 rounded-xl cursor-pointer border
-          ${selected?._id === item._id ? "bg-blue-100" : ""}`}
-        >
-          <div className="flex justify-between">
-            <div>
-              <h2>{item.referenceId}</h2>
-              <p>{item.requester}</p>
-              <button className="bg-yellow-400 text-white rounded-2xl px-3 py-1 mt-2 text-xs">
-              <span>{item.priority}</span></button>
+/* ================================================================
+   PRIORITY BADGE
+================================================================ */
+const PRIORITY_STYLES: Record<string, string> = {
+  High:   "bg-red-100  text-red-700  border-red-200",
+  Urgent: "bg-rose-100 text-rose-700 border-rose-200",
+  Medium: "bg-amber-100 text-amber-700 border-amber-200",
+  Low:    "bg-green-100 text-green-700 border-green-200",
+};
+
+const PriorityBadge = ({ priority }: { priority: string }) => (
+  <span className={`text-[9px] font-black px-2 py-0.5 rounded border uppercase tracking-widest ${PRIORITY_STYLES[priority] ?? "bg-gray-100 text-gray-600 border-gray-200"}`}>
+    {priority}
+  </span>
+);
+
+/* ================================================================
+   WORKFLOW STEPPER
+================================================================ */
+const WorkflowStepper = ({ status }: { status: string }) => {
+  const steps = [
+    { label: "Requested",   done: true },
+    { label: "Pending",     done: true },
+    { label: "Approved",    done: ["Approved", "Completed", "Procurement Required"].includes(status) },
+    { label: "Stock Check", done: ["Completed", "Procurement Required"].includes(status) },
+    { label: "Fulfilled",   done: status === "Completed" },
+  ];
+
+  return (
+    <div className="flex items-start w-full">
+      {steps.map((step, i) => (
+        <div key={i} className="flex items-center flex-1 last:flex-none">
+          <div className="flex flex-col items-center">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all shadow-sm ${step.done ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-400 border border-slate-200"}`}>
+              {step.done ? "✓" : i + 1}
             </div>
-            <ChevronRight />
+            <p className={`text-[9px] font-semibold mt-1.5 whitespace-nowrap ${step.done ? "text-slate-700" : "text-slate-400"}`}>
+              {step.label}
+            </p>
           </div>
+          {i < steps.length - 1 && (
+            <div className={`flex-1 h-0.5 mx-1.5 mb-4 rounded-full ${steps[i + 1].done ? "bg-blue-400" : "bg-slate-200"}`} />
+          )}
         </div>
       ))}
     </div>
   );
 };
 
-/* =========================
-   DETAILS PANEL
-========================= */
-const DetailsPanel = ({ selected, handleApprove, handleReject }: DetailsProps) => {
-  if (!selected) return <div className="p-6">Select item</div>;
+/* ================================================================
+   WORKFLOW DIAGRAM (right sidebar)
+================================================================ */
+const WorkflowDiagram = () => (
+  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Approval Workflow</p>
+    <div className="flex flex-col items-center gap-0 text-xs">
+      {/* Material Request */}
+      <div className="w-full bg-slate-100 border border-slate-200 rounded-xl px-4 py-2.5 text-center font-semibold text-slate-600">
+        Material Request
+      </div>
+      <ArrowDown className="w-4 h-4 text-slate-400 my-1" />
+
+      {/* Pending */}
+      <div className="w-full bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 text-center font-bold text-amber-700">
+        🟡 Pending
+      </div>
+      <ArrowDown className="w-4 h-4 text-slate-400 my-1" />
+
+      {/* Approve / Reject */}
+      <div className="w-full grid grid-cols-2 gap-2">
+        <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2 text-center font-bold text-emerald-700 text-[11px]">
+          ✅ Approve
+        </div>
+        <div className="bg-red-50 border border-red-200 rounded-xl px-3 py-2 text-center font-bold text-red-600 text-[11px]">
+          ❌ Reject
+        </div>
+      </div>
+
+      {/* Arrow from Approve down */}
+      <div className="w-full flex justify-start pl-[12%] mt-1 mb-0">
+        <ArrowDown className="w-4 h-4 text-emerald-400" />
+      </div>
+
+      {/* Stock Check */}
+      <div className="w-3/5 self-start ml-[5%] bg-blue-50 border border-blue-200 rounded-xl px-3 py-2 text-center font-bold text-blue-700 text-[11px]">
+        Stock Check
+      </div>
+
+      {/* Branch */}
+      <div className="w-3/5 self-start ml-[5%] grid grid-cols-2 gap-2 mt-2">
+        <div className="bg-blue-100 border border-blue-200 rounded-xl px-2 py-2 text-center font-bold text-blue-700 text-[10px]">
+          🔵 Completed
+        </div>
+        <div className="bg-orange-50 border border-orange-200 rounded-xl px-2 py-2 text-center font-bold text-orange-700 text-[10px]">
+          🟠 Procurement
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+/* ================================================================
+   INVENTORY STOCK SUMMARY CARD
+================================================================ */
+const StockSummaryCard = ({
+  result,
+  requestedQty,
+  onClose,
+}: {
+  result: StockResult;
+  requestedQty: number;
+  onClose: () => void;
+}) => {
+  const pct = result.stock > 0
+    ? Math.max(0, Math.round(((result.stock - requestedQty) / result.stock) * 100))
+    : 0;
 
   return (
-   <div className="w-full max-w-[850px] mx-auto mt-10">
-
-  {/* Card */}
-  <div className="bg-white/80 backdrop-blur-lg border border-gray-200 rounded-3xl shadow-xl p-8">
-
-    {/* Top Section */}
-    <div className="flex justify-between items-start mb-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 tracking-wide">
-          {selected.referenceId}
-        </h1>
-        <p className="text-gray-500 text-sm mt-1">
-          Material Request Overview
-        </p>
-      </div>
-
-      {/* Status */}
-      <span
-        className={`px-4 py-1.5 text-xs font-semibold rounded-full shadow-sm
-          ${
-            selected.status === "Pending"
-              ? "bg-yellow-100 text-yellow-700"
-              : selected.status === "Approved"
-              ? "bg-green-100 text-green-700"
-              : "bg-red-100 text-red-700"
-          }`}
-      >
-        {selected.status}
-      </span>
-    </div>
-
-    {/* Divider */}
-    <div className="border-t mb-6"></div>
-
-    {/* Info Cards */}
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5">
-
-      {/* Requester */}
-      <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-xl">
-        <User className="text-blue-500" />
-        <div>
-          <p className="text-xs text-gray-500">Requester</p>
-          <p className="font-semibold text-gray-800">
-            {selected.requester}
-          </p>
+    <div className="mt-5 rounded-2xl border overflow-hidden shadow-sm">
+      <div className={`flex items-center justify-between px-5 py-4 ${result.isAvailable ? "bg-gradient-to-r from-emerald-600 to-teal-600" : "bg-gradient-to-r from-orange-500 to-red-500"}`}>
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-white/20 rounded-xl"><Warehouse className="w-5 h-5 text-white" /></div>
+          <div>
+            <p className="text-white font-bold text-sm">Inventory Stock Summary</p>
+            <p className="text-white/70 text-xs">{result.itemName}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className={`text-[11px] font-bold px-3 py-1 rounded-full ${result.isAvailable ? "bg-white text-emerald-700" : "bg-white text-red-600"}`}>
+            {result.isAvailable ? "✓ Stock Available" : "✗ Not Available"}
+          </span>
+          <button onClick={onClose} className="text-white/60 hover:text-white text-xl leading-none ml-1">×</button>
         </div>
       </div>
-
-      {/* Department */}
-      <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-xl">
-        <Building2 className="text-purple-500" />
-        <div>
-          <p className="text-xs text-gray-500">Department</p>
-          <p className="font-semibold text-gray-800">
-            {selected.department}
-          </p>
-        </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 bg-white divide-x divide-y sm:divide-y-0 divide-slate-100">
+        {[
+          { label: "Current Stock",   value: result.stock,                                 icon: Boxes,         color: "text-blue-600",    bg: "bg-blue-50",    num: true  },
+          { label: "Requested Qty",   value: requestedQty,                                 icon: Hash,          color: "text-amber-600",   bg: "bg-amber-50",   num: true  },
+          { label: "Remaining Stock", value: result.remaining,                              icon: TrendingDown,  color: result.remaining >= 0 ? "text-emerald-600" : "text-red-600", bg: result.remaining >= 0 ? "bg-emerald-50" : "bg-red-50", num: true },
+          { label: "Stock Status",    value: result.isAvailable ? "Sufficient" : "Deficit", icon: result.isAvailable ? ShieldCheck : AlertTriangle, color: result.isAvailable ? "text-emerald-600" : "text-red-600", bg: result.isAvailable ? "bg-emerald-50" : "bg-red-50", num: false },
+        ].map((s, i) => { const Icon = s.icon; return (
+          <div key={i} className="p-4 flex flex-col gap-2">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${s.bg}`}><Icon className={`w-4 h-4 ${s.color}`} /></div>
+            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{s.label}</p>
+            <p className={`text-xl font-extrabold ${s.color}`}>{s.num ? Number(s.value).toLocaleString() : s.value}</p>
+          </div>
+        );})}
       </div>
-
-      {/* Product */}
-      <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-xl">
-        <Package className="text-green-500" />
-        <div>
-          <p className="text-xs text-gray-500">Product</p>
-          <p className="font-semibold text-gray-800">
-            {selected.productDetails}
-          </p>
+      <div className="px-5 py-4 bg-white border-t border-slate-100">
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Post-Fulfillment Stock</span>
+          <span className="text-xs font-bold text-slate-600">{pct}% remaining</span>
         </div>
-      </div>
-
-      {/* Quantity */}
-      <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-xl">
-        <Hash className="text-orange-500" />
-        <div>
-          <p className="text-xs text-gray-500">Quantity</p>
-          <p className="font-semibold text-gray-800">
-            {selected.quantity}
-          </p>
+        <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+          <div className={`h-full rounded-full transition-all duration-700 ${pct > 40 ? "bg-emerald-500" : pct > 15 ? "bg-amber-400" : "bg-red-500"}`} style={{ width: `${pct}%` }} />
         </div>
       </div>
     </div>
-
-    {/* Action Section */}
-    {selected.status === "Pending" && (
-     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mt-10">
-        <p className="text-sm text-gray-500">
-          Take action on this request
-        </p>
-
-        <div className="flex gap-4">
-          <button
-            onClick={() => handleReject(selected._id)}
-            className="px-6 py-2 rounded-xl border border-red-500 text-red-600 font-medium hover:bg-red-50 transition"
-          >
-            Reject
-          </button>
-
-          <button
-            onClick={() => handleApprove(selected._id)}
-            className="px-6 py-2 rounded-xl bg-gradient-to-r from-green-500 to-green-600 text-white font-medium shadow hover:scale-105 transition"
-          >
-            Approve
-          </button>
-        </div>
-      </div>
-    )}
-  </div>
-</div>
   );
 };
 
-/* =========================
-   MAIN COMPONENT
-========================= */
-const Approvals = () => {
-const [status, setStatus] = useState<string>("Pending");
+/* ================================================================
+   LEFT LIST ITEM
+================================================================ */
+const ListItem = ({
+  item, isSelected, onClick,
+}: {
+  item: MaterialRequest; isSelected: boolean; onClick: () => void;
+}) => (
+  <div
+    onClick={onClick}
+    className={`p-4 rounded-xl border cursor-pointer transition-all duration-150 group ${isSelected ? "bg-blue-50 border-blue-300 shadow-sm" : "bg-slate-50 border-transparent hover:border-slate-300 hover:bg-white hover:shadow-sm"}`}
+  >
+    <div className="flex justify-between items-start gap-2">
+      <div className="flex-1 min-w-0">
+        <div className="flex flex-wrap items-center gap-1.5 mb-1">
+          <span className="font-bold text-slate-800 text-sm">{item.referenceId}</span>
+          <PriorityBadge priority={item.priority} />
+        </div>
+        <p className="text-xs text-slate-500 truncate">{item.requester} · {item.department}</p>
+        <p className="text-xs text-slate-400 truncate mt-0.5">{item.productDetails}</p>
+        <div className="mt-2.5"><StatusBadge status={item.status} /></div>
+      </div>
+      <ChevronRight className={`shrink-0 w-4 h-4 mt-1 transition-colors ${isSelected ? "text-blue-500" : "text-slate-300 group-hover:text-slate-500"}`} />
+    </div>
+  </div>
+);
 
-const [data, setData] = useState<MaterialRequest[]>([]);
+/* ================================================================
+   DETAILS PANEL
+================================================================ */
+interface DetailsPanelProps {
+  item: MaterialRequest | null;
+  stockResult: StockResult | null;
+  stockMessage: { text: string; type: "success" | "error" } | null;
+  loading: { approve: boolean; reject: boolean; stock: boolean; process: boolean };
+  onApprove: () => void;
+  onReject: () => void;
+  onCheckStock: () => void;
+  onProcess: () => void;
+  onCloseStock: () => void;
+}
 
-const [selected, setSelected] =
-  useState<MaterialRequest | null>(null);
+const DetailsPanel = ({
+  item, stockResult, stockMessage, loading,
+  onApprove, onReject, onCheckStock, onProcess, onCloseStock,
+}: DetailsPanelProps) => {
+  if (!item) {
+    return (
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center justify-center min-h-[420px] text-slate-400 gap-3">
+        <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center">
+          <BarChart3 className="w-8 h-8 text-slate-300" />
+        </div>
+        <p className="font-semibold text-sm">Select a request to view details</p>
+        <p className="text-xs text-slate-300">Click any item from the list on the left</p>
+      </div>
+    );
+  }
 
-  const fetchData = () => {
-    fetch(`${API_BASE_URL}/material?status=${status}`)
-      .then((res) => res.json())
-      .then((res) => {
-        setData(res.data || []);
-        setSelected(res.data?.[0] || null);
-      });
-  };
+  const isPending     = item.status === "Pending";
+  const isApproved    = item.status === "Approved";
+  const isCompleted   = item.status === "Completed";
+  const isProcurement = item.status === "Procurement Required";
+  const isRejected    = item.status === "Rejected";
+  const canAct        = isPending || isApproved;
+  const anyLoading    = loading.approve || loading.reject || loading.stock || loading.process;
 
-  useEffect(() => {
-    fetchData();
-  }, [status]);
-
-  const handleApprove = async (id:any) => {
-    await fetch(`${API_BASE_URL}/material/${id}/approve`, {
-      method: "PUT",
-    });
-    fetchData();
-  };
-
-  const handleReject = async (id:any) => {
-    await fetch(`${API_BASE_URL}/material/${id}/reject`, {
-      method: "PUT",
-    });
-    fetchData();
-  };
+  const resolvedBanner = isCompleted
+    ? { bg: "bg-blue-50 border-blue-100", icon: <CheckCircle className="w-4 h-4 text-blue-600" />, iconBg: "bg-blue-100", title: "Request Completed", desc: "Stock was available and has been deducted from inventory.", textColor: "text-blue-700", descColor: "text-blue-600" }
+    : isProcurement
+    ? { bg: "bg-orange-50 border-orange-100", icon: <AlertTriangle className="w-4 h-4 text-orange-600" />, iconBg: "bg-orange-100", title: "Procurement Required", desc: "Stock was insufficient. A purchase requisition must be raised.", textColor: "text-orange-700", descColor: "text-orange-600" }
+    : isRejected
+    ? { bg: "bg-red-50 border-red-100", icon: <XCircle className="w-4 h-4 text-red-600" />, iconBg: "bg-red-100", title: "Request Rejected", desc: "This material request was rejected by the admin.", textColor: "text-red-700", descColor: "text-red-600" }
+    : null;
 
   return (
-    
-<div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 p-6">
+    <div className="space-y-4">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
 
-  <div className="max-w-[1200px] mx-auto grid  grid-cols-1 md:grid-cols-12 gap-6">
-
-    {/* LEFT PANEL */}
-    <div className="col-span-12 md:col-span-5 bg-white rounded-2xl shadow-lg p-4 md:p-5 border">
-
-      {/* Header */}
-      <h2 className="text-lg font-semibold text-gray-800 mb-4">
-        Material Requests
-      </h2>
-
-      {/* Tabs */}
-      <Tabs defaultValue="pending" className="w-full">
-
-       <TabsList className="grid grid-cols-3 bg-gray-100 p-1 rounded-xl mb-4 text-xs md:text-sm">
-
-          <TabsTrigger
-            value="pending"
-            onClick={() => setStatus("Pending")}
-            className="flex items-center justify-center gap-2 text-sm"
-          >
-            <Clock size={16} /> Pending
-          </TabsTrigger>
-
-          <TabsTrigger
-            value="approved"
-            onClick={() => setStatus("Approved")}
-            className="flex items-center justify-center gap-2 text-sm"
-          >
-            <CheckCircle size={16} /> Approved
-          </TabsTrigger>
-
-          <TabsTrigger
-            value="rejected"
-            onClick={() => setStatus("Rejected")}
-            className="flex items-center justify-center gap-2 text-sm"
-          >
-            <XCircle size={16} /> Rejected
-          </TabsTrigger>
-
-        </TabsList>
-
-        {/* Tab Content */}
-       <div className="max-h-[400px] md:max-h-[520px] overflow-y-auto pr-2">
-
-          <TabsContent value="pending">
-            <List data={data} selected={selected} setSelected={setSelected} />
-          </TabsContent>
-
-          <TabsContent value="approved">
-            <List data={data} selected={selected} setSelected={setSelected} />
-          </TabsContent>
-
-          <TabsContent value="rejected">
-            <List data={data} selected={selected} setSelected={setSelected} />
-          </TabsContent>
-
+        {/* ── Dark header ── */}
+        <div className="bg-gradient-to-r from-slate-800 to-slate-700 px-6 py-5">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1.5">
+                <BadgeCheck className="w-4 h-4 text-blue-400" />
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Material Request Detail</span>
+              </div>
+              <h2 className="text-2xl font-extrabold text-white tracking-tight">{item.referenceId}</h2>
+              <p className="text-slate-400 text-xs mt-1">Review request details and take action below.</p>
+            </div>
+            <StatusBadge status={item.status} />
+          </div>
         </div>
-      </Tabs>
-    </div>
 
-    {/* RIGHT PANEL */}
-    <div className="col-span-12 md:col-span-7">
-
-      <div className="">
-
-        {selected ? (
-          <DetailsPanel
-            selected={selected}
-            handleApprove={handleApprove}
-            handleReject={handleReject}
-          />
-        ) : (
-          <div className="flex items-center justify-center h-full text-gray-400 text-sm">
-            Select a request to view details
+        {/* ── Stock message banner ── */}
+        {stockMessage && (
+          <div className={`flex items-center gap-2 px-6 py-3 text-sm font-semibold border-b ${stockMessage.type === "success" ? "bg-emerald-50 text-emerald-700 border-emerald-100" : "bg-red-50 text-red-700 border-red-100"}`}>
+            {stockMessage.type === "success" ? <CheckCircle className="w-4 h-4 shrink-0" /> : <AlertTriangle className="w-4 h-4 shrink-0" />}
+            {stockMessage.text}
           </div>
         )}
 
+        <div className="p-6 space-y-5">
+
+          {/* ── Info cards ── */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {[
+              { label: "Requester",         value: item.requester,        icon: User,      color: "text-blue-500",    bg: "bg-blue-50"    },
+              { label: "Department",         value: item.department,       icon: Building2, color: "text-purple-500",  bg: "bg-purple-50"  },
+              { label: "Product / Item",     value: item.productDetails,   icon: Package,   color: "text-emerald-500", bg: "bg-emerald-50" },
+              { label: "Requested Quantity", value: String(item.quantity), icon: Hash,      color: "text-orange-500",  bg: "bg-orange-50"  },
+            ].map((f, i) => {
+              const Icon = f.icon;
+              return (
+                <div key={i} className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-100">
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${f.bg}`}>
+                    <Icon className={`w-4 h-4 ${f.color}`} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{f.label}</p>
+                    <p className="font-semibold text-slate-800 text-sm truncate">{f.value || "—"}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* ── Workflow stepper ── */}
+          <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-4">Workflow Progress</p>
+            <WorkflowStepper status={item.status} />
+          </div>
+
+          {/* ── Resolved info banner ── */}
+          {resolvedBanner && (
+            <div className={`flex items-start gap-3 p-4 rounded-xl border ${resolvedBanner.bg}`}>
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${resolvedBanner.iconBg}`}>
+                {resolvedBanner.icon}
+              </div>
+              <div>
+                <p className={`font-bold text-sm ${resolvedBanner.textColor}`}>{resolvedBanner.title}</p>
+                <p className={`text-xs mt-0.5 ${resolvedBanner.descColor}`}>{resolvedBanner.desc}</p>
+              </div>
+            </div>
+          )}
+
+          {/* ── Action Buttons (Pending & Approved only) ── */}
+          {canAct && (
+            <div className="border-t border-slate-100 pt-5">
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Admin Actions</p>
+                <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg ${isPending ? "bg-amber-50 text-amber-700 border border-amber-200" : "bg-emerald-50 text-emerald-700 border border-emerald-200"}`}>
+                  {isPending ? "⏳ Awaiting Approval" : "✓ Approved — Awaiting Stock Check"}
+                </span>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                {/* Check Stock — both Pending & Approved */}
+                <button
+                  id="btn-check-stock"
+                  onClick={onCheckStock}
+                  disabled={anyLoading}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white border border-slate-300 text-slate-700 font-semibold text-sm hover:bg-slate-50 hover:border-blue-300 hover:text-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading.stock ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                  Check Stock
+                </button>
+
+                {/* Reject — Pending only */}
+                {isPending && (
+                  <button
+                    id="btn-reject"
+                    onClick={onReject}
+                    disabled={anyLoading}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-50 border border-red-300 text-red-600 font-semibold text-sm hover:bg-red-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading.reject ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
+                    Reject
+                  </button>
+                )}
+
+                {/* Approve — Pending only */}
+                {isPending && (
+                  <button
+                    id="btn-approve"
+                    onClick={onApprove}
+                    disabled={anyLoading}
+                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold text-sm shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading.approve ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                    Approve
+                  </button>
+                )}
+
+                {/* Process & Check Stock — Approved only */}
+                {isApproved && (
+                  <button
+                    id="btn-process"
+                    onClick={onProcess}
+                    disabled={anyLoading}
+                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold text-sm shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading.process ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
+                    Process & Check Stock
+                  </button>
+                )}
+              </div>
+
+              {/* Workflow hint */}
+              <div className="mt-4 p-3 bg-slate-50 rounded-xl border border-slate-100">
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">How it works</p>
+                <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-slate-500">
+                  {isPending ? (
+                    <>
+                      <span className="font-semibold text-amber-600">Pending</span>
+                      <ArrowRight className="w-3 h-3 text-slate-300" />
+                      <span className="font-semibold">Approve / Reject</span>
+                      <ArrowRight className="w-3 h-3 text-slate-300" />
+                      <span className="font-semibold text-emerald-600">Approved</span>
+                      <span className="text-slate-300 font-bold">/</span>
+                      <span className="font-semibold text-red-600">Rejected</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="font-semibold text-emerald-600">Already Approved</span>
+                      <ArrowRight className="w-3 h-3 text-slate-300" />
+                      <span>Process & Check Stock</span>
+                      <ArrowRight className="w-3 h-3 text-slate-300" />
+                      <span className="font-semibold text-blue-600">Stock OK → Completed</span>
+                      <span className="text-slate-300 font-bold">|</span>
+                      <span className="font-semibold text-orange-600">No Stock → Procurement</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
+      {/* Stock summary card */}
+      {stockResult && (
+        <StockSummaryCard result={stockResult} requestedQty={item.quantity} onClose={onCloseStock} />
+      )}
     </div>
+  );
+};
 
-  </div>
-</div>
+/* ================================================================
+   MAIN COMPONENT
+================================================================ */
+const PAGE_SIZE = 8;
+
+const EMPTY_COUNTS: CountsMap = {
+  Pending: 0,
+  Approved: 0,
+  Completed: 0,
+  Rejected: 0,
+  "Procurement Required": 0,
+};
+
+const Approvals = () => {
+  const [activeSlug,    setActiveSlug]    = useState<TabSlug>("pending");
+  const [requests,      setRequests]      = useState<MaterialRequest[]>([]);
+  const [selected,      setSelected]      = useState<MaterialRequest | null>(null);
+  const [counts,        setCounts]        = useState<CountsMap>(EMPTY_COUNTS);
+  const [stockResult,   setStockResult]   = useState<StockResult | null>(null);
+  const [stockMessage,  setStockMessage]  = useState<{ text: string; type: "success" | "error" } | null>(null);
+  const [search,        setSearch]        = useState("");
+  const [page,          setPage]          = useState(1);
+  const [loading,       setLoading]       = useState({ list: false, counts: false, approve: false, reject: false, stock: false, process: false });
+
+  const activeTab = TABS.find((t) => t.slug === activeSlug)!;
+
+  /* ── Fetch all tab counts in parallel ── */
+  const fetchAllCounts = useCallback(async () => {
+    setLoading((p) => ({ ...p, counts: true }));
+    try {
+      const statuses: ApiStatus[] = ["Pending", "Approved", "Completed", "Rejected", "Procurement Required"];
+      const results = await Promise.all(
+        statuses.map((s) =>
+          fetch(`${API_BASE_URL}/material?status=${encodeURIComponent(s)}`)
+            .then((r) => r.json())
+            .then((j) => ({ status: s, count: (j.data ?? []).length as number }))
+            .catch(() => ({ status: s, count: 0 }))
+        )
+      );
+      const map = { ...EMPTY_COUNTS };
+      results.forEach(({ status, count }) => { map[status] = count; });
+      setCounts(map);
+    } finally {
+      setLoading((p) => ({ ...p, counts: false }));
+    }
+  }, []);
+
+  /* ── Fetch requests for the active tab ── */
+  const fetchRequests = useCallback(async (slug?: TabSlug) => {
+    const tab = TABS.find((t) => t.slug === (slug ?? activeSlug))!;
+    setLoading((p) => ({ ...p, list: true }));
+    try {
+      const res  = await fetch(`${API_BASE_URL}/material?status=${encodeURIComponent(tab.apiStatus)}`);
+      const json = await res.json();
+      const list: MaterialRequest[] = json.data ?? [];
+      setRequests(list);
+      setSelected(list[0] ?? null);
+      setStockResult(null);
+      setStockMessage(null);
+      setPage(1);
+    } catch (err) {
+      console.error("Fetch error:", err);
+    } finally {
+      setLoading((p) => ({ ...p, list: false }));
+    }
+  }, [activeSlug]);
+
+  /* ── Switch tab + refresh ── */
+  const switchTab = useCallback((slug: TabSlug) => {
+    setActiveSlug(slug);
+    setSearch("");
+    setPage(1);
+  }, []);
+
+  /* ── Initial load ── */
+  useEffect(() => {
+    fetchRequests();
+    fetchAllCounts();
+  }, [activeSlug]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ── Reset page on search ── */
+  useEffect(() => { setPage(1); }, [search]);
+
+  const handleSelect = (item: MaterialRequest) => {
+    setSelected(item);
+    setStockResult(null);
+    setStockMessage(null);
+  };
+
+  /* ── Check Stock (standalone, no status change) ── */
+  const handleCheckStock = async () => {
+    if (!selected) return;
+    setLoading((p) => ({ ...p, stock: true }));
+    setStockResult(null);
+    setStockMessage(null);
+    try {
+      const res  = await fetch(`${API_BASE_URL}/inventory/check-stock/${encodeURIComponent(selected.productDetails)}`);
+      const json = await res.json();
+      if (!json.found) {
+        setStockMessage({ text: `"${selected.productDetails}" not found in inventory.`, type: "error" });
+        return;
+      }
+      const currentStock: number = json.stock ?? 0;
+      const isAvailable = currentStock >= selected.quantity;
+      setStockResult({
+        found:       true,
+        stock:       currentStock,
+        itemName:    json.itemName ?? selected.productDetails,
+        inventoryId: json.data?._id ?? "",
+        isAvailable,
+        remaining:   currentStock - selected.quantity,
+      });
+      setStockMessage(
+        isAvailable
+          ? { text: "✓ Stock Available — sufficient quantity in inventory.", type: "success" }
+          : { text: "✗ Stock Not Available — insufficient quantity for this request.", type: "error" }
+      );
+    } catch {
+      setStockMessage({ text: "Failed to check stock. Please try again.", type: "error" });
+    } finally {
+      setLoading((p) => ({ ...p, stock: false }));
+    }
+  };
+
+  /* ── Approve: mark Approved and move to Approved tab ── */
+  const handleApprove = async () => {
+    if (!selected) return;
+    setLoading((p) => ({ ...p, approve: true }));
+    setStockResult(null);
+    setStockMessage(null);
+    try {
+      // 1. Mark Approved
+      await fetch(`${API_BASE_URL}/material/${selected._id}/approve`, { method: "PUT" });
+      setStockMessage({ text: "✓ Material Request Approved successfully.", type: "success" });
+      
+      // 2. Refresh counts and switch tab
+      await fetchAllCounts();
+      switchTab("approved");
+      await fetchRequests("approved");
+    } catch {
+      setStockMessage({ text: "An error occurred. Please try again.", type: "error" });
+    } finally {
+      setLoading((p) => ({ ...p, approve: false }));
+    }
+  };
+
+  /* ── Reject: mark Rejected → move to Rejected tab ── */
+  const handleReject = async () => {
+    if (!selected) return;
+    setLoading((p) => ({ ...p, reject: true }));
+    setStockResult(null);
+    setStockMessage(null);
+    try {
+      await fetch(`${API_BASE_URL}/material/${selected._id}/reject`, { method: "PUT" });
+      setStockMessage({ text: "✗ Material Request Rejected.", type: "error" });
+      
+      // Refresh counts + move to Rejected tab
+      await fetchAllCounts();
+      switchTab("rejected");
+      await fetchRequests("rejected");
+    } catch {
+      console.error("Reject error");
+    } finally {
+      setLoading((p) => ({ ...p, reject: false }));
+    }
+  };
+
+  /* ── Process (already-Approved): stock check → Complete or Procurement ── */
+  const handleProcess = async () => {
+    if (!selected) return;
+    setLoading((p) => ({ ...p, process: true }));
+    setStockResult(null);
+    setStockMessage(null);
+    try {
+      const stockRes  = await fetch(`${API_BASE_URL}/inventory/check-stock/${encodeURIComponent(selected.productDetails)}`);
+      const stockJson = await stockRes.json();
+      const currentStock: number = stockJson.stock ?? 0;
+      const isAvailable = stockJson.found && currentStock >= selected.quantity;
+
+      const result: StockResult = {
+        found:       stockJson.found ?? false,
+        stock:       currentStock,
+        itemName:    stockJson.itemName ?? selected.productDetails,
+        inventoryId: stockJson.data?._id ?? "",
+        isAvailable,
+        remaining:   currentStock - selected.quantity,
+      };
+      setStockResult(result);
+
+      if (isAvailable && result.inventoryId) {
+        await fetch(`${API_BASE_URL}/inventory/deduct-stock/${result.inventoryId}`, {
+          method: "PUT", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ quantity: selected.quantity }),
+        });
+        await fetch(`${API_BASE_URL}/material/${selected._id}/complete`, { method: "PUT" });
+        setStockMessage({ text: `✓ Stock Available — Deducted ${selected.quantity} units. Request marked as Completed.`, type: "success" });
+        await fetchAllCounts();
+        switchTab("completed");
+        await fetchRequests("completed");
+      } else {
+        await fetch(`${API_BASE_URL}/material/${selected._id}/procurement-required`, { method: "PUT" });
+        setStockMessage({ text: "✗ Stock Not Available — Moved to Procurement Required.", type: "error" });
+        await fetchAllCounts();
+        switchTab("procurement-required");
+        await fetchRequests("procurement-required");
+      }
+    } catch {
+      setStockMessage({ text: "An error occurred. Please try again.", type: "error" });
+    } finally {
+      setLoading((p) => ({ ...p, process: false }));
+    }
+  };
+
+  /* ── Filtered + paginated list ── */
+  const filtered = requests.filter((r) => {
+    const q = search.toLowerCase();
+    return (
+      r.referenceId.toLowerCase().includes(q)   ||
+      r.requester.toLowerCase().includes(q)      ||
+      r.department.toLowerCase().includes(q)     ||
+      r.productDetails.toLowerCase().includes(q)
+    );
+  });
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage   = Math.min(page, totalPages);
+  const paginated  = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+  /* ================================================================
+     RENDER
+  ================================================================ */
+  return (
+    <div className="min-h-screen bg-slate-50 p-4 md:p-6">
+
+      {/* ── Page Header ── */}
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-1">
+          <ShieldCheck className="w-4 h-4 text-blue-600" />
+          <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Approval Management</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-extrabold text-slate-800">Material Request Approvals</h1>
+            <p className="text-slate-500 text-sm mt-1">
+              Review and process material requests. Approve triggers automatic stock check and inventory deduction.
+            </p>
+          </div>
+          <button
+            onClick={() => { fetchRequests(); fetchAllCounts(); }}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-600 text-sm font-semibold hover:bg-slate-50 transition"
+          >
+            <RefreshCcw className={`w-4 h-4 ${loading.list || loading.counts ? "animate-spin" : ""}`} />
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      {/* ── Main layout ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+
+        {/* ════ LEFT PANEL ════ */}
+        <div className="col-span-12 lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col">
+
+          {/* Search bar */}
+          <div className="p-4 border-b border-slate-100">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search by ID, requester, product…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300 transition"
+              />
+            </div>
+          </div>
+
+          {/* ── Status Tab Buttons ── */}
+          <div className="p-4 border-b border-slate-100">
+            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-3">Filter by Status</p>
+            <div className="flex flex-col gap-2">
+              {/* Top 3 */}
+              <div className="grid grid-cols-3 gap-2">
+                {TABS.slice(0, 3).map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = activeSlug === tab.slug;
+                  const count = counts[tab.apiStatus];
+                  return (
+                    <button
+                      key={tab.slug}
+                      onClick={() => switchTab(tab.slug)}
+                      className={`flex items-center gap-2 px-3 py-3 rounded-xl font-semibold text-sm transition-all duration-200 ${
+                        isActive
+                          ? `${tab.activeBg} ${tab.activeText} shadow-lg ${tab.activeShadow}`
+                          : `bg-white border ${tab.inactiveBorder} ${tab.inactiveText} ${tab.inactiveHover}`
+                      }`}
+                    >
+                      <Icon className="w-4 h-4 shrink-0" />
+                      <span className="truncate text-xs">{tab.label}</span>
+                      <span className={`ml-auto text-[10px] font-extrabold min-w-[20px] text-center px-1.5 py-0.5 rounded-full ${
+                        isActive ? `${tab.countActiveBg} ${tab.countActiveText}` : `${tab.countBg} ${tab.countText}`
+                      }`}>
+                        {loading.counts && count === 0 ? "…" : count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              {/* Bottom 2 */}
+              <div className="grid grid-cols-2 gap-2">
+                {TABS.slice(3).map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = activeSlug === tab.slug;
+                  const count = counts[tab.apiStatus];
+                  return (
+                    <button
+                      key={tab.slug}
+                      onClick={() => switchTab(tab.slug)}
+                      className={`flex items-center gap-2 px-3 py-3 rounded-xl font-semibold text-sm transition-all duration-200 ${
+                        isActive
+                          ? `${tab.activeBg} ${tab.activeText} shadow-lg ${tab.activeShadow}`
+                          : `bg-white border ${tab.inactiveBorder} ${tab.inactiveText} ${tab.inactiveHover}`
+                      }`}
+                    >
+                      <Icon className="w-4 h-4 shrink-0" />
+                      <span className="truncate text-xs">{tab.label}</span>
+                      <span className={`ml-auto text-[10px] font-extrabold min-w-[20px] text-center px-1.5 py-0.5 rounded-full ${
+                        isActive ? `${tab.countActiveBg} ${tab.countActiveText}` : `${tab.countBg} ${tab.countText}`
+                      }`}>
+                        {loading.counts && count === 0 ? "…" : count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* ── Request List ── */}
+          <div className="flex-1 overflow-y-auto px-4 pt-3 pb-1">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                {activeTab.label} Requests
+              </p>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${activeTab.countBg} ${activeTab.countText}`}>
+                {filtered.length} found
+              </span>
+            </div>
+
+            {loading.list ? (
+              <div className="flex justify-center items-center py-14">
+                <RefreshCcw className="w-5 h-5 text-slate-400 animate-spin" />
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-14 text-slate-400">
+                <Boxes className="w-9 h-9 text-slate-300 mb-2" />
+                <p className="text-sm font-semibold">No {activeTab.label.toLowerCase()} requests</p>
+                <p className="text-xs text-slate-300 mt-0.5">
+                  {search ? "Try a different search term" : "All clear!"}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {paginated.map((req) => (
+                  <ListItem
+                    key={req._id}
+                    item={req}
+                    isSelected={selected?._id === req._id}
+                    onClick={() => handleSelect(req)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* ── Pagination ── */}
+          {filtered.length > PAGE_SIZE && (
+            <div className="px-4 py-3 border-t border-slate-100 flex items-center justify-between">
+              <p className="text-xs text-slate-500 font-medium">
+                <span className="font-bold text-slate-700">{(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filtered.length)}</span>
+                {" "}of{" "}
+                <span className="font-bold text-slate-700">{filtered.length}</span>
+              </p>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={safePage === 1}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition font-bold text-sm"
+                >‹</button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setPage(p)}
+                    className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition ${
+                      p === safePage
+                        ? `${activeTab.activeBg} ${activeTab.activeText} shadow-sm`
+                        : "border border-slate-200 text-slate-500 hover:bg-slate-100"
+                    }`}
+                  >{p}</button>
+                ))}
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={safePage === totalPages}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition font-bold text-sm"
+                >›</button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ════ RIGHT PANEL ════ */}
+        <div className="col-span-12 lg:col-span-7 space-y-4">
+          <DetailsPanel
+            item={selected}
+            stockResult={stockResult}
+            stockMessage={stockMessage}
+            loading={loading}
+            onApprove={handleApprove}
+            onReject={handleReject}
+            onCheckStock={handleCheckStock}
+            onProcess={handleProcess}
+            onCloseStock={() => { setStockResult(null); setStockMessage(null); }}
+          />
+          {/* Workflow diagram — shown when no item selected */}
+          {!selected && <WorkflowDiagram />}
+        </div>
+      </div>
+    </div>
   );
 };
 
