@@ -4,6 +4,7 @@ import { API_BASE_URL } from "../../config/http";
 import { toast } from "sonner";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useLocation } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 
@@ -153,7 +154,10 @@ const STATIC_VENDORS: Vendor[] = [
 /* ---------------- Page Component ---------------- */
 const VendorsPage = () => {
  
-  const [activeTab, setActiveTab] = useState("all-vendors");
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState(() => {
+    return location.state?.activeTab || "all-vendors";
+  });
 
  
  const [vendors, setVendors] = useState<Vendor[]>([]);
@@ -344,6 +348,13 @@ const VendorsPage = () => {
     fetchVendors();
     fetchPurchaseRequests();
   }, []);
+
+  // Sync activeTab when location state changes
+  useEffect(() => {
+    if (location.state?.activeTab) {
+      setActiveTab(location.state.activeTab);
+    }
+  }, [location.state]);
 
   const fetchPurchaseRequests = async () => {
     try {

@@ -3,6 +3,8 @@ export const pageTitles: Record<string, string> = {
   "/material-request": "Material Request",
   "/apporavals": "Approvals",
   "/procurement": "Procurement",
+  "/procurement/vendor": "Vendors",
+  "/procurement/requisition": "Procurement Requisition",
   "/inventory": "Inventory",
   "/qcmanagement": "QC Management",
   "/barcode-tracking": "Barcode Tracking",

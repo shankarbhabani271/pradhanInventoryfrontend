@@ -298,6 +298,32 @@ const AppRouter = () => {
       />
 
       <Route
+        path="/procurement/vendor"
+        element={
+          <ProtectedRoute allowedRoles={["admin", "procurement"]}>
+            <Layout>
+              <SuspenseGate>
+                <Vendors />
+              </SuspenseGate>
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/procurement/requisition"
+        element={
+          <ProtectedRoute allowedRoles={["admin", "procurement"]}>
+            <Layout>
+              <SuspenseGate>
+                <Procurement />
+              </SuspenseGate>
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="/inventory"
         element={
           <ProtectedRoute allowedRoles={["admin", "inventory"]}>
@@ -351,15 +377,7 @@ const AppRouter = () => {
 
       <Route
         path="/vendors"
-        element={
-          <ProtectedRoute allowedRoles={["admin", "procurement"]}>
-            <Layout>
-              <SuspenseGate>
-                <Vendors />
-              </SuspenseGate>
-            </Layout>
-          </ProtectedRoute>
-        }
+        element={<Navigate to="/procurement/vendor" replace />}
       />
 
       <Route

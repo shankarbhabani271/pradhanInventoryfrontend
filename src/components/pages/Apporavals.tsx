@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import {
   ChevronRight,
   User,
@@ -19,8 +21,10 @@ import {
   BarChart3,
   ArrowRight,
   ArrowDown,
+  Trash2,
 } from "lucide-react";
 import { API_BASE_URL } from "../../config/http";
+
 
 /* ================================================================
    TYPES
@@ -175,12 +179,14 @@ const STATUS_STYLES: Record<string, { bg: string; border: string; text: string; 
   Rejected:               { bg: "bg-red-50",    border: "border-red-200",    text: "text-red-600",    dot: "bg-red-500"    },
   "Procurement Required": { bg: "bg-orange-50", border: "border-orange-200", text: "text-orange-700", dot: "bg-orange-500" },
   Completed:              { bg: "bg-blue-50",   border: "border-blue-200",   text: "text-blue-700",   dot: "bg-blue-500"   },
+  "Procurement Completed": { bg: "bg-blue-50",   border: "border-blue-200",   text: "text-blue-700",   dot: "bg-blue-500"   },
+  "PO Created":            { bg: "bg-blue-50",   border: "border-blue-200",   text: "text-blue-700",   dot: "bg-blue-500"   },
 };
 
-const StatusBadge = ({ status }: { status: string }) => {
+const StatusBadge = ({ status, isClickable = false }: { status: string; isClickable?: boolean }) => {
   const s = STATUS_STYLES[status] ?? { bg: "bg-gray-50", border: "border-gray-200", text: "text-gray-600", dot: "bg-gray-400" };
   return (
-    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border ${s.bg} ${s.border} ${s.text}`}>
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border transition-all ${s.bg} ${s.border} ${s.text} ${isClickable ? "hover:bg-orange-100 hover:border-orange-300 hover:text-orange-700 cursor-pointer active:scale-95 shadow-sm" : ""}`}>
       <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
       {status}
     </span>
@@ -352,9 +358,9 @@ const StockSummaryCard = ({
    LEFT LIST ITEM
 ================================================================ */
 const ListItem = ({
-  item, isSelected, onClick,
+  item, isSelected, onClick, onDeleteAction,
 }: {
-  item: MaterialRequest; isSelected: boolean; onClick: () => void;
+  item: MaterialRequest; isSelected: boolean; onClick: () => void; onDeleteAction?: () => void;
 }) => (
   <div
     onClick={onClick}
@@ -368,12 +374,26 @@ const ListItem = ({
         </div>
         <p className="text-xs text-slate-500 truncate">{item.requester} · {item.department}</p>
         <p className="text-xs text-slate-400 truncate mt-0.5">{item.productDetails}</p>
-        <div className="mt-2.5"><StatusBadge status={item.status} /></div>
+        <div className="mt-2.5">
+          <StatusBadge status={item.status} isClickable={false} />
+        </div>
       </div>
-      <ChevronRight className={`shrink-0 w-4 h-4 mt-1 transition-colors ${isSelected ? "text-blue-500" : "text-slate-300 group-hover:text-slate-500"}`} />
+      {onDeleteAction && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onDeleteAction();
+          }}
+          className="shrink-0 p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all mt-1 focus:outline-none"
+          title="Delete Procurement Request"
+        >
+          <Trash2 className="w-4.5 h-4.5" />
+        </button>
+      )}
     </div>
   </div>
 );
+
 
 /* ================================================================
    DETAILS PANEL
@@ -388,11 +408,12 @@ interface DetailsPanelProps {
   onCheckStock: () => void;
   onProcess: () => void;
   onCloseStock: () => void;
+  onProcure?: () => void;
 }
 
 const DetailsPanel = ({
   item, stockResult, stockMessage, loading,
-  onApprove, onReject, onCheckStock, onProcess, onCloseStock,
+  onApprove, onReject, onCheckStock, onProcess, onCloseStock, onProcure,
 }: DetailsPanelProps) => {
   if (!item) {
     return (
@@ -408,14 +429,16 @@ const DetailsPanel = ({
 
   const isPending     = item.status === "Pending";
   const isApproved    = item.status === "Approved";
-  const isCompleted   = item.status === "Completed";
+  const isCompleted   = item.status === "Completed" || item.status === "Procurement Completed" || item.status === "PO Created";
   const isProcurement = item.status === "Procurement Required";
   const isRejected    = item.status === "Rejected";
-  const canAct        = isPending || isApproved;
+  const canAct        = isPending || isApproved || isProcurement;
   const anyLoading    = loading.approve || loading.reject || loading.stock || loading.process;
 
-  const resolvedBanner = isCompleted
+  const resolvedBanner = item.status === "Completed"
     ? { bg: "bg-blue-50 border-blue-100", icon: <CheckCircle className="w-4 h-4 text-blue-600" />, iconBg: "bg-blue-100", title: "Request Completed", desc: "Stock was available and has been deducted from inventory.", textColor: "text-blue-700", descColor: "text-blue-600" }
+    : item.status === "Procurement Completed" || item.status === "PO Created"
+    ? { bg: "bg-blue-50 border-blue-100", icon: <CheckCircle className="w-4 h-4 text-blue-600" />, iconBg: "bg-blue-100", title: "Procurement Completed", desc: "Purchase Order was created and procurement has been successfully completed.", textColor: "text-blue-700", descColor: "text-blue-600" }
     : isProcurement
     ? { bg: "bg-orange-50 border-orange-100", icon: <AlertTriangle className="w-4 h-4 text-orange-600" />, iconBg: "bg-orange-100", title: "Procurement Required", desc: "Stock was insufficient. A purchase requisition must be raised.", textColor: "text-orange-700", descColor: "text-orange-600" }
     : isRejected
@@ -493,27 +516,29 @@ const DetailsPanel = ({
             </div>
           )}
 
-          {/* ── Action Buttons (Pending & Approved only) ── */}
+          {/* ── Action Buttons (Pending, Approved & Procurement Required) ── */}
           {canAct && (
             <div className="border-t border-slate-100 pt-5">
               <div className="flex items-center justify-between mb-4">
                 <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Admin Actions</p>
-                <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg ${isPending ? "bg-amber-50 text-amber-700 border border-amber-200" : "bg-emerald-50 text-emerald-700 border border-emerald-200"}`}>
-                  {isPending ? "⏳ Awaiting Approval" : "✓ Approved — Awaiting Stock Check"}
+                <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg ${isPending ? "bg-amber-50 text-amber-700 border border-amber-200" : isApproved ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-orange-50 text-orange-700 border border-orange-200"}`}>
+                  {isPending ? "⏳ Awaiting Approval" : isApproved ? "✓ Approved — Awaiting Stock Check" : "🟠 Procurement Required"}
                 </span>
               </div>
 
               <div className="flex flex-wrap gap-3">
                 {/* Check Stock — both Pending & Approved */}
-                <button
-                  id="btn-check-stock"
-                  onClick={onCheckStock}
-                  disabled={anyLoading}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white border border-slate-300 text-slate-700 font-semibold text-sm hover:bg-slate-50 hover:border-blue-300 hover:text-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading.stock ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-                  Check Stock
-                </button>
+                {(isPending || isApproved) && (
+                  <button
+                    id="btn-check-stock"
+                    onClick={onCheckStock}
+                    disabled={anyLoading}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white border border-slate-300 text-slate-700 font-semibold text-sm hover:bg-slate-50 hover:border-blue-300 hover:text-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading.stock ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                    Check Stock
+                  </button>
+                )}
 
                 {/* Reject — Pending only */}
                 {isPending && (
@@ -553,6 +578,19 @@ const DetailsPanel = ({
                     Process & Check Stock
                   </button>
                 )}
+
+                {/* Procurement Required — Procurement Required only */}
+                {isProcurement && onProcure && (
+                  <button
+                    id="btn-procure"
+                    onClick={onProcure}
+                    disabled={anyLoading}
+                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-semibold text-sm shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ArrowRight className="w-4 h-4" />
+                    Procurement Required
+                  </button>
+                )}
               </div>
 
               {/* Workflow hint */}
@@ -569,7 +607,7 @@ const DetailsPanel = ({
                       <span className="text-slate-300 font-bold">/</span>
                       <span className="font-semibold text-red-600">Rejected</span>
                     </>
-                  ) : (
+                  ) : isApproved ? (
                     <>
                       <span className="font-semibold text-emerald-600">Already Approved</span>
                       <ArrowRight className="w-3 h-3 text-slate-300" />
@@ -578,6 +616,14 @@ const DetailsPanel = ({
                       <span className="font-semibold text-blue-600">Stock OK → Completed</span>
                       <span className="text-slate-300 font-bold">|</span>
                       <span className="font-semibold text-orange-600">No Stock → Procurement</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="font-semibold text-orange-600">Procurement Required</span>
+                      <ArrowRight className="w-3 h-3 text-slate-300" />
+                      <span>Click Procurement Required Button</span>
+                      <ArrowRight className="w-3 h-3 text-slate-300" />
+                      <span className="font-semibold text-blue-600">Create PO → Completed</span>
                     </>
                   )}
                 </div>
@@ -595,6 +641,7 @@ const DetailsPanel = ({
   );
 };
 
+
 /* ================================================================
    MAIN COMPONENT
 ================================================================ */
@@ -609,6 +656,7 @@ const EMPTY_COUNTS: CountsMap = {
 };
 
 const Approvals = () => {
+  const navigate = useNavigate();
   const [activeSlug,    setActiveSlug]    = useState<TabSlug>("pending");
   const [requests,      setRequests]      = useState<MaterialRequest[]>([]);
   const [selected,      setSelected]      = useState<MaterialRequest | null>(null);
@@ -618,6 +666,8 @@ const Approvals = () => {
   const [search,        setSearch]        = useState("");
   const [page,          setPage]          = useState(1);
   const [loading,       setLoading]       = useState({ list: false, counts: false, approve: false, reject: false, stock: false, process: false });
+  const [requestToDelete, setRequestToDelete] = useState<MaterialRequest | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const activeTab = TABS.find((t) => t.slug === activeSlug)!;
 
@@ -625,7 +675,7 @@ const Approvals = () => {
   const fetchAllCounts = useCallback(async () => {
     setLoading((p) => ({ ...p, counts: true }));
     try {
-      const statuses: ApiStatus[] = ["Pending", "Approved", "Completed", "Rejected", "Procurement Required"];
+      const statuses: string[] = ["Pending", "Approved", "Completed", "Rejected", "Procurement Required", "Procurement Completed", "PO Created"];
       const results = await Promise.all(
         statuses.map((s) =>
           fetch(`${API_BASE_URL}/material?status=${encodeURIComponent(s)}`)
@@ -634,8 +684,17 @@ const Approvals = () => {
             .catch(() => ({ status: s, count: 0 }))
         )
       );
+      
       const map = { ...EMPTY_COUNTS };
-      results.forEach(({ status, count }) => { map[status] = count; });
+      let completedCount = 0;
+      results.forEach(({ status, count }) => {
+        if (status === "Completed" || status === "Procurement Completed" || status === "PO Created") {
+          completedCount += count;
+        } else if (status in map) {
+          map[status as ApiStatus] = count;
+        }
+      });
+      map["Completed"] = completedCount;
       setCounts(map);
     } finally {
       setLoading((p) => ({ ...p, counts: false }));
@@ -647,9 +706,19 @@ const Approvals = () => {
     const tab = TABS.find((t) => t.slug === (slug ?? activeSlug))!;
     setLoading((p) => ({ ...p, list: true }));
     try {
-      const res  = await fetch(`${API_BASE_URL}/material?status=${encodeURIComponent(tab.apiStatus)}`);
-      const json = await res.json();
-      const list: MaterialRequest[] = json.data ?? [];
+      let list: MaterialRequest[] = [];
+      if (tab.apiStatus === "Completed") {
+        const [res1, res2, res3] = await Promise.all([
+          fetch(`${API_BASE_URL}/material?status=Completed`).then(r => r.json()),
+          fetch(`${API_BASE_URL}/material?status=${encodeURIComponent("Procurement Completed")}`).then(r => r.json()),
+          fetch(`${API_BASE_URL}/material?status=${encodeURIComponent("PO Created")}`).then(r => r.json())
+        ]);
+        list = [...(res1.data ?? []), ...(res2.data ?? []), ...(res3.data ?? [])];
+      } else {
+        const res  = await fetch(`${API_BASE_URL}/material?status=${encodeURIComponent(tab.apiStatus)}`);
+        const json = await res.json();
+        list = json.data ?? [];
+      }
       setRequests(list);
       setSelected(list[0] ?? null);
       setStockResult(null);
@@ -661,6 +730,7 @@ const Approvals = () => {
       setLoading((p) => ({ ...p, list: false }));
     }
   }, [activeSlug]);
+
 
   /* ── Switch tab + refresh ── */
   const switchTab = useCallback((slug: TabSlug) => {
@@ -808,8 +878,150 @@ const Approvals = () => {
     }
   };
 
+  const handleMoveToProcurement = async (req: MaterialRequest) => {
+    const toastId = toast.loading(`Transferring ${req.referenceId} to Vendor module...`);
+    try {
+      // 1. Fetch available vendors to pick one
+      let vendorName = "HP Solutions";
+      try {
+        const vendorRes = await fetch(`${API_BASE_URL}/vendor/get`);
+        const vendorData = await vendorRes.json();
+        let loadedVendors = [];
+        if (Array.isArray(vendorData)) {
+          loadedVendors = vendorData;
+        } else if (vendorData && Array.isArray(vendorData.vendors)) {
+          loadedVendors = vendorData.vendors;
+        }
+        if (loadedVendors.length > 0) {
+          const matched = loadedVendors.find((v: any) => 
+            (v.name || v.vendorName || "").toLowerCase().includes(req.department.toLowerCase()) ||
+            (v.productType || v.category || "").toLowerCase().includes(req.productDetails.toLowerCase())
+          );
+          vendorName = matched ? (matched.name || matched.vendorName) : (loadedVendors[0].name || loadedVendors[0].vendorName);
+        }
+      } catch (err) {
+        console.warn("Failed to fetch vendors, defaulting to HP Solutions", err);
+      }
+
+      // 2. Build purchase request payload
+      const requestNumber = "PR-" + Math.floor(1000 + Math.random() * 9000);
+      const todayStr = new Date().toISOString().split("T")[0];
+      
+      const prPayload = {
+        department: req.department,
+        vendor: vendorName,
+        products: [{
+          name: req.productDetails,
+          quantity: req.quantity,
+          price: 1200
+        }],
+        totalAmount: req.quantity * 1200,
+        requestedBy: req.requester,
+        status: "Pending",
+        createdDate: todayStr,
+        materialRequestId: req._id
+      };
+
+      const fullLocalPR = {
+        ...prPayload,
+        id: requestNumber,
+        vendorId: "1",
+        startDate: todayStr,
+        endDate: todayStr,
+        deliveryAddress: "Corporate Head Office",
+        specialInstructions: `Generated automatically from Material Request ${req.referenceId}`,
+        totalQty: req.quantity,
+        materialRequestId: req._id
+      };
+
+      // 3. POST purchase request to database
+      try {
+        const createRes = await fetch(`${API_BASE_URL}/purchase-request/create`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(prPayload)
+        });
+        const createJson = await createRes.json();
+        if (createJson.success && createJson.data) {
+          const dbPR = createJson.data;
+          fullLocalPR.id = dbPR.id || "PR-" + dbPR._id.substring(dbPR._id.length - 4).toUpperCase();
+        }
+      } catch (err) {
+        console.warn("Backend purchase request save failed, falling back to local storage only", err);
+      }
+
+      // 4. Save to local storage for dynamic sync in vendors module
+      const saved = localStorage.getItem("purchase_requests");
+      let requestsList = [];
+      if (saved) {
+        try {
+          requestsList = JSON.parse(saved);
+        } catch {
+          requestsList = [];
+        }
+      }
+      requestsList.unshift(fullLocalPR);
+      localStorage.setItem("purchase_requests", JSON.stringify(requestsList));
+
+      toast.success(`Request ${req.referenceId} successfully moved to Vendor module! 🎉`, { id: toastId });
+
+      // 5. Refresh approvals state dynamically
+      await fetchAllCounts();
+      await fetchRequests();
+
+      // 6. Navigate directly to Vendors page's Purchase Requests tab
+      navigate("/procurement/vendor", { state: { activeTab: "purchase-request" } });
+
+    } catch (error) {
+      console.error("Move to procurement failed:", error);
+      toast.error("Failed to transfer request to Vendor module.", { id: toastId });
+    }
+  };
+
+  const handleDeleteClick = (req: MaterialRequest) => {
+    setRequestToDelete(req);
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!requestToDelete) return;
+    const toastId = toast.loading(`Deleting Procurement Request ${requestToDelete.referenceId}...`);
+    try {
+      const res = await fetch(`${API_BASE_URL}/material/${requestToDelete._id}`, {
+        method: "DELETE",
+      });
+      const json = await res.json();
+      if (json.success) {
+        toast.success(`Request ${requestToDelete.referenceId} permanently deleted! 🗑️`, { id: toastId });
+        
+        // Clean up local storage purchase_requests as well
+        try {
+          const saved = localStorage.getItem("purchase_requests");
+          if (saved) {
+            const list = JSON.parse(saved);
+            const filteredList = list.filter((r: any) => r.materialRequestId !== requestToDelete._id);
+            localStorage.setItem("purchase_requests", JSON.stringify(filteredList));
+          }
+        } catch (lsErr) {
+          console.warn("Failed to clean up localStorage PRs:", lsErr);
+        }
+
+        setShowDeleteModal(false);
+        setRequestToDelete(null);
+        await fetchAllCounts();
+        await fetchRequests();
+      } else {
+        toast.error(json.message || "Failed to delete request.", { id: toastId });
+      }
+    } catch (err) {
+      console.error("Delete request error:", err);
+      toast.error("Failed to delete request due to server or network error.", { id: toastId });
+    }
+  };
+
   /* ── Filtered + paginated list ── */
   const filtered = requests.filter((r) => {
+
     const q = search.toLowerCase();
     return (
       r.referenceId.toLowerCase().includes(q)   ||
@@ -964,6 +1176,7 @@ const Approvals = () => {
                     item={req}
                     isSelected={selected?._id === req._id}
                     onClick={() => handleSelect(req)}
+                    onDeleteAction={activeSlug === "procurement-required" ? () => handleDeleteClick(req) : undefined}
                   />
                 ))}
               </div>
@@ -1005,7 +1218,7 @@ const Approvals = () => {
           )}
         </div>
 
-        {/* ════ RIGHT PANEL ════ */}
+        {/* ── ════ RIGHT PANEL ════ ── */}
         <div className="col-span-12 lg:col-span-7 space-y-4">
           <DetailsPanel
             item={selected}
@@ -1017,11 +1230,48 @@ const Approvals = () => {
             onCheckStock={handleCheckStock}
             onProcess={handleProcess}
             onCloseStock={() => { setStockResult(null); setStockMessage(null); }}
+            onProcure={() => selected && handleMoveToProcurement(selected)}
           />
           {/* Workflow diagram — shown when no item selected */}
           {!selected && <WorkflowDiagram />}
         </div>
       </div>
+
+      {showDeleteModal && requestToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-xl border p-6 max-w-md w-full mx-4 space-y-4 animate-scale-up">
+            <div className="flex items-center gap-3 text-red-600">
+              <AlertTriangle className="w-6 h-6 shrink-0 animate-bounce" />
+              <h3 className="text-lg font-black tracking-tight">Delete Procurement Request</h3>
+            </div>
+            
+            <div className="text-slate-600 text-sm space-y-2">
+              <p>Are you sure you want to delete this Procurement Request?</p>
+              <div className="bg-slate-50 border p-3 rounded-xl text-xs font-semibold text-slate-500">
+                <span className="font-bold text-slate-700">Reference:</span> {requestToDelete.referenceId}<br/>
+                <span className="font-bold text-slate-700">Product:</span> {requestToDelete.productDetails} ({requestToDelete.quantity} qty)<br/>
+                <span className="font-bold text-slate-700">Department:</span> {requestToDelete.department}
+              </div>
+              <p className="text-red-500 font-bold text-xs mt-1">⚠️ This action cannot be undone.</p>
+            </div>
+
+            <div className="flex gap-3 justify-end pt-2">
+              <button
+                onClick={() => { setShowDeleteModal(false); setRequestToDelete(null); }}
+                className="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl text-xs font-bold transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition shadow-md shadow-red-50"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

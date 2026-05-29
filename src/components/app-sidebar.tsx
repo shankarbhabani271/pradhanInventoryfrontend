@@ -44,6 +44,7 @@ const getSidebarItems = (role: string) => {
     },
     {
       title: "Procurement",
+      url: "/procurement",
       icon: ShoppingCart,
       children: [
         {
@@ -99,7 +100,7 @@ const getSidebarItems = (role: string) => {
     },
     {
       title: "Vendors",
-      url: "/vendors",
+      url: "/procurement/vendor",
       icon: Truck,
     },
     {
@@ -193,6 +194,7 @@ const getSidebarItems = (role: string) => {
       },
       {
         title: "Procurement",
+        url: "/procurement",
         icon: ShoppingCart,
         children: [
           {
@@ -211,7 +213,7 @@ const getSidebarItems = (role: string) => {
       },
       {
         title: "Vendors",
-        url: "/vendors",
+        url: "/procurement/vendor",
         icon: Truck,
       },
       {
@@ -352,14 +354,30 @@ export function AppSidebar() {
                     return (
                       <SidebarMenuItem key={item.title}>
                         {item.children ? (
-                          <Collapsible>
-                            <CollapsibleTrigger asChild>
-                              <SidebarMenuButton className="w-full text-sm font-medium">
-                                <Icon className="w-5 h-5" />
-                                <span className="flex-1">{item.title}</span>
-                                <ChevronDown className="ml-auto h-4 w-4 transition-transform data-[state=open]:rotate-180" />
-                              </SidebarMenuButton>
-                            </CollapsibleTrigger>
+                          <Collapsible className="w-full">
+                            {item.url ? (
+                              <div className="flex items-center justify-between w-full rounded-md hover:bg-slate-100/80 group">
+                                <SidebarMenuButton asChild className="flex-1 text-sm font-medium">
+                                  <Link to={item.url}>
+                                    <Icon className="w-5 h-5" />
+                                    <span>{item.title}</span>
+                                  </Link>
+                                </SidebarMenuButton>
+                                <CollapsibleTrigger asChild>
+                                  <button className="p-2 text-slate-500 hover:text-slate-900 focus:outline-none shrink-0">
+                                    <ChevronDown className="h-4 w-4 transition-transform data-[state=open]:rotate-180" />
+                                  </button>
+                                </CollapsibleTrigger>
+                              </div>
+                            ) : (
+                              <CollapsibleTrigger asChild>
+                                <SidebarMenuButton className="w-full text-sm font-medium">
+                                  <Icon className="w-5 h-5" />
+                                  <span className="flex-1">{item.title}</span>
+                                  <ChevronDown className="ml-auto h-4 w-4 transition-transform data-[state=open]:rotate-180" />
+                                </SidebarMenuButton>
+                              </CollapsibleTrigger>
+                            )}
 
                             <CollapsibleContent>
                               <ul className="ml-6 mt-2 space-y-1">
