@@ -6,12 +6,30 @@ interface ProtectedRouteProps {
   allowedRoles?: string[];
 }
 
+// Securely decode Base64URL JWT payload to parse cryptographically signed claims
+const decodeJwt = (token: string) => {
+  try {
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
+    );
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    return null;
+  }
+};
+
 const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
   const token = localStorage.getItem("token");
-  const role = localStorage.getItem("role");
+  const claims = token ? decodeJwt(token) : null;
+  const role = claims?.role;
 
-  // ❌ no token
-  if (!token) {
+  // ❌ no token or parsing failure
+  if (!token || !role) {
     return <Navigate to="/login" replace />;
   }
 

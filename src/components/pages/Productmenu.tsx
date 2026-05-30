@@ -141,11 +141,15 @@ const Productmenu = () => {
     setReview("");
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
+
     try {
       const data = {
         ...formData,
+        price: Number(formData.price) || 0,
+        stock: Number(formData.stock) || 0,
+        discount: Number(formData.discount) || 0,
         sizes: selectedSizes,
         colors: selectedColors,
         description,

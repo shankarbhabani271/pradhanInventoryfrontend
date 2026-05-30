@@ -50,8 +50,26 @@ const SuspenseGate = ({ children }: { children: React.ReactNode }) => (
   </Suspense>
 );
 
+const decodeJwt = (token: string) => {
+  try {
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
+    );
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    return null;
+  }
+};
+
 const DashboardRedirect = () => {
-  const role = localStorage.getItem("role") || "employee";
+  const token = localStorage.getItem("token");
+  const claims = token ? decodeJwt(token) : null;
+  const role = claims?.role || "employee";
   
   if (role === "admin") {
     return <Navigate to="/admin-dashboard" replace />;
