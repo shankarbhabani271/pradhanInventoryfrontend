@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import QRCode from "react-qr-code";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -11,6 +12,8 @@ import {
   ScanLine,
   Search,
 } from "lucide-react";
+import axios from "axios";
+import { API_BASE_URL } from "../../config/http";
 
 import {
   NativeSelect,
@@ -97,6 +100,33 @@ function NativeSelectDemo() {
 }
 
 const BarcodeTracking = () => {
+  const [barcodes, setBarcodes] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchBarcodes = async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/qc/barcodes`);
+        if (response.data.success && Array.isArray(response.data.data)) {
+          setBarcodes(response.data.data);
+        }
+      } catch (err) {
+        console.warn("Failed to fetch barcodes from backend, using default placeholders.", err);
+      }
+    };
+    fetchBarcodes();
+  }, []);
+
+  const mergedInventory = barcodes.length > 0 
+    ? barcodes.map(b => ({
+        code: b.barcodeNumber,
+        name: b.productName,
+        category: b.category,
+        warehouse: b.storageLocation,
+        value: new Date(b.createdAt).toLocaleDateString(),
+        status: b.status === "QC Approved" || b.status === "Available" ? "in" : "low"
+      }))
+    : inventoryData;
+
   return (
     <div className="p-4 bg-blue-50 min-h-screen space-y-4">
 
@@ -144,24 +174,24 @@ const BarcodeTracking = () => {
               <div>Action</div>
             </div>
 
-            {inventoryData.map((item, i) => (
+            {mergedInventory.map((item, i) => (
               <div
                 key={i}
-                className="grid grid-cols-7 py-4 border-b items-center"
+                className="grid grid-cols-7 py-4 border-b items-center text-slate-800 text-xs"
               >
-                <div>{item.code}</div>
-                <div>{item.name}</div>
+                <div className="font-extrabold text-sky-600">{item.code}</div>
+                <div className="font-bold">{item.name}</div>
                 <div>{item.category}</div>
                 <div>{item.warehouse}</div>
 
                 <div>
                   {item.status === "in" ? (
-                    <span className="bg-green-100 text-green-700 px-2 py-1 rounded">
-                      In Stock
+                    <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-[10px] font-black uppercase">
+                      QC Approved
                     </span>
                   ) : (
-                    <span className="bg-orange-100 text-orange-700 px-2 py-1 rounded">
-                      Low Stock
+                    <span className="bg-orange-100 text-orange-700 px-2 py-1 rounded text-[10px] font-black uppercase">
+                      Issued/Assigned
                     </span>
                   )}
                 </div>
@@ -169,7 +199,7 @@ const BarcodeTracking = () => {
                 <div>{item.value}</div>
 
                 <div>
-                  <Printer className="cursor-pointer h-5 w-5" />
+                  <Printer className="cursor-pointer h-5 w-5 hover:text-sky-600 transition" />
                 </div>
               </div>
             ))}

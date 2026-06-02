@@ -1,6 +1,7 @@
-
 import { Button } from "@/components/ui/button"
-import { Dot, TrendingUp,  } from "lucide-react"
+import { Dot, TrendingUp } from "lucide-react"
+import { useState, useEffect } from "react"
+import { getSavedSettings, getCurrencySymbol } from "../../utils/settingsHelper"
 
 import {
   Card,
@@ -143,7 +144,7 @@ const procurementData = [
   { month: "Jan", value: 73000 },
 ]
 
-const ProcurementTrendChart = () => (
+const ProcurementTrendChart = ({ currencySymbol }: { currencySymbol: string }) => (
   <Card>
     <CardHeader>
       <CardTitle className="text-2xl">Procurement Trend</CardTitle>
@@ -156,7 +157,7 @@ const ProcurementTrendChart = () => (
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="month" />
           <YAxis />
-          <Tooltip formatter={(v: number) => `$${v.toLocaleString()}`} />
+          <Tooltip formatter={(v: number) => `${currencySymbol}${v.toLocaleString()}`} />
           <Line
             type="monotone"
             dataKey="value"
@@ -173,12 +174,34 @@ const ProcurementTrendChart = () => (
 /* ===================== MAIN ===================== */
 
 const Reports = () => {
+  const [settings, setSettings] = useState(getSavedSettings());
+  const currencySymbol = getCurrencySymbol(settings.currency);
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      setSettings(getSavedSettings());
+    };
+    window.addEventListener("invenpro_settings_updated", handleUpdate);
+    return () => {
+      window.removeEventListener("invenpro_settings_updated", handleUpdate);
+    };
+  }, []);
+
   return (
     <div className="p-4 space-y-6 bg-blue-50 min-h-screen">
+      {/* Dynamic Header Panel */}
+      <div className="bg-white rounded-2xl border p-5 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">{settings.orgName}</span>
+          <h1 className="text-2xl font-black text-slate-800 tracking-tight mt-0.5">Procurement Spend & Stock Analytics</h1>
+          <p className="text-xs text-muted-foreground text-slate-500">Historical performance logs, stock inward/outward margins, and active spend tracking.</p>
+        </div>
+      </div>
+
       <Tabs defaultValue="procurement">
         <div className="flex justify-between mb-4">
           <TabsList className="bg-[#94A3B8]">
-            <TabsTrigger value="procurement " className="text-black">Procurement</TabsTrigger>
+            <TabsTrigger value="procurement" className="text-black">Procurement</TabsTrigger>
           </TabsList>
           <Button className="bg-blue-700 text-white">Export Reports</Button>
         </div>
@@ -190,7 +213,7 @@ const Reports = () => {
           </div>
 
           <div className="mt-4">
-            <ProcurementTrendChart />
+            <ProcurementTrendChart currencySymbol={currencySymbol} />
           </div>
         </TabsContent>
       </Tabs>

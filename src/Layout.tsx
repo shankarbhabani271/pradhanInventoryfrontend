@@ -7,7 +7,22 @@ import { Bell } from "lucide-react";
 import type React from "react";
 // import Loader from "./components/Loader";
 
+import { useState, useEffect } from "react";
+import { getSavedSettings } from "./utils/settingsHelper";
+
 const Layout = ({ children }: { children: React.ReactNode }) => {
+  const [settings, setSettings] = useState(getSavedSettings());
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      setSettings(getSavedSettings());
+    };
+    window.addEventListener("invenpro_settings_updated", handleUpdate);
+    return () => {
+      window.removeEventListener("invenpro_settings_updated", handleUpdate);
+    };
+  }, []);
+
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full">
@@ -19,10 +34,16 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
               <div className="flex items-center gap-4">
                 <SidebarTrigger className="h-6 w-6" />
                 <div>
-                  <h1 className="text-lg font-bold">Dashboard</h1>
+                  <div className="flex items-center gap-2">
+                    <h1 className="text-lg font-extrabold text-slate-800">Dashboard</h1>
+                    <span className="h-4 w-px bg-slate-200" />
+                    <span className="text-[10px] font-black text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-full px-2.5 py-0.5 uppercase tracking-wider">
+                      {settings.orgName}
+                    </span>
+                  </div>
                   
-                  <p className="text-sm text-muted-foreground">
-                    Welcome back! Here's what's happening today.
+                  <p className="text-xs text-muted-foreground text-slate-500 font-semibold">
+                    Welcome back! Here's what's happening today at {settings.orgName}.
                   </p>
                 </div>
               </div>

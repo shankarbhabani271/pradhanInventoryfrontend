@@ -28,7 +28,12 @@ const themes = [
   { name: "Sunset", color: "bg-orange-500" },
 ]
 
-import { Building2, Globe, Bell,ShieldAlert,Database, Palette,Save } from "lucide-react"
+import { Building2, Globe, Bell, ShieldAlert, Database, Palette, Save } from "lucide-react"
+import { useState, useEffect } from "react"
+import axios from "axios"
+import { toast } from "sonner"
+import { API_BASE_URL } from "../../config/http"
+import { getSavedSettings, saveSettingsLocal } from "../../utils/settingsHelper"
 
 /* ================= Notification Item ================= */
 const NotificationItem = ({
@@ -65,9 +70,122 @@ const NotificationItem = ({
 
 /* ================= Settings Page ================= */
 const Settings = () => {
+  const [orgName, setOrgName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [industryType, setIndustryType] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [timezone, setTimezone] = useState("");
+  const [currency, setCurrency] = useState("");
+  const [dateFormat, setDateFormat] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    setIsLoading(true);
+    axios.get(`${API_BASE_URL}/settings/get`)
+      .then(res => {
+        if (res.data && res.data.success && res.data.data) {
+          const s = res.data.data;
+          setOrgName(s.orgName || "");
+          setContactEmail(s.contactEmail || "");
+          setIndustryType(s.industryType || "");
+          setPhone(s.phone || "");
+          setAddress(s.address || "");
+          setTimezone(s.timezone || "");
+          setCurrency(s.currency || "");
+          setDateFormat(s.dateFormat || "");
+          saveSettingsLocal(s); // Update local cache
+        }
+      })
+      .catch(err => {
+        console.warn("Failed to load settings from API, loading local cache", err);
+        const s = getSavedSettings();
+        setOrgName(s.orgName);
+        setContactEmail(s.contactEmail);
+        setIndustryType(s.industryType);
+        setPhone(s.phone);
+        setAddress(s.address);
+        setTimezone(s.timezone);
+        setCurrency(s.currency);
+        setDateFormat(s.dateFormat);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, []);
+
+  const handleSaveSettings = async () => {
+    // Client-side validations
+    if (!orgName.trim() || orgName.trim().length < 3) {
+      toast.error("Failed to save settings. Organization Name must be at least 3 characters.");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!contactEmail.trim() || !emailRegex.test(contactEmail.trim())) {
+      toast.error("Failed to save settings. Please provide a valid Contact Email.");
+      return;
+    }
+
+    const phoneRegex = /^\+?[0-9\s\-()]{7,20}$/;
+    if (!phone.trim() || !phoneRegex.test(phone.trim())) {
+      toast.error("Failed to save settings. Please provide a valid Phone Number containing digits.");
+      return;
+    }
+
+    if (!address.trim()) {
+      toast.error("Failed to save settings. Address is required.");
+      return;
+    }
+
+    if (!timezone) {
+      toast.error("Failed to save settings. Time Zone is required.");
+      return;
+    }
+
+    if (!currency) {
+      toast.error("Failed to save settings. Currency is required.");
+      return;
+    }
+
+    if (!dateFormat) {
+      toast.error("Failed to save settings. Date Format is required.");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const payload = {
+        orgName: orgName.trim(),
+        contactEmail: contactEmail.trim(),
+        industryType: industryType.trim() || "Inventory Management",
+        phone: phone.trim(),
+        address: address.trim(),
+        timezone,
+        currency,
+        dateFormat
+      };
+
+      const res = await axios.put(`${API_BASE_URL}/settings/update`, payload);
+
+      if (res.data && res.data.success) {
+        toast.success("Organization settings updated successfully.");
+        saveSettingsLocal(res.data.data);
+      } else {
+        toast.error("Failed to save settings. Please try again.");
+      }
+    } catch (err: any) {
+      console.error("Save Settings Error:", err);
+      const msg = err.response?.data?.message || "Failed to save settings. Please try again.";
+      toast.error(msg);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="bg-[#EFF6FF]">
-      <Tabs defaultValue="items" className="w-full pt-4 pl-6  ">
+      <Tabs defaultValue="general" className="w-full pt-4 pl-6  ">
 
         {/* ================= Tabs Header ================= */}
         <TabsList className="bg-[#94A3B8] rounded-xl p-1 w-ful  ">
@@ -113,25 +231,26 @@ const Settings = () => {
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <Label>Organization Name</Label>
-                  <Input defaultValue="InvenPro Pvt Ltd" />
+                  <Input value={orgName} onChange={(e) => setOrgName(e.target.value)} placeholder="Organization Name" />
                 </div>
 
                 <div>
                   <Label>Contact Email</Label>
-                  <Input type="email" defaultValue="admin@invenpro.com" />
+                  <Input type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="admin@organization.com" />
                 </div>
 
                 <div>
                   <Label>Industry</Label>
-                  <Select>
+                  <Select value={industryType} onValueChange={(val) => setIndustryType(val)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select industry" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        <SelectItem value="manufacturing">Manufacturing</SelectItem>
-                        <SelectItem value="it">IT Services</SelectItem>
-                        <SelectItem value="retail">Retail</SelectItem>
+                        <SelectItem value="Manufacturing">Manufacturing</SelectItem>
+                        <SelectItem value="IT Services">IT Services</SelectItem>
+                        <SelectItem value="Retail">Retail</SelectItem>
+                        <SelectItem value="Inventory Management">Inventory Management</SelectItem>
                       </SelectGroup>
                     </SelectContent>
                   </Select>
@@ -139,14 +258,16 @@ const Settings = () => {
 
                 <div>
                   <Label>Phone</Label>
-                  <Input defaultValue="+91 98765 43210" />
+                  <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Contact Phone" />
                 </div>
 
                 <div className="md:col-span-2">
                   <Label>Address</Label>
                   <textarea
                     rows={4}
-                    defaultValue="123 Industrial Area, Mumbai, Maharashtra - 400001"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder="Company Address"
                     className="w-full rounded-md border bg-slate-50 px-3 py-2 text-sm
                     focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
@@ -168,63 +289,74 @@ const Settings = () => {
                 
               </div>
               <div className="w-full">
-  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-    
-    {/* Timezone */}
-    <div className="flex flex-col gap-1">
-      <Label>Timezone</Label>
-      <Select>
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="Asia/Kolkata (IST)" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            <SelectItem value="asia-kolkata">Asia/Kolkata (IST)</SelectItem>
-            <SelectItem value="america-newyork">America/New York (EST)</SelectItem>
-            <SelectItem value="europe-london">Europe/London (GMT)</SelectItem>
-          </SelectGroup>
-        </SelectContent>
-      </Select>
-    </div>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  
+                  {/* Timezone */}
+                  <div className="flex flex-col gap-1">
+                    <Label>Timezone</Label>
+                    <Select value={timezone} onValueChange={(val) => setTimezone(val)}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select Timezone" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectItem value="Asia/Kolkata (IST)">Asia/Kolkata (IST)</SelectItem>
+                          <SelectItem value="America/New York (EST)">America/New York (EST)</SelectItem>
+                          <SelectItem value="Europe/London (GMT)">Europe/London (GMT)</SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-    {/* Currency */}
-    <div className="flex flex-col gap-1">
-      <Label>Currency</Label>
-      <Select>
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="INR (₹)" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            <SelectItem value="INR">INR (₹)</SelectItem>
-            <SelectItem value="USD">USD ($)</SelectItem>
-            <SelectItem value="EUR">EUR (€)</SelectItem>
-          </SelectGroup>
-        </SelectContent>
-      </Select>
-    </div>
+                  {/* Currency */}
+                  <div className="flex flex-col gap-1">
+                    <Label>Currency</Label>
+                    <Select value={currency} onValueChange={(val) => setCurrency(val)}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select Currency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectItem value="INR (₹)">INR (₹)</SelectItem>
+                          <SelectItem value="USD ($)">USD ($)</SelectItem>
+                          <SelectItem value="EUR (€)">EUR (€)</SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-    {/* Date Format */}
-    <div className="flex flex-col gap-1">
-      <Label>Date Format</Label>
-      <Select>
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="DD/MM/YYYY" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            <SelectItem value="DD/MM/YYYY">DD/MM/YYYY</SelectItem>
-            <SelectItem value="MM/DD/YYYY">MM/DD/YYYY</SelectItem>
-            <SelectItem value="YYYY-MM-DD">YYYY-MM-DD</SelectItem>
-          </SelectGroup>
-        </SelectContent>
-      </Select>
-    </div>
+                  {/* Date Format */}
+                  <div className="flex flex-col gap-1">
+                    <Label>Date Format</Label>
+                    <Select value={dateFormat} onValueChange={(val) => setDateFormat(val)}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select Date Format" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectItem value="DD/MM/YYYY">DD/MM/YYYY</SelectItem>
+                          <SelectItem value="MM/DD/YYYY">MM/DD/YYYY</SelectItem>
+                          <SelectItem value="YYYY-MM-DD">YYYY-MM-DD</SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-  </div>
-</div>
-
+                </div>
+              </div>
             </Card>
+
+            {/* Save Settings Action Button */}
+            <div className="w-full flex flex-col sm:flex-row sm:justify-end pt-6">
+              <Button 
+                onClick={handleSaveSettings} 
+                disabled={isLoading}
+                className="bg-blue-800 hover:bg-blue-900 text-white font-bold px-6 py-2.5 rounded-xl shadow-lg transition duration-200 flex items-center gap-2"
+              >
+                <Save className="h-4 w-4" />
+                <span>{isLoading ? "Saving..." : "Save Settings"}</span>
+              </Button>
+            </div>
 
           </div>
         </TabsContent>

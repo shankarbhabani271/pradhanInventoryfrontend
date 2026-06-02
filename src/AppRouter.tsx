@@ -43,6 +43,7 @@ const Settings = lazy(() => import("./components/pages/Settings"));
 const Reports = lazy(() => import("./components/pages/Reports"));
 const Masters = lazy(() => import("./components/pages/Masters"));
 const PurchaseRequestList = lazy(() => import("./components/pages/PurchaseRequestList"));
+const VendorDetails = lazy(() => import("./components/pages/VendorDetails"));
 
 const SuspenseGate = ({ children }: { children: React.ReactNode }) => (
   <Suspense fallback={<Loader />}>
@@ -309,6 +310,19 @@ const AppRouter = () => {
             <Layout>
               <SuspenseGate>
                 <Procurement />
+              </SuspenseGate>
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/procurement/vendor-details"
+        element={
+          <ProtectedRoute allowedRoles={["admin", "procurement"]}>
+            <Layout>
+              <SuspenseGate>
+                <VendorDetails />
               </SuspenseGate>
             </Layout>
           </ProtectedRoute>

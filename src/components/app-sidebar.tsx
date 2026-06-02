@@ -1,6 +1,6 @@
-import {Settings,LogOut,Bell, BarChart3 ,Users,Truck,Package,Scan,ArrowLeftRight, 
-  ClipboardCheck,Boxes,LayoutDashboard,FileText,CheckCircle,
-   ChevronDown , ShoppingCart} from "lucide-react"
+import { Settings, LogOut, Bell, BarChart3, Users, Truck, Package, Scan, ArrowLeftRight, 
+  ClipboardCheck, Boxes, LayoutDashboard, FileText, CheckCircle,
+  ChevronDown, ShoppingCart } from "lucide-react"
 
 import {
   Sidebar,
@@ -22,6 +22,8 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
 import { Link } from "react-router-dom"
+import { useState, useEffect } from "react";
+import { getSavedSettings } from "../utils/settingsHelper";
 
 
 // Dynamic sidebar items based on role
@@ -303,6 +305,17 @@ const getSidebarItems = (role: string) => {
 
 export function AppSidebar() {
   const navigate = useNavigate();
+  const [settings, setSettings] = useState(getSavedSettings());
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      setSettings(getSavedSettings());
+    };
+    window.addEventListener("invenpro_settings_updated", handleUpdate);
+    return () => {
+      window.removeEventListener("invenpro_settings_updated", handleUpdate);
+    };
+  }, []);
 
   const role = localStorage.getItem("role") || "employee";
   const userStr = localStorage.getItem("user");
@@ -338,7 +351,9 @@ export function AppSidebar() {
             <div className="h-10 w-10 flex items-center justify-center rounded-lg bg-[#0284C5]">
               <Boxes className="h-6 w-6 text-white" />
             </div>
-            <h1 className="text-lg font-bold text-black">InvenPro</h1>
+            <h1 className="text-lg font-bold text-black max-w-[130px] truncate" title={settings.orgName}>
+              {settings.orgName}
+            </h1>
           </div>
         </div>
 

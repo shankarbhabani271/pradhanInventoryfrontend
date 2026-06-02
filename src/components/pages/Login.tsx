@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../../config/http";
@@ -6,11 +6,32 @@ import { AlertCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 function Login() {
+  const [orgName, setOrgName] = useState<string>("InvenPro Pvt Ltd");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    axios.get(`${API_BASE_URL}/settings/get`)
+      .then(res => {
+        if (res.data && res.data.success && res.data.data) {
+          setOrgName(res.data.data.orgName);
+          localStorage.setItem("invenpro_settings", JSON.stringify(res.data.data));
+        }
+      })
+      .catch(err => {
+        console.warn("Failed to load settings on login, using cache", err);
+        const cached = localStorage.getItem("invenpro_settings");
+        if (cached) {
+          try {
+            const parsed = JSON.parse(cached);
+            setOrgName(parsed.orgName);
+          } catch(e){}
+        }
+      });
+  }, []);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -68,11 +89,11 @@ function Login() {
         
         {/* Left Section */}
         <div className="bg-indigo-700 text-white flex flex-col justify-center p-10">
-          <h1 className="text-4xl font-bold mb-4">
-            Inventory Management System
+          <h1 className="text-4xl font-extrabold mb-4 tracking-tight leading-tight">
+            Welcome to {orgName}
           </h1>
-          <p className="text-lg text-gray-200">
-            Manage employees, products, and stock efficiently with a smart dashboard.
+          <p className="text-sm text-indigo-100 font-semibold leading-relaxed">
+            Manage employees, products, procurement workflows, and stocks efficiently with the smart {orgName} console.
           </p>
         </div>
 
