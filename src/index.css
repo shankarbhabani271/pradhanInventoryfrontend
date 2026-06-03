@@ -146,3 +146,31 @@
 .animate-error-entry {
   animation: slideDownShake 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* Global Dark Mode Utility Overrides to prevent white-on-white text issues */
+.dark {
+  .bg-white {
+    background-color: oklch(0.205 0 0) !important;
+  }
+  .bg-slate-50, .bg-gray-50, .bg-blue-50, .bg-blue-50\/40 {
+    background-color: oklch(0.145 0 0) !important;
+  }
+  .bg-slate-100, .bg-gray-100 {
+    background-color: oklch(0.28 0 0) !important;
+  }
+  .hover\:bg-gray-50:hover, .hover\:bg-slate-50:hover, .hover\:bg-gray-100:hover, .hover\:bg-slate-100:hover, .hover\:bg-slate-50\/50:hover {
+    background-color: oklch(0.28 0 0) !important;
+  }
+  .text-slate-800, .text-gray-800, .text-slate-900, .text-gray-900 {
+    color: oklch(0.985 0 0) !important;
+  }
+  .text-slate-700, .text-gray-700 {
+    color: oklch(0.922 0 0) !important;
+  }
+  .text-slate-600, .text-gray-600 {
+    color: oklch(0.85 0 0) !important;
+  }
+  .border-slate-100, .border-slate-200, .border-gray-100, .border-gray-200 {
+    border-color: oklch(1 0 0 / 10%) !important;
+  }
+}

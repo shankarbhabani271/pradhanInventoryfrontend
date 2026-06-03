@@ -174,22 +174,22 @@ const Productmenu = () => {
   };
 
   return (
-    <div className="w-full min-h-screen bg-[#EFF6FF] p-6 space-y-4">
+    <div className="w-full min-h-screen bg-[#EFF6FF] dark:bg-slate-950 p-6 space-y-4">
 
       {/* Back */}
-      <a href="/masters" className="inline-flex items-center gap-2 text-sm text-blue-700 hover:text-gray-800 transition-colors">
+      <a href="/masters" className="inline-flex items-center gap-2 text-sm text-blue-700 dark:text-blue-400 hover:text-gray-800 dark:hover:text-slate-200 transition-colors">
         <ArrowLeft className="h-6 w-6" />
-       <div className="text-2xl"> Back to page</div>
+       <div className="text-2xl font-bold"> Back to page</div>
       </a>
 
       {/* Header */}
-      <div className="bg-[#0f1623] rounded-2xl p-5 flex items-center gap-4">
-        <div className="bg-blue-600 text-white p-3 rounded-xl shrink-0">
+      <div className="bg-[#0f1623] dark:bg-slate-900 border dark:border-slate-800 rounded-2xl p-5 flex items-center gap-4">
+        <div className="bg-blue-600 dark:bg-blue-500 text-white p-3 rounded-xl shrink-0">
           <Plus className="h-5 w-5" />
         </div>
         <div>
-          <h1 className="text-lg font-semibold text-white">Add new product</h1>
-          <p className="text-sm text-blue-200/60 mt-0.5">Fill out the sections below to create a new product.</p>
+          <h1 className="text-lg font-semibold text-white dark:text-slate-100">Add new product</h1>
+          <p className="text-sm text-blue-200/60 dark:text-slate-400 mt-0.5">Fill out the sections below to create a new product.</p>
         </div>
       </div>
 

@@ -346,12 +346,12 @@ export function AppSidebar() {
       {/* Wrapper */}
       <div className="flex h-full flex-col">
         {/* ===== HEADER (STICKY) ===== */}
-        <div className="sticky top-0 z-50 border-b bg-white px-6 py-4">
+        <div className="sticky top-0 z-50 border-b dark:border-slate-800/80 bg-white px-6 py-4">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 flex items-center justify-center rounded-lg bg-[#0284C5]">
               <Boxes className="h-6 w-6 text-white" />
             </div>
-            <h1 className="text-lg font-bold text-black max-w-[130px] truncate" title={settings.orgName}>
+            <h1 className="text-lg font-bold text-slate-800 dark:text-slate-100 max-w-[130px] truncate" title={settings.orgName}>
               {settings.orgName}
             </h1>
           </div>
@@ -427,22 +427,22 @@ export function AppSidebar() {
         </div>
 
         {/* ===== FOOTER (FIXED) ===== */}
-        <div className="border-t bg-white px-4 py-3">
+        <div className="border-t dark:border-slate-800 bg-white px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="h-9 w-9 rounded-full bg-[#0284C5] flex items-center justify-center">
                 <span className="text-white font-semibold">{initials}</span>
               </div>
               <div>
-                <p className="text-sm font-medium text-black max-w-[120px] truncate">{name}</p>
-                <p className="text-xs text-muted-foreground capitalize">{role}</p>
+                <p className="text-sm font-medium text-slate-800 dark:text-slate-100 max-w-[120px] truncate">{name}</p>
+                <p className="text-xs text-muted-foreground dark:text-slate-400 capitalize">{role}</p>
               </div>
             </div>
 
             <div className="flex gap-3">
-              <Bell className="h-5 w-5 cursor-pointer text-black" />
+              <Bell className="h-5 w-5 cursor-pointer text-slate-800 dark:text-slate-200" />
               <LogOut
-                className="h-5 w-5 cursor-pointer hover:text-red-500"
+                className="h-5 w-5 cursor-pointer hover:text-red-500 text-slate-800 dark:text-slate-200"
                 onClick={handleLogout}
               />
             </div>
