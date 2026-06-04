@@ -26,6 +26,7 @@ import {
   FileSpreadsheet,
   Layers,
   Award,
+  DollarSign,
 } from "lucide-react";
 
 /* ── Static Vendors Fallback ── */
@@ -168,6 +169,8 @@ export default function VendorDetails() {
   const [poHistory, setPoHistory] = useState<any[]>([]);
   const [grnHistory, setGrnHistory] = useState<any[]>([]);
   const [deliveryHistory, setDeliveryHistory] = useState<any[]>([]);
+  const [invoiceHistory, setInvoiceHistory] = useState<any[]>([]);
+  const [paymentHistory, setPaymentHistory] = useState<any[]>([]);
 
   useEffect(() => {
     if (!vendorContext) {
@@ -213,6 +216,8 @@ export default function VendorDetails() {
             productType: finalVendor.productType || finalVendor.category || "N/A",
             status: finalVendor.status || "Active",
             address: finalVendor.primaryaddress || finalVendor.address || finalVendor.location || "N/A",
+            rating: finalVendor.rating || 4.5,
+            onTimeRate: finalVendor.onTimeRate || 95,
           });
 
           // ── Fetch Transaction Histories ──
@@ -285,6 +290,20 @@ export default function VendorDetails() {
             }));
           
           setDeliveryHistory([...filteredDels, ...derivedDels]);
+
+          // 7. Invoices History
+          const invoicesRaw = localStorage.getItem("invenpro_invoices") || "[]";
+          let allInvoices: any[] = [];
+          try { allInvoices = JSON.parse(invoicesRaw); } catch {}
+          const filteredInvoices = allInvoices.filter(inv => (inv.vendorName || "").toLowerCase() === vNameLower);
+          setInvoiceHistory(filteredInvoices);
+
+          // 8. Payments History
+          const paymentsRaw = localStorage.getItem("invenpro_payments") || "[]";
+          let allPayments: any[] = [];
+          try { allPayments = JSON.parse(paymentsRaw); } catch {}
+          const filteredPayments = allPayments.filter(pay => (pay.vendorName || "").toLowerCase() === vNameLower);
+          setPaymentHistory(filteredPayments);
 
         } else {
           setErrorMsg("Vendor details are unavailable for the selected record.");
@@ -366,6 +385,26 @@ export default function VendorDetails() {
      RENDER CASE 1: Vendor Master Overview (redesigned page)
      ──────────────────────────────────────────────────────── */
   if (vendor) {
+    // Calculations
+    const totalPOs = poHistory.length;
+    const totalValue = poHistory.reduce((sum, p) => sum + (p.grandTotal || 0), 0);
+    const avgOrderVal = totalPOs ? totalValue / totalPOs : 0;
+    const pendingPOs = poHistory.filter(p => p.status !== "Closed").length;
+    const completedPOs = poHistory.filter(p => p.status === "Closed").length;
+
+    const pendingDel = deliveryHistory.filter(d => d.status !== "Delivered").length;
+    const completedDel = deliveryHistory.filter(d => d.status === "Delivered").length;
+    const onTimeRate = vendor.onTimeRate || 95;
+
+    const pendingInv = invoiceHistory.filter(i => i.status !== "Paid").length;
+    const paidInv = invoiceHistory.filter(i => i.status === "Paid").length;
+    const outstandingAmt = invoiceHistory.filter(i => i.status !== "Paid").reduce((sum, i) => sum + (i.amount || 0), 0);
+
+    const rating = vendor.rating || 4.5;
+    const deliveryScore = vendor.onTimeRate || 95;
+    const qualityScore = 98;
+    const procurementScore = 96;
+
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/20 to-slate-50 p-4 md:p-8">
         <div className="max-w-6xl mx-auto space-y-6">
@@ -419,30 +458,123 @@ export default function VendorDetails() {
               </Section>
             </div>
             
-            {/* Quick KPI stats */}
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 flex flex-col justify-between">
-              <div>
-                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-2 flex items-center gap-2 mb-4">
-                  <Award size={14} className="text-indigo-500" />
-                  Performance Metrics
-                </h3>
+            {/* Vendor Performance Metrics */}
+            <div className="lg:col-span-1">
+              <Section icon={Award} title="Vendor Performance Metrics" color="bg-gradient-to-r from-amber-500 to-orange-500">
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-slate-500 font-semibold">Total Orders Released:</span>
-                    <span className="font-extrabold text-slate-800">{poHistory.length} POs</span>
+                  <div>
+                    <div className="flex justify-between items-center text-xs mb-1">
+                      <span className="text-slate-500 font-semibold">Vendor Rating:</span>
+                      <span className="font-extrabold text-slate-800">{rating} / 5.0</span>
+                    </div>
+                    <div className="w-full bg-slate-100 rounded-full h-1.5">
+                      <div className="bg-amber-400 h-1.5 rounded-full" style={{ width: `${rating * 20}%` }}></div>
+                    </div>
                   </div>
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-slate-500 font-semibold">Pending Delivery:</span>
-                    <span className="font-extrabold text-amber-600">{deliveryHistory.filter(d => d.status !== "Delivered").length} Shipments</span>
+
+                  <div>
+                    <div className="flex justify-between items-center text-xs mb-1">
+                      <span className="text-slate-500 font-semibold">On-Time Delivery Score:</span>
+                      <span className="font-extrabold text-slate-800">{deliveryScore}%</span>
+                    </div>
+                    <div className="w-full bg-slate-100 rounded-full h-1.5">
+                      <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: `${deliveryScore}%` }}></div>
+                    </div>
                   </div>
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-slate-500 font-semibold">Verified GRNs:</span>
-                    <span className="font-extrabold text-emerald-600">{grnHistory.length} Batches</span>
+
+                  <div>
+                    <div className="flex justify-between items-center text-xs mb-1">
+                      <span className="text-slate-500 font-semibold">Quality Score:</span>
+                      <span className="font-extrabold text-slate-800">{qualityScore}%</span>
+                    </div>
+                    <div className="w-full bg-slate-100 rounded-full h-1.5">
+                      <div className="bg-indigo-500 h-1.5 rounded-full" style={{ width: `${qualityScore}%` }}></div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center text-xs mb-1">
+                      <span className="text-slate-500 font-semibold">Procurement Performance Score:</span>
+                      <span className="font-extrabold text-slate-800">{procurementScore}%</span>
+                    </div>
+                    <div className="w-full bg-slate-100 rounded-full h-1.5">
+                      <div className="bg-violet-500 h-1.5 rounded-full" style={{ width: `${procurementScore}%` }}></div>
+                    </div>
                   </div>
                 </div>
+              </Section>
+            </div>
+          </div>
+
+          {/* Three-Column Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Card 1: Purchase Summary */}
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4">
+              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-2 flex items-center gap-2">
+                <ShoppingCart size={14} className="text-indigo-500" />
+                Purchase Summary
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Total POs</p>
+                  <p className="text-xl font-black text-slate-800">{totalPOs}</p>
+                </div>
+                <div>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Total Value</p>
+                  <p className="text-xl font-black text-indigo-600">₹{totalValue.toLocaleString()}</p>
+                </div>
+                <div>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Avg Order Value</p>
+                  <p className="text-sm font-extrabold text-slate-700">₹{Math.round(avgOrderVal).toLocaleString()}</p>
+                </div>
+                <div>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Pending / Completed</p>
+                  <p className="text-sm font-extrabold text-slate-700">{pendingPOs} / {completedPOs}</p>
+                </div>
               </div>
-              <div className="bg-indigo-50/50 border border-indigo-100 rounded-xl p-3 text-[11px] text-slate-500 font-semibold mt-4">
-                This logs dashboard aggregates real-time Mongoose DB records and local replica transaction pools.
+            </div>
+
+            {/* Card 2: Delivery Information */}
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4">
+              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-2 flex items-center gap-2">
+                <Truck size={14} className="text-emerald-500" />
+                Delivery Information
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Pending Deliveries</p>
+                  <p className="text-xl font-black text-slate-800">{pendingDel}</p>
+                </div>
+                <div>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Completed Deliveries</p>
+                  <p className="text-xl font-black text-emerald-600">{completedDel}</p>
+                </div>
+                <div className="col-span-2">
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Delivery Performance %</p>
+                  <p className="text-sm font-extrabold text-slate-700">{onTimeRate}% On-Time Delivery</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 3: Financial Information */}
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4">
+              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-2 flex items-center gap-2">
+                <DollarSign size={14} className="text-blue-500" />
+                Financial Information
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Pending Invoices</p>
+                  <p className="text-xl font-black text-slate-800">{pendingInv}</p>
+                </div>
+                <div>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Paid Invoices</p>
+                  <p className="text-xl font-black text-blue-600">{paidInv}</p>
+                </div>
+                <div className="col-span-2">
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Outstanding Balance</p>
+                  <p className="text-sm font-extrabold text-rose-600">₹{outstandingAmt.toLocaleString()}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -456,7 +588,9 @@ export default function VendorDetails() {
                 { key: "quote", label: "Quotations", count: quoteHistory.length },
                 { key: "po", label: "Purchase Orders", count: poHistory.length },
                 { key: "grn", label: "GRNs", count: grnHistory.length },
-                { key: "delivery", label: "Deliveries", count: deliveryHistory.length }
+                { key: "delivery", label: "Deliveries", count: deliveryHistory.length },
+                { key: "invoice", label: "Invoices", count: invoiceHistory.length },
+                { key: "payment", label: "Payments", count: paymentHistory.length }
               ].map(tab => (
                 <button
                   key={tab.key}
@@ -704,6 +838,86 @@ export default function VendorDetails() {
                               }`}>{d.status}</span>
                             </td>
                             <td className="p-3 text-slate-400">{d.createdDate}</td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Tab: Invoices */}
+              {activeHistoryTab === "invoice" && (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs text-left border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 text-slate-500 border-b text-[10px] font-bold uppercase tracking-wider">
+                        <th className="p-3">Invoice Number</th>
+                        <th className="p-3">PO Reference</th>
+                        <th className="p-3">GRN Reference</th>
+                        <th className="p-3">Invoice Date</th>
+                        <th className="p-3">Due Date</th>
+                        <th className="p-3 text-right">Amount</th>
+                        <th className="p-3">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 font-medium">
+                      {invoiceHistory.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="p-8 text-center text-slate-400">No Invoice records found.</td>
+                        </tr>
+                      ) : (
+                        invoiceHistory.map(inv => (
+                          <tr key={inv.id} className="hover:bg-slate-50/40">
+                            <td className="p-3 font-bold text-indigo-700">{inv.id}</td>
+                            <td className="p-3 text-slate-700 font-bold">{inv.poId}</td>
+                            <td className="p-3 text-slate-700 font-bold">{inv.grnId || "—"}</td>
+                            <td className="p-3 text-slate-500">{inv.invoiceDate}</td>
+                            <td className="p-3 text-slate-500">{inv.dueDate}</td>
+                            <td className="p-3 text-right font-extrabold text-slate-800">₹{inv.amount?.toLocaleString() || 0}</td>
+                            <td className="p-3">
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                inv.status === "Paid" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+                              }`}>{inv.status}</span>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Tab: Payments */}
+              {activeHistoryTab === "payment" && (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs text-left border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 text-slate-500 border-b text-[10px] font-bold uppercase tracking-wider">
+                        <th className="p-3">Payment ID</th>
+                        <th className="p-3">Invoice Reference</th>
+                        <th className="p-3">PO Reference</th>
+                        <th className="p-3">Payment Date</th>
+                        <th className="p-3">Payment Mode</th>
+                        <th className="p-3">Bank Reference</th>
+                        <th className="p-3 text-right">Amount Paid</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 font-medium">
+                      {paymentHistory.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="p-8 text-center text-slate-400">No Payment records found.</td>
+                        </tr>
+                      ) : (
+                        paymentHistory.map(pay => (
+                          <tr key={pay.id} className="hover:bg-slate-50/40">
+                            <td className="p-3 font-bold text-indigo-700">{pay.id}</td>
+                            <td className="p-3 text-slate-700 font-bold">{pay.invoiceId}</td>
+                            <td className="p-3 text-slate-700 font-bold">{pay.poId || "—"}</td>
+                            <td className="p-3 text-slate-500">{pay.paymentDate}</td>
+                            <td className="p-3 text-slate-600 font-semibold">{pay.mode || "—"}</td>
+                            <td className="p-3 text-slate-500">{pay.bankRef || "—"}</td>
+                            <td className="p-3 text-right font-extrabold text-emerald-600">₹{pay.amount?.toLocaleString() || 0}</td>
                           </tr>
                         ))
                       )}

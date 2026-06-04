@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import axios from "axios";
 import { API_BASE_URL } from "../../config/http";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -204,6 +205,7 @@ const Procurement = () => {
 
   const [selectedRfq, setSelectedRfq] = useState<RFQItem | null>(null);
   const [showCompareModal, setShowCompareModal] = useState(false);
+  const [selectedQuoteForPo, setSelectedQuoteForPo] = useState<VendorQuotation | null>(null);
 
   const [selectedPo, setSelectedPo] = useState<POItem | null>(null);
   const [showGrnModal, setShowGrnModal] = useState(false);
@@ -705,7 +707,7 @@ const Procurement = () => {
   };
 
   // ── PO AUTO-CREATION FROM SELECTION ──
-  const handleSelectVendorQuote = (quote: VendorQuotation) => {
+  const handleSelectVendorQuote = async (quote: VendorQuotation) => {
     if (!selectedRfq) return;
 
     const poId = getNextPoId();
@@ -755,7 +757,27 @@ const Procurement = () => {
     localStorage.setItem("invenpro_pos", JSON.stringify(updatedPos));
     setPos(updatedPos);
 
+    // Update vendor status to Awarded
+    const savedStatuses = JSON.parse(localStorage.getItem("invenpro_vendor_statuses") || "{}");
+    savedStatuses[quote.vendorName.toLowerCase()] = "Awarded";
+    localStorage.setItem("invenpro_vendor_statuses", JSON.stringify(savedStatuses));
+
+    try {
+      const res = await axios.get(`${API_BASE_URL}/vendor/get`);
+      const loadedVendors = Array.isArray(res.data) ? res.data : (res.data?.vendors || []);
+      const dbMatch = loadedVendors.find((v: any) => (v.name || v.vendorName || "").toLowerCase() === quote.vendorName.toLowerCase());
+      if (dbMatch && dbMatch._id) {
+        await axios.put(`${API_BASE_URL}/vendor/${dbMatch._id}`, {
+          ...dbMatch,
+          status: "Awarded"
+        });
+      }
+    } catch (err) {
+      console.warn("Failed to update vendor status to Awarded in DB:", err);
+    }
+
     addAuditLog(`Purchase Order ${poId} auto-created in Draft status based on approved RFQ ${selectedRfq.id} (Supplier: ${quote.vendorName}).`);
+    setSelectedQuoteForPo(null);
     setShowCompareModal(false);
     toast.success(`PO ${poId} generated from approved quotation! Please approve to release to supplier.`);
   };
@@ -1877,37 +1899,50 @@ const Procurement = () => {
               <table className="w-full text-xs text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-100 text-slate-700 font-extrabold text-[10px] uppercase border-b">
+                    <th className="p-3 text-center w-12">Select</th>
                     <th className="p-3">Vendor / Supplier</th>
                     <th className="p-3 text-right">Unit Price</th>
                     <th className="p-3 text-center">Delivery Days</th>
                     <th className="p-3 text-center">Warranty</th>
                     <th className="p-3">Payment Terms</th>
                     <th className="p-3 text-right">Total Amount</th>
-                    <th className="p-3 text-center">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium">
-                  {quotations.filter(q => q.rfqId === selectedRfq.id).map((quote) => (
-                    <tr key={quote.id} className="hover:bg-slate-50/50">
-                      <td className="p-3">
-                        <p className="font-black text-slate-800">{quote.vendorName}</p>
-                        <p className="text-[9px] text-slate-400 leading-none mt-0.5">{quote.notes}</p>
-                      </td>
-                      <td className="p-3 text-right font-bold text-slate-900">{currencySymbol}{quote.unitPrice.toLocaleString()}</td>
-                      <td className="p-3 text-center font-extrabold text-blue-600">{quote.deliveryDays} Days</td>
-                      <td className="p-3 text-center font-bold text-slate-700">{quote.warranty}</td>
-                      <td className="p-3 text-slate-600 font-bold">{quote.paymentTerms}</td>
-                      <td className="p-3 text-right font-black text-indigo-600 text-sm">{currencySymbol}{quote.totalAmount.toLocaleString()}</td>
-                      <td className="p-3 text-center">
-                        <button
-                          onClick={() => handleSelectVendorQuote(quote)}
-                          className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-[10px] transition shadow-sm"
-                        >
-                          Select Vendor & Generate PO
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                  {quotations.filter(q => q.rfqId === selectedRfq.id).map((quote) => {
+                    const isSelected = selectedQuoteForPo?.id === quote.id;
+                    const isAnySelected = selectedQuoteForPo !== null;
+                    return (
+                      <tr key={quote.id} className={`hover:bg-slate-50/50 transition-colors ${isSelected ? "bg-indigo-50/20" : ""}`}>
+                        <td className="p-3 text-center">
+                          <input
+                            type="radio"
+                            name="vendorSelection"
+                            checked={isSelected}
+                            disabled={isAnySelected && !isSelected}
+                            onChange={() => setSelectedQuoteForPo(quote)}
+                            className="w-4 h-4 text-indigo-600 border-slate-300 focus:ring-indigo-500 cursor-pointer"
+                          />
+                        </td>
+                        <td className="p-3">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-black text-slate-800">{quote.vendorName}</span>
+                            {isSelected && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                Awarded
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[9px] text-slate-400 leading-none mt-0.5">{quote.notes}</p>
+                        </td>
+                        <td className="p-3 text-right font-bold text-slate-900">{currencySymbol}{quote.unitPrice.toLocaleString()}</td>
+                        <td className="p-3 text-center font-extrabold text-blue-600">{quote.deliveryDays} Days</td>
+                        <td className="p-3 text-center font-bold text-slate-700">{quote.warranty}</td>
+                        <td className="p-3 text-slate-600 font-bold">{quote.paymentTerms}</td>
+                        <td className="p-3 text-right font-black text-indigo-600 text-sm">{currencySymbol}{quote.totalAmount.toLocaleString()}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -1921,10 +1956,30 @@ const Procurement = () => {
               <p>2. Selection locks vendor bid details and automatically constructs an authorized Draft Purchase Order (PO).</p>
             </div>
 
-            <div className="flex justify-end pt-3">
+            <div className="flex justify-end items-center pt-3 gap-3">
+              {selectedQuoteForPo && (
+                <>
+                  <button
+                    onClick={() => setSelectedQuoteForPo(null)}
+                    className="text-xs text-rose-600 hover:text-rose-800 font-bold transition cursor-pointer"
+                  >
+                    Clear Selection
+                  </button>
+                  <button
+                    onClick={() => handleSelectVendorQuote(selectedQuoteForPo)}
+                    className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-md shadow-indigo-150 flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <ShoppingCart size={13} />
+                    Create Purchase Order
+                  </button>
+                </>
+              )}
               <button
-                onClick={() => setShowCompareModal(false)}
-                className="px-5 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl text-xs font-bold transition"
+                onClick={() => {
+                  setSelectedQuoteForPo(null);
+                  setShowCompareModal(false);
+                }}
+                className="px-5 py-2.5 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl text-xs font-bold transition cursor-pointer"
               >
                 Back to RFQ List
               </button>

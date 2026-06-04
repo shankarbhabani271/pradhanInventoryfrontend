@@ -62,6 +62,10 @@ const getSidebarItems = (role: string) => {
           title: "Purchase Requests List",
           url: "/purchase-request-list",
         },
+        {
+          title: "Purchase Orders (PO)",
+          url: "/po",
+        },
       ],
     },
     {
@@ -211,6 +215,10 @@ const getSidebarItems = (role: string) => {
           {
             title: "Purchase Requests List",
             url: "/purchase-request-list",
+          },
+          {
+            title: "Purchase Orders (PO)",
+            url: "/po",
           },
         ],
       },

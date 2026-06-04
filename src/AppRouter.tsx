@@ -413,6 +413,11 @@ const AppRouter = () => {
       />
 
       <Route
+        path="/purchase-orders"
+        element={<Navigate to="/po" replace />}
+      />
+
+      <Route
         path="/reports"
         element={
           <ProtectedRoute allowedRoles={["admin", "manager"]}>

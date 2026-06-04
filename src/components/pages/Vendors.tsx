@@ -287,7 +287,7 @@ const VendorSelectionPanel = ({
   );
 
   // Filter by search and loosely by product category
-  const productKeywords = mrContext.productDetails.toLowerCase().split(/[\s,&]+/).filter(Boolean);
+  const productKeywords = (mrContext.productDetails || "").toLowerCase().split(/[\s,&]+/).filter(Boolean);
   const filteredVendors = activeVendors.filter((v) => {
     const name = (v.name || v.vendorName || "").toLowerCase();
     const cat = (v.category || v.productType || "").toLowerCase();
@@ -1674,11 +1674,22 @@ const VendorsPage = () => {
     if (!exists) allVendorsForPanel.push(v);
   });
 
-  // ✅ If MR context is present, show the Vendor Selection Panel
-  if (mrContext) {
+  // ✅ If MR context is present and valid, show the Vendor Selection Panel
+  if (mrContext && mrContext._id) {
+    // Ensure productDetails is always a string to prevent toLowerCase crash
+    const safeMrContext = {
+      ...mrContext,
+      productDetails: mrContext.productDetails || mrContext.referenceId || "Product",
+      referenceId: mrContext.referenceId || mrContext._id || "",
+      requester: mrContext.requester || "Unknown",
+      priority: mrContext.priority || "Medium",
+      department: mrContext.department || "General",
+      quantity: mrContext.quantity || 1,
+      status: mrContext.status || "Pending",
+    };
     return (
       <VendorSelectionPanel
-        mrContext={mrContext}
+        mrContext={safeMrContext}
         allVendors={allVendorsForPanel}
         onDismiss={() => setMrContext(null)}
         onPOCreated={(_poId, _vendorName) => {
@@ -3804,9 +3815,9 @@ const VendorsPage = () => {
               </button>
               <button 
                 onClick={() => setViewingRequest(null)}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-900 rounded-xl text-xs sm:text-sm font-bold text-white transition"
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-900 rounded-xl text-xs sm:text-sm font-bold text-white transition flex items-center gap-1.5"
               >
-                Close Details
+                <X size={15} /> Close
               </button>
             </div>
 
