@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { API_BASE_URL } from "../../config/http";
 import { toast } from "sonner";
-import { getSavedSettings, getCurrencySymbol, formatDate } from "../../utils/settingsHelper";
+import { getSavedSettings, getCurrencySymbol, formatDate, buildLogoUrl } from "../../utils/settingsHelper";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -1518,6 +1518,11 @@ const VendorsPage = () => {
     const curSymbol = getCurrencySymbol(settingsObj.currency);
     const formattedD = formatDate(req.createdAt?.split("T")[0] || req.createdDate || new Date().toISOString().split("T")[0], settingsObj.dateFormat);
 
+    const logoSrc = buildLogoUrl(settingsObj.logoUrl, settingsObj.logoVersion ?? 0, API_BASE_URL);
+    const logoHtml = logoSrc 
+      ? `<img src="${logoSrc}" alt="${settingsObj.orgName}" style="max-height: 50px; max-width: 150px; object-fit: contain; margin-bottom: 10px;" />`
+      : `<div style="height: 40px; width: 40px; background: #4f46e5; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 20px; margin-bottom: 10px;">📦</div>`;
+
     const printWindow = window.open("", "_blank");
     if (!printWindow) {
       toast.error("Popups blocked! Please allow popups for printing PO invoices.");
@@ -1575,6 +1580,7 @@ const VendorsPage = () => {
         <body>
           <div class="header">
             <div>
+              ${logoHtml}
               <div class="logo">${settingsObj.orgName}</div>
               <p style="font-size: 12px; color: #64748b; margin: 4px 0 0 0;">Procurement & Supplier Center</p>
             </div>

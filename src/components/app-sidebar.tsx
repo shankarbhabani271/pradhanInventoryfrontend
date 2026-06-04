@@ -23,7 +23,8 @@ import {
 } from "@/components/ui/collapsible"
 import { Link } from "react-router-dom"
 import { useState, useEffect } from "react";
-import { getSavedSettings } from "../utils/settingsHelper";
+import { getSavedSettings, buildLogoUrl } from "../utils/settingsHelper";
+import { API_BASE_URL } from "../config/http";
 
 
 // Dynamic sidebar items based on role
@@ -308,14 +309,23 @@ export function AppSidebar() {
   const [settings, setSettings] = useState(getSavedSettings());
 
   useEffect(() => {
-    const handleUpdate = () => {
-      setSettings(getSavedSettings());
+    // Listen for settings updates — CustomEvent carries the new settings in .detail
+    const handleUpdate = (e: Event) => {
+      const updated = (e as CustomEvent).detail;
+      if (updated) {
+        setSettings(updated);
+      } else {
+        setSettings(getSavedSettings());
+      }
     };
     window.addEventListener("invenpro_settings_updated", handleUpdate);
-    return () => {
-      window.removeEventListener("invenpro_settings_updated", handleUpdate);
-    };
+    return () => window.removeEventListener("invenpro_settings_updated", handleUpdate);
   }, []);
+
+  const [logoFailed, setLogoFailed] = useState(false);
+  useEffect(() => {
+    setLogoFailed(false);
+  }, [settings.logoUrl, settings.logoVersion]);
 
   const role = localStorage.getItem("role") || "employee";
   const userStr = localStorage.getItem("user");
@@ -341,27 +351,48 @@ export function AppSidebar() {
     window.location.reload();
   };
 
+  console.log("Sidebar Settings object:", settings);
+  console.log("Sidebar Logo URL:", settings.logoUrl);
+  console.log("Sidebar Generated URL:", buildLogoUrl(settings.logoUrl, settings.logoVersion ?? 0, API_BASE_URL));
+
   return (
-    <Sidebar className="h-screen ">
+    <Sidebar className="h-screen">
       {/* Wrapper */}
-      <div className="flex h-full flex-col">
+      <div className="flex h-full flex-col bg-white dark:bg-slate-900">
         {/* ===== HEADER (STICKY) ===== */}
-        <div className="sticky top-0 z-50 border-b dark:border-slate-800/80 bg-white px-6 py-4">
+        <div className="sticky top-0 z-50 border-b border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-900 px-4 py-3">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 flex items-center justify-center rounded-lg bg-[#0284C5]">
-              <Boxes className="h-6 w-6 text-white" />
-            </div>
-            <h1 className="text-lg font-bold text-slate-800 dark:text-slate-100 max-w-[130px] truncate" title={settings.orgName}>
+            {/* Logo: show uploaded org logo with cache-bust, fallback to Boxes icon */}
+            {settings.logoUrl && !logoFailed ? (
+              <img
+                src={buildLogoUrl(settings.logoUrl, settings.logoVersion ?? 0, API_BASE_URL)}
+                alt={settings.orgName}
+                className="rounded object-contain"
+                style={{ maxWidth: 140, maxHeight: 44 }}
+                onError={(e) => {
+                  console.log("Sidebar Logo failed to load", e);
+                  setLogoFailed(true);
+                }}
+              />
+            ) : (
+              <div className="h-10 w-10 flex items-center justify-center rounded-lg bg-[#0284C5] shrink-0">
+                <Boxes className="h-6 w-6 text-white" />
+              </div>
+            )}
+            <h1
+              className="text-lg font-bold text-slate-800 dark:text-slate-100 max-w-[130px] truncate"
+              title={settings.orgName}
+            >
               {settings.orgName}
             </h1>
           </div>
         </div>
 
         {/* ===== SCROLLABLE MENU ===== */}
-        <div className="flex-1 overflow-y-auto px-4 py-4">
-          <SidebarContent>
-            <SidebarGroup>
-              <SidebarGroupContent>
+        <div className="flex-1 overflow-y-auto px-4 py-4 bg-white dark:bg-slate-900">
+          <SidebarContent className="bg-white dark:bg-slate-900">
+            <SidebarGroup className="bg-white dark:bg-slate-900">
+              <SidebarGroupContent className="bg-white dark:bg-slate-900">
                 <SidebarMenu className="space-y-1">
                   {filteredItems.map((item) => {
                     const Icon = item.icon;
@@ -371,22 +402,22 @@ export function AppSidebar() {
                         {item.children ? (
                           <Collapsible className="w-full">
                             {item.url ? (
-                              <div className="flex items-center justify-between w-full rounded-md hover:bg-slate-100/80 group">
-                                <SidebarMenuButton asChild className="flex-1 text-sm font-medium">
+                              <div className="flex items-center justify-between w-full rounded-md hover:bg-slate-100/80 dark:hover:bg-slate-800 group">
+                                <SidebarMenuButton asChild className="flex-1 text-sm font-medium text-slate-700 dark:text-slate-350">
                                   <Link to={item.url}>
                                     <Icon className="w-5 h-5" />
                                     <span>{item.title}</span>
                                   </Link>
                                 </SidebarMenuButton>
                                 <CollapsibleTrigger asChild>
-                                  <button className="p-2 text-slate-500 hover:text-slate-900 focus:outline-none shrink-0">
+                                  <button className="p-2 text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 focus:outline-none shrink-0">
                                     <ChevronDown className="h-4 w-4 transition-transform data-[state=open]:rotate-180" />
                                   </button>
                                 </CollapsibleTrigger>
                               </div>
                             ) : (
                               <CollapsibleTrigger asChild>
-                                <SidebarMenuButton className="w-full text-sm font-medium">
+                                <SidebarMenuButton className="w-full text-sm font-medium text-slate-700 dark:text-slate-350">
                                   <Icon className="w-5 h-5" />
                                   <span className="flex-1">{item.title}</span>
                                   <ChevronDown className="ml-auto h-4 w-4 transition-transform data-[state=open]:rotate-180" />
@@ -400,7 +431,7 @@ export function AppSidebar() {
                                   <li key={sub.title}>
                                     <Link
                                       to={sub.url}
-                                      className="block rounded-md px-2 py-1 text-sm text-muted-foreground hover:bg-[#d2e0f4] hover:text-black"
+                                      className="block rounded-md px-2 py-1 text-sm text-muted-foreground hover:bg-[#d2e0f4] dark:hover:bg-slate-800 hover:text-black dark:hover:text-white"
                                     >
                                       {sub.title}
                                     </Link>
@@ -410,7 +441,7 @@ export function AppSidebar() {
                             </CollapsibleContent>
                           </Collapsible>
                         ) : (
-                          <SidebarMenuButton asChild>
+                          <SidebarMenuButton asChild className="text-slate-700 dark:text-slate-350">
                             <Link to={item.url}>
                               <Icon className="w-5 h-5" />
                               <span>{item.title}</span>
@@ -427,7 +458,7 @@ export function AppSidebar() {
         </div>
 
         {/* ===== FOOTER (FIXED) ===== */}
-        <div className="border-t dark:border-slate-800 bg-white px-4 py-3">
+        <div className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="h-9 w-9 rounded-full bg-[#0284C5] flex items-center justify-center">

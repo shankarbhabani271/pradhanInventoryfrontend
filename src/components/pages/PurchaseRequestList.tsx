@@ -4,7 +4,7 @@ import { Search, Filter, Eye, Printer, Download, Check, X, FileText, Calendar, A
 import axios from "axios";
 import { API_BASE_URL } from "../../config/http";
 import { toast } from "sonner";
-import { getSavedSettings, getCurrencySymbol, formatDate } from "../../utils/settingsHelper";
+import { getSavedSettings, getCurrencySymbol, formatDate, buildLogoUrl } from "../../utils/settingsHelper";
 
 interface PurchaseRequestItem {
   id: string; // PR-2026-001 ERP serial ID
@@ -194,6 +194,11 @@ export default function PurchaseRequestList() {
   };
 
   const handlePrint = (request: PurchaseRequestItem) => {
+    const logoSrc = buildLogoUrl(settings.logoUrl, settings.logoVersion ?? 0, API_BASE_URL);
+    const logoHtml = logoSrc 
+      ? `<img src="${logoSrc}" alt="${settings.orgName}" style="max-height: 50px; max-width: 150px; object-fit: contain; margin-bottom: 10px;" />`
+      : `<div style="height: 40px; width: 40px; background: #4f46e5; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 20px; margin-bottom: 10px;">📦</div>`;
+
     const printContent = `
       <html>
         <head>
@@ -220,6 +225,7 @@ export default function PurchaseRequestList() {
         <body>
           <div class="header">
             <div class="title">
+              ${logoHtml}
               <h1>${settings.orgName}</h1>
               <p>ID: ${request.id}</p>
             </div>

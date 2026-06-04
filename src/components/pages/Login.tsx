@@ -2,11 +2,13 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../../config/http";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle, Loader2, Boxes } from "lucide-react";
 import { toast } from "sonner";
 
 function Login() {
   const [orgName, setOrgName] = useState<string>("InvenPro Pvt Ltd");
+  const [logoUrl, setLogoUrl] = useState<string>("");
+  const [logoFailed, setLogoFailed] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -18,6 +20,7 @@ function Login() {
       .then(res => {
         if (res.data && res.data.success && res.data.data) {
           setOrgName(res.data.data.orgName);
+          setLogoUrl(res.data.data.logoUrl || "");
           localStorage.setItem("invenpro_settings", JSON.stringify(res.data.data));
         }
       })
@@ -28,6 +31,7 @@ function Login() {
           try {
             const parsed = JSON.parse(cached);
             setOrgName(parsed.orgName);
+            setLogoUrl(parsed.logoUrl || "");
           } catch(e){}
         }
       });
@@ -89,6 +93,22 @@ function Login() {
         
         {/* Left Section */}
         <div className="bg-indigo-700 text-white flex flex-col justify-center p-10">
+          {/* Org logo */}
+          {logoUrl && !logoFailed ? (
+            <div className="mb-6">
+              <img
+                src={`${logoUrl.startsWith("http") ? "" : (API_BASE_URL || "").replace("/api", "")}${logoUrl}`}
+                alt={orgName}
+                style={{ maxWidth: 180, maxHeight: 60, objectFit: "contain" }}
+                className="rounded-lg"
+                onError={() => setLogoFailed(true)}
+              />
+            </div>
+          ) : (
+            <div className="mb-6 h-12 w-12 flex items-center justify-center rounded-xl bg-white/20 backdrop-blur-md border border-white/30 shrink-0">
+              <Boxes className="h-6 w-6 text-white" />
+            </div>
+          )}
           <h1 className="text-4xl font-extrabold mb-4 tracking-tight leading-tight">
             Welcome to {orgName}
           </h1>

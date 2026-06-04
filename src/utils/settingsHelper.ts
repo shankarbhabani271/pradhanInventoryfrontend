@@ -7,6 +7,8 @@ export interface InvenProSettings {
   timezone: string;
   currency: string;
   dateFormat: string;
+  logoUrl: string;
+  logoVersion: number; // epoch ms — bumped on every upload/remove for cache-busting
 }
 
 export const DEFAULT_SETTINGS: InvenProSettings = {
@@ -17,7 +19,9 @@ export const DEFAULT_SETTINGS: InvenProSettings = {
   address: "123 Industrial Area, Mumbai, Maharashtra - 400001",
   timezone: "Asia/Kolkata (IST)",
   currency: "INR (₹)",
-  dateFormat: "DD/MM/YYYY"
+  dateFormat: "DD/MM/YYYY",
+  logoUrl: "",
+  logoVersion: 0,
 };
 
 // Retrieve settings from local cache
@@ -25,23 +29,48 @@ export const getSavedSettings = (): InvenProSettings => {
   try {
     const cached = localStorage.getItem("invenpro_settings");
     if (cached) {
-      return JSON.parse(cached);
+      const parsed = JSON.parse(cached);
+      // Back-fill logoVersion if missing (older cache)
+      if (!parsed.logoVersion) parsed.logoVersion = 0;
+      return parsed;
     }
   } catch (e) {
     console.error("Error reading settings from localStorage", e);
   }
-  return DEFAULT_SETTINGS;
+  return { ...DEFAULT_SETTINGS };
 };
 
-// Save settings to local cache and alert components
-export const saveSettingsLocal = (settings: InvenProSettings) => {
+// Save settings to local cache and broadcast to all listeners
+export const saveSettingsLocal = (settings: Partial<InvenProSettings>) => {
   try {
-    localStorage.setItem("invenpro_settings", JSON.stringify(settings));
-    window.dispatchEvent(new Event("invenpro_settings_updated"));
+    const current = getSavedSettings();
+    const merged: InvenProSettings = { ...current, ...settings };
+    localStorage.setItem("invenpro_settings", JSON.stringify(merged));
+    window.dispatchEvent(new CustomEvent("invenpro_settings_updated", { detail: merged }));
   } catch (e) {
     console.error("Error writing settings to localStorage", e);
   }
 };
+
+/**
+ * Build a cache-busted absolute URL for the org logo.
+ * Returns "" if no logo is set (caller should show default fallback).
+ *
+ * @param logoUrl   - e.g. "/uploads/logos/org-logo-1234.png"
+ * @param version   - epoch timestamp; bumped on every upload/remove
+ * @param apiBase   - e.g. "https://backend.onrender.com/api"
+ */
+export const buildLogoUrl = (
+  logoUrl: string,
+  version: number,
+  apiBase: string,
+): string => {
+  if (!logoUrl) return "";
+  const base = apiBase.replace(/\/api\/?$/, "");
+  const path = logoUrl.startsWith("http") ? logoUrl : `${base}${logoUrl}`;
+  return version ? `${path}?v=${version}` : path;
+};
+
 
 // Parse and format any date based on settings
 export const formatDate = (dateInput: any, dateFormat: string = "DD/MM/YYYY"): string => {
