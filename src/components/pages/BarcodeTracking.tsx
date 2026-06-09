@@ -115,7 +115,7 @@ const BarcodeTracking = () => {
     };
     fetchBarcodes();
   }, []);
-
+    
   const mergedInventory = barcodes.length > 0 
     ? barcodes.map(b => ({
         code: b.barcodeNumber,

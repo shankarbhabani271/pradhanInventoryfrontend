@@ -496,7 +496,7 @@ export default function PurchaseRequestList() {
 
                           // Consolidated items description
                           const itemsSummary = r.items && r.items.length > 0 
-                            ? r.items.map(i => `${i.qty || i.quantity || 0} × ${i.productName}`).join(", ") 
+                            ? r.items.map(i => `${i.qty || 0} × ${i.productName}`).join(", ") 
                             : `${totalQty} × Items`;
 
                           return (

@@ -4,6 +4,9 @@ import { API_BASE_URL } from "../config/http";
 const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true, // ✅ REQUIRED for refresh token cookie
+  headers: {
+    "Bypass-Tunnel-Reminder": "true",
+  },
 });
 
 // ✅ attach access token
@@ -18,6 +21,11 @@ api.interceptors.request.use((config) => {
 });
 
 // ✅ auto refresh token
+api.interceptors.request.use((config) => {
+  config.headers["Bypass-Tunnel-Reminder"] = "true";
+  return config;
+});
+
 api.interceptors.response.use(
   (res) => res,
   async (error) => {
@@ -30,7 +38,12 @@ api.interceptors.response.use(
         const res = await axios.post(
           `${API_BASE_URL}/auth/refresh-token`,
           {},
-          { withCredentials: true }
+          {
+            withCredentials: true,
+            headers: {
+              "Bypass-Tunnel-Reminder": "true",
+            },
+          }
         );
 
         const newAccessToken = res.data.data.accessToken;

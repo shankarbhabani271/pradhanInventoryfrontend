@@ -68,6 +68,9 @@ export default function MaterialForm() {
   const [loading, setLoading] = useState({ submit: false, refId: false });
 
   const productDropdownRef = useRef<HTMLDivElement>(null);
+  
+  const [isTyping, setIsTyping] = useState(false);
+  const typingTimeoutRef = useRef<any>(null);
 
   // ── Auto-generate Reference ID ──
   const fetchNextReferenceId = async () => {
@@ -161,6 +164,15 @@ export default function MaterialForm() {
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // ── Cleanup typing timeout on unmount ──
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
   }, []);
 
   // ── Date Formatter matching screen: "29 May 2026" ──
@@ -271,13 +283,11 @@ export default function MaterialForm() {
   };
 
   const isOutOfStockWarning = 
+    !isTyping &&
     selectedProduct && 
     formData.quantity !== "" && 
     Number(formData.quantity) > selectedProduct.stockQuantity;
 
-  const isCustomProduct = 
-    !selectedProduct && 
-    formData.productDetails.trim() !== "";
 
   return (
     <div className="min-h-screen bg-slate-100 p-4 md:p-8 flex items-center justify-center font-sans antialiased text-slate-800">
@@ -429,6 +439,15 @@ export default function MaterialForm() {
                   if (selectedProduct && val !== selectedProduct.itemName) {
                     setSelectedProduct(null);
                   }
+
+                  // Handle typing state for search completion debounce
+                  setIsTyping(true);
+                  if (typingTimeoutRef.current) {
+                    clearTimeout(typingTimeoutRef.current);
+                  }
+                  typingTimeoutRef.current = setTimeout(() => {
+                    setIsTyping(false);
+                  }, 500);
                 }}
                 onFocus={() => setShowProductDropdown(true)}
                 className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition"
@@ -436,39 +455,32 @@ export default function MaterialForm() {
               <Search className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
 
               {/* Dynamic searchable matching dropdown list */}
-              {showProductDropdown && (
+              {showProductDropdown && filteredProducts.length > 0 && (
                 <div className="absolute z-25 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-56 overflow-y-auto p-1.5 space-y-0.5">
-                  {filteredProducts.length === 0 ? (
-                    <div className="py-6 text-center text-slate-400 text-xs flex flex-col items-center justify-center gap-1">
-                      <AlertTriangle className="w-5 h-5 text-slate-350" />
-                      <span>Product not found in current inventory.</span>
-                    </div>
-                  ) : (
-                    filteredProducts.map(item => (
-                      <button
-                        key={item._id}
-                        type="button"
-                        onClick={() => handleSelectProduct(item)}
-                        className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg hover:bg-slate-50 text-left transition ${selectedProduct?._id === item._id ? "bg-blue-50/50" : ""}`}
-                      >
-                        <div>
-                          <p className="font-semibold text-slate-800 text-sm">{item.itemName}</p>
-                          <p className="text-[10px] text-slate-450 mt-0.5">{item.category || "General Item"}</p>
-                        </div>
-                        <div>
-                          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                            item.stockQuantity <= 0 
-                              ? "bg-red-50 border-red-200 text-red-700" 
-                              : item.stockQuantity < 10 
-                              ? "bg-amber-50 border-amber-200 text-amber-700" 
-                              : "bg-blue-50 border-blue-200 text-blue-700"
-                          }`}>
-                            {item.stockQuantity} in stock
-                          </span>
-                        </div>
-                      </button>
-                    ))
-                  )}
+                  {filteredProducts.map(item => (
+                    <button
+                      key={item._id}
+                      type="button"
+                      onClick={() => handleSelectProduct(item)}
+                      className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg hover:bg-slate-50 text-left transition ${selectedProduct?._id === item._id ? "bg-blue-50/50" : ""}`}
+                    >
+                      <div>
+                        <p className="font-semibold text-slate-800 text-sm">{item.itemName}</p>
+                        <p className="text-[10px] text-slate-450 mt-0.5">{item.category || "General Item"}</p>
+                      </div>
+                      <div>
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                          item.stockQuantity <= 0 
+                            ? "bg-red-50 border-red-200 text-red-700" 
+                            : item.stockQuantity < 10 
+                            ? "bg-amber-50 border-amber-200 text-amber-700" 
+                            : "bg-blue-50 border-blue-200 text-blue-700"
+                        }`}>
+                          {item.stockQuantity} in stock
+                        </span>
+                      </div>
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
@@ -497,18 +509,6 @@ export default function MaterialForm() {
               </div>
             )}
 
-            {/* Alert card for custom product requests */}
-            {isCustomProduct && (
-              <div className="flex items-start gap-2.5 p-3 bg-blue-50 border border-blue-200 rounded-lg mt-1 text-blue-800 text-xs">
-                <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-bold">New Product Request</p>
-                  <p className="mt-0.5 text-blue-700">
-                    Note: This product is not in inventory. Submitting this request will automatically queue a <strong>Procurement Required</strong> action upon admin approval.
-                  </p>
-                </div>
-              </div>
-            )}
 
           </div>
 

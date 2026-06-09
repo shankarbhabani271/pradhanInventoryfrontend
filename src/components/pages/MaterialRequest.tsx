@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../../config/http";
+import MaterialIssueBillModal from "./MaterialIssueBillModal";
 
 interface MaterialData {
   _id: string;
@@ -29,16 +30,26 @@ const priorityConfig: Record<string, { bg: string; text: string; dot: string }> 
   Urgent: { bg: "#FEE2E2", text: "#991B1B", dot: "#EF4444" },
 };
 
-const statusConfig: Record<string, { bg: string; text: string; border: string }> = {
-  Pending:   { bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE" },
-  Approved:  { bg: "#D1FAE5", text: "#065F46", border: "#6EE7B7" },
-  Draft:     { bg: "#F3F4F6", text: "#374151", border: "#D1D5DB" },
-  Rejected:  { bg: "#FEE2E2", text: "#991B1B", border: "#FECACA" },
-  Completed: { bg: "#F0FDF4", text: "#14532D", border: "#86EFAC" },
-  "Procurement Required": { bg: "#FFEDD5", text: "#C2410C", border: "#FED7AA" },
+const getDisplayStatus = (status: string) => {
+  if (["Procurement Required", "RFQ Created", "Quotations Received", "Vendor Selected", "PO Created", "PO Approved", "Material Ordered", "Material Received"].includes(status)) {
+    return "Procurement";
+  }
+  if (status === "Procurement Completed") {
+    return "Completed";
+  }
+  return status;
 };
 
-const STATUSES = ["All Status", "Draft", "Pending", "Approved", "Rejected", "Completed", "Procurement Required"];
+const statusConfig: Record<string, { bg: string; text: string; border: string }> = {
+  Pending:     { bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA" }, // Orange
+  Approved:    { bg: "#ECFDF5", text: "#047857", border: "#A7F3D0" }, // Green
+  Procurement: { bg: "#F3E8FF", text: "#6B21A8", border: "#E9D5FF" }, // Purple
+  Completed:   { bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE" }, // Blue
+  Rejected:    { bg: "#FEF2F2", text: "#B91C1C", border: "#FCA5A5" }, // Red
+  Draft:       { bg: "#F3F4F6", text: "#374151", border: "#D1D5DB" },
+};
+
+const STATUSES = ["All Status", "Draft", "Pending", "Approved", "Procurement", "Completed", "Rejected"];
 
 export default function MaterialRequest() {
   const navigate = useNavigate();
@@ -47,6 +58,7 @@ export default function MaterialRequest() {
   const [statusFilter, setStatusFilter] = useState("All Status");
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [billRequest, setBillRequest] = useState<MaterialData | null>(null);
 
   // Reset page on filter changes
   useEffect(() => {
@@ -65,13 +77,14 @@ export default function MaterialRequest() {
   }, []);
 
   const filtered = data.filter((row) => {
+    const displayStatus = getDisplayStatus(row.status);
     const matchSearch =
       (row.referenceId || "").toLowerCase().includes(search.toLowerCase()) ||
       (row.requester || "").toLowerCase().includes(search.toLowerCase()) ||
       (row.department || "").toLowerCase().includes(search.toLowerCase()) ||
       (row.productDetails || "").toLowerCase().includes(search.toLowerCase());
     const matchStatus =
-      statusFilter === "All Status" || row.status === statusFilter;
+      statusFilter === "All Status" || displayStatus === statusFilter;
     return matchSearch && matchStatus;
   });
 
@@ -209,8 +222,9 @@ export default function MaterialRequest() {
                     </td>
                   </tr>
                 ) : paginated.map((row, idx) => {
+                  const displayStatus = getDisplayStatus(row.status);
                   const pri = priorityConfig[row.priority] || priorityConfig["Low"];
-                  const sta = statusConfig[row.status] || statusConfig["Pending"];
+                  const sta = statusConfig[displayStatus] || statusConfig["Pending"];
                   const avBg = avatarColors[idx % avatarColors.length];
                   const avTxt = avatarTextColors[idx % avatarTextColors.length];
                   return (
@@ -250,30 +264,56 @@ export default function MaterialRequest() {
                       </td>
                       <td style={{ padding: "13px 16px" }}>
                         <span style={{ background: sta.bg, color: sta.text, border: `1px solid ${sta.border}`, fontSize: 11, fontWeight: 500, padding: "4px 10px", borderRadius: 20, whiteSpace: "nowrap" }}>
-                          {row.status || "Pending"}
+                          {displayStatus || "Pending"}
                         </span>
                       </td>
                       <td style={{ padding: "13px 16px", textAlign: "center", position: "relative" }}
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setOpenMenu(openMenu === row._id ? null : row._id); }}
-                          style={{ background: "none", border: "1px solid #E2E8F0", borderRadius: 6, padding: "4px 8px", cursor: "pointer", color: "#64748B", display: "inline-flex", alignItems: "center" }}
-                        >
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-                        </button>
-                        {openMenu === row._id && (
-                          <div style={{ position: "absolute", right: 16, top: 44, background: "#fff", border: "1px solid #E2E8F0", borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.08)", zIndex: 10, minWidth: 130, overflow: "hidden" }}>
-                            {["View", "Edit", "Approve", "Reject"].map(action => (
-                              <button key={action} onClick={(e) => { e.stopPropagation(); setOpenMenu(null); navigate("/apporavals"); }}
-                                style={{ display: "block", width: "100%", padding: "9px 14px", textAlign: "left", background: "none", border: "none", fontSize: 13, color: action === "Reject" ? "#DC2626" : "#334155", cursor: "pointer", fontFamily: "inherit", fontWeight: 500 }}
-                                onMouseEnter={e => e.currentTarget.style.background = "#F8FAFC"}
-                                onMouseLeave={e => e.currentTarget.style.background = "none"}
-                              >
-                                {action}
-                              </button>
-                            ))}
-                          </div>
+                        {displayStatus === "Completed" ? (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setBillRequest(row); }}
+                            style={{
+                              background: "#EFF6FF",
+                              border: "1px solid #BFDBFE",
+                              borderRadius: 6,
+                              padding: "5px 12px",
+                              cursor: "pointer",
+                              color: "#1D4ED8",
+                              fontSize: 12,
+                              fontWeight: 650,
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 4,
+                              fontFamily: "inherit",
+                              boxShadow: "0 1px 2px rgba(29, 78, 216, 0.05)"
+                            }}
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                            View Bill
+                          </button>
+                        ) : (
+                          <>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setOpenMenu(openMenu === row._id ? null : row._id); }}
+                              style={{ background: "none", border: "1px solid #E2E8F0", borderRadius: 6, padding: "4px 8px", cursor: "pointer", color: "#64748B", display: "inline-flex", alignItems: "center" }}
+                            >
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+                            </button>
+                            {openMenu === row._id && (
+                              <div style={{ position: "absolute", right: 16, top: 44, background: "#fff", border: "1px solid #E2E8F0", borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.08)", zIndex: 10, minWidth: 130, overflow: "hidden" }}>
+                                {["View", "Edit", "Approve", "Reject"].map(action => (
+                                  <button key={action} onClick={(e) => { e.stopPropagation(); setOpenMenu(null); navigate("/apporavals"); }}
+                                    style={{ display: "block", width: "100%", padding: "9px 14px", textAlign: "left", background: "none", border: "none", fontSize: 13, color: action === "Reject" ? "#DC2626" : "#334155", cursor: "pointer", fontFamily: "inherit", fontWeight: 500 }}
+                                    onMouseEnter={e => e.currentTarget.style.background = "#F8FAFC"}
+                                    onMouseLeave={e => e.currentTarget.style.background = "none"}
+                                  >
+                                    {action}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </>
                         )}
                       </td>
                     </tr>
@@ -326,6 +366,13 @@ export default function MaterialRequest() {
         </div>
 
       </div>
+
+      {billRequest && (
+        <MaterialIssueBillModal
+          request={billRequest}
+          onClose={() => setBillRequest(null)}
+        />
+      )}
     </div>
   );
 }

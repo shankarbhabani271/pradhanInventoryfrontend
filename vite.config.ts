@@ -11,5 +11,23 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-
+  server: {
+    host: '127.0.0.1',
+    allowedHosts: true,
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:8080',
+        changeOrigin: true,
+      },
+      '/uploads': {
+        target: 'http://127.0.0.1:8080',
+        changeOrigin: true,
+      },
+    },
+  },
+  preview: {
+    host: '127.0.0.1',
+    port: 5174,
+    allowedHosts: true
+  }
 })

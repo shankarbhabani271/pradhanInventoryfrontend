@@ -194,6 +194,7 @@ const Procurement = () => {
   const [invoices, setInvoices] = useState<InvoiceItem[]>([]);
   const [payments, setPayments] = useState<PaymentItem[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [mrStatusMap, setMrStatusMap] = useState<Record<string, string>>({});
 
   // Search/Filters
   const [searchQuery, setSearchQuery] = useState("");
@@ -546,18 +547,27 @@ const Procurement = () => {
   // ── AUTO-SYNC APPROVED MATERIAL REQUESTS TO PRs ──
   const syncApprovedMaterialRequests = async () => {
     try {
-      const res = await fetch("/api/material?status=Approved");
+      const res = await fetch(`${API_BASE_URL}/material`);
       const json = await res.json();
       if (json && json.data) {
-        const approvedMRequests = json.data;
+        const activeProcurementRequests = json.data.filter((req: any) =>
+          ["Procurement Required", "RFQ Created", "Quotations Received", "Vendor Selected", "PO Created", "PO Approved"].includes(req.status)
+        );
         const currentPrs = JSON.parse(localStorage.getItem("invenpro_prs") || "[]");
         let addedCount = 0;
 
-        approvedMRequests.forEach((req: any) => {
-          const exists = currentPrs.some((p: any) => p.materialRequestId === req._id);
+        const statusMap: Record<string, string> = {};
+        json.data.forEach((req: any) => {
+          statusMap[req._id] = req.status;
+          statusMap[req.referenceId] = req.status;
+        });
+        setMrStatusMap(statusMap);
+
+        activeProcurementRequests.forEach((req: any) => {
+          const exists = currentPrs.some((p: any) => p.materialRequestId === req._id || p.id === req.referenceId);
           if (!exists) {
             const newPr: PRItem = {
-              id: getNextPrId(),
+              id: req.referenceId, // Request Number as PR ID
               materialRequestId: req._id,
               department: req.department,
               requester: req.requester,
@@ -566,22 +576,23 @@ const Procurement = () => {
               estimatedPrice: 1200,
               totalAmount: req.quantity * 1200,
               priority: req.priority === "Urgent" ? "High" : req.priority,
-              status: "Approved",
-              createdDate: new Date().toISOString().split("T")[0]
+              status: "Approved", // Approved status allows Create RFQ action
+              createdDate: req.date || (req.createdAt ? req.createdAt.split("T")[0] : new Date().toISOString().split("T")[0])
             };
             currentPrs.unshift(newPr);
             addedCount++;
           }
         });
 
+        localStorage.setItem("invenpro_prs", JSON.stringify(currentPrs));
+        setPrs(currentPrs);
+
         if (addedCount > 0) {
-          localStorage.setItem("invenpro_prs", JSON.stringify(currentPrs));
-          setPrs(currentPrs);
-          addAuditLog(`Auto-synced ${addedCount} approved material requests into PR Requisitions list.`);
+          addAuditLog(`Auto-synced ${addedCount} non-inventory product requests into PR Requisitions list.`);
         }
       }
     } catch (err) {
-      console.warn("MongoDB API sync unavailable, relying on localStorage requisitions state.");
+      console.warn("MongoDB API sync failed.", err);
     }
   };
 
@@ -687,6 +698,14 @@ const Procurement = () => {
     localStorage.setItem("invenpro_prs", JSON.stringify(updatedPrs));
     setPrs(updatedPrs);
 
+    if (selectedPr.materialRequestId) {
+      axios.put(`${API_BASE_URL}/material/${selectedPr.materialRequestId}/status`, { status: "RFQ Created" })
+        .then(() => {
+          setMrStatusMap(prev => ({ ...prev, [selectedPr.materialRequestId!]: "RFQ Created", [selectedPr.id]: "RFQ Created" }));
+        })
+        .catch(err => console.warn("Failed to update status to RFQ Created:", err));
+    }
+
     const updatedRfqs = [newRfq, ...rfqs];
     const updatedQuotes = [...newQuotes, ...quotations];
 
@@ -722,6 +741,32 @@ const Procurement = () => {
     const shippingCost = 3500;
     const grandTotal = subtotal + taxAmount - discountAmount + shippingCost;
 
+    const matchedPr = prs.find(p => p.id === selectedRfq.prId);
+    if (matchedPr && matchedPr.materialRequestId) {
+      try {
+        await axios.put(`${API_BASE_URL}/material/${matchedPr.materialRequestId}/status`, { status: "Vendor Selected" });
+        setMrStatusMap(prev => ({ ...prev, [matchedPr.materialRequestId!]: "Vendor Selected", [matchedPr.id]: "Vendor Selected" }));
+
+        // Save vendor details to local storage map
+        const cachedVendors = localStorage.getItem("invenpro_mr_vendors");
+        let map: Record<string, any> = {};
+        if (cachedVendors) {
+          try {
+            map = JSON.parse(cachedVendors);
+          } catch {}
+        }
+        map[matchedPr.materialRequestId] = {
+          vendorName: quote.vendorName,
+          vendorContact: quote.vendorContact,
+          vendorAddress: quote.vendorAddress,
+          unitPrice: quote.unitPrice
+        };
+        localStorage.setItem("invenpro_mr_vendors", JSON.stringify(map));
+      } catch (err) {
+        console.warn("Failed to update status to Vendor Selected in DB:", err);
+      }
+    }
+
     const newPo: POItem = {
       id: poId,
       rfqId: selectedRfq.id,
@@ -745,7 +790,8 @@ const Procurement = () => {
       status: "Draft",
       createdBy: "Bhabani",
       approvedBy: "",
-      createdDate: today
+      createdDate: today,
+      materialRequestRef: matchedPr ? matchedPr.id : undefined
     };
 
     // Close RFQ
@@ -946,6 +992,7 @@ const Procurement = () => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ status: "PO Created" })
         });
+        setMrStatusMap(prev => ({ ...prev, [selectedMr._id]: "PO Created", [selectedMr.referenceId]: "PO Created" }));
       } catch (err) {
         console.warn("Backend status update failed", err);
       }
@@ -1032,6 +1079,7 @@ const Procurement = () => {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ status: "PO Approved" })
             });
+            setMrStatusMap(prev => ({ ...prev, [matchedMr._id]: "PO Approved", [matchedMr.referenceId]: "PO Approved" }));
           }
         }
       } catch (err) {
@@ -1234,25 +1282,25 @@ const Procurement = () => {
 
   // ── FILTER LISTS ──
   const filteredPrs = prs.filter(p =>
-    p.productDetails.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.requester.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.department.toLowerCase().includes(searchQuery.toLowerCase())
+    (p.productDetails || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (p.requester || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (p.department || "").toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const filteredRfqs = rfqs.filter(r =>
-    r.productDetails.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    r.id.toLowerCase().includes(searchQuery.toLowerCase())
+    (r.productDetails || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (r.id || "").toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const filteredPos = pos.filter(p =>
-    p.productName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.vendorName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.id.toLowerCase().includes(searchQuery.toLowerCase())
+    (p.productName || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (p.vendorName || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (p.id || "").toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const filteredInvoices = invoices.filter(i =>
-    i.vendorName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    i.poId.toLowerCase().includes(searchQuery.toLowerCase())
+    (i.vendorName || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (i.poId || "").toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -1360,11 +1408,11 @@ const Procurement = () => {
               <table className="w-full text-xs text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-50 border-b text-slate-500 font-extrabold text-[10px] uppercase tracking-wider">
-                    <th className="p-3">PR Number</th>
-                    <th className="p-3">Department</th>
-                    <th className="p-3">Product Name</th>
-                    <th className="p-3 text-center">Quantity</th>
-                    <th className="p-3">Date</th>
+                    <th className="p-3">Request Number</th>
+                    <th className="p-3">Item Name</th>
+                    <th className="p-3 text-center">Requested Quantity</th>
+                    <th className="p-3">Requested By</th>
+                    <th className="p-3">Request Date</th>
                     <th className="p-3">Priority</th>
                     <th className="p-3">Status</th>
                     <th className="p-3 text-center">Action</th>
@@ -1379,9 +1427,9 @@ const Procurement = () => {
                     filteredPrs.map(pr => (
                       <tr key={pr.id} className="hover:bg-slate-50/50">
                         <td className="p-3 font-bold text-blue-600">{pr.id}</td>
-                        <td className="p-3 text-slate-700">{pr.department}</td>
                         <td className="p-3 text-slate-800 font-semibold">{pr.productDetails}</td>
                         <td className="p-3 text-center font-bold text-slate-900">{pr.quantity}</td>
+                        <td className="p-3 text-slate-700">{pr.requester}</td>
                         <td className="p-3 text-slate-500">{formatDate(pr.createdDate, settings.dateFormat)}</td>
                         <td className="p-3">
                           <span className={`px-2 py-0.5 rounded-full text-[9px] font-black border uppercase tracking-wider ${pr.priority === "High" ? "bg-rose-50 text-rose-700 border-rose-100" :
@@ -1392,11 +1440,16 @@ const Procurement = () => {
                           </span>
                         </td>
                         <td className="p-3">
-                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${pr.status === "Approved" ? "bg-green-100 text-green-700" :
-                              pr.status === "Rejected" ? "bg-red-100 text-red-700" :
-                                "bg-amber-100 text-amber-700"
-                            }`}>
-                            {pr.status}
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                            pr.materialRequestId 
+                              ? "bg-orange-100 text-orange-700 border border-orange-200" 
+                              : pr.status === "Approved" 
+                              ? "bg-green-100 text-green-700" 
+                              : pr.status === "Rejected" 
+                              ? "bg-red-100 text-red-700" 
+                              : "bg-amber-100 text-amber-700"
+                          }`}>
+                            {pr.materialRequestId ? "Pending Procurement" : pr.status}
                           </span>
                         </td>
                         <td className="p-3 text-center">
@@ -1419,7 +1472,7 @@ const Procurement = () => {
                                 </button>
                               </>
                             )}
-                            {pr.status === "Approved" && (
+                            {pr.status === "Approved" && (!pr.materialRequestId || mrStatusMap[pr.id] === "Procurement Required" || mrStatusMap[pr.materialRequestId] === "Procurement Required") && (
                               <button
                                 onClick={() => handleOpenRfqModal(pr)}
                                 className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-[10px] flex items-center gap-1 transition"

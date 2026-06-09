@@ -7,6 +7,9 @@ export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://backen
 export const http = axios.create({
     baseURL: API_BASE_URL,
     withCredentials: true,
+    headers: {
+        "Bypass-Tunnel-Reminder": "true",
+    },
 });
 
 // http.interceptors.response.use(

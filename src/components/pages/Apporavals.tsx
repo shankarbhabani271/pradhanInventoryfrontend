@@ -24,8 +24,10 @@ import {
   ArrowDown,
   Trash2,
   ShoppingCart,
+  FileText,
 } from "lucide-react";
 import { API_BASE_URL } from "../../config/http";
+import MaterialIssueBillModal from "./MaterialIssueBillModal";
 
 const STATIC_VENDORS = [
   { name: "Dell Technologies", contact: "Dell Sales Team (+91-8877665544)", address: "Bangalore Tech Park, India" },
@@ -62,16 +64,16 @@ interface StockResult {
 type ApiStatus =
   | "Pending"
   | "Approved"
+  | "Procurement"
   | "Completed"
-  | "Rejected"
-  | "Procurement Required";
+  | "Rejected";
 
 type TabSlug =
   | "pending"
   | "approved"
+  | "procurement"
   | "completed"
-  | "rejected"
-  | "procurement-required";
+  | "rejected";
 
 type CountsMap = Record<ApiStatus, number>;
 
@@ -97,102 +99,106 @@ const TABS: {
   countActiveBg: string;
   countActiveText: string;
 }[] = [
-  {
-    slug: "pending",
-    label: "Pending",
-    apiStatus: "Pending",
-    icon: Clock,
-    activeBg: "bg-amber-400",
-    activeText: "text-white",
-    activeShadow: "shadow-amber-200",
-    inactiveBorder: "border-amber-200",
-    inactiveText: "text-amber-700",
-    inactiveHover: "hover:bg-amber-50",
-    countBg: "bg-amber-100",
-    countText: "text-amber-800",
-    countActiveBg: "bg-white/30",
-    countActiveText: "text-white",
-  },
-  {
-    slug: "approved",
-    label: "Approved",
-    apiStatus: "Approved",
-    icon: CheckCircle,
-    activeBg: "bg-emerald-500",
-    activeText: "text-white",
-    activeShadow: "shadow-emerald-200",
-    inactiveBorder: "border-emerald-200",
-    inactiveText: "text-emerald-700",
-    inactiveHover: "hover:bg-emerald-50",
-    countBg: "bg-emerald-100",
-    countText: "text-emerald-800",
-    countActiveBg: "bg-white/30",
-    countActiveText: "text-white",
-  },
-  {
-    slug: "completed",
-    label: "Completed",
-    apiStatus: "Completed",
-    icon: BadgeCheck,
-    activeBg: "bg-blue-500",
-    activeText: "text-white",
-    activeShadow: "shadow-blue-200",
-    inactiveBorder: "border-blue-200",
-    inactiveText: "text-blue-700",
-    inactiveHover: "hover:bg-blue-50",
-    countBg: "bg-blue-100",
-    countText: "text-blue-800",
-    countActiveBg: "bg-white/30",
-    countActiveText: "text-white",
-  },
-  {
-    slug: "rejected",
-    label: "Rejected",
-    apiStatus: "Rejected",
-    icon: XCircle,
-    activeBg: "bg-red-500",
-    activeText: "text-white",
-    activeShadow: "shadow-red-200",
-    inactiveBorder: "border-red-200",
-    inactiveText: "text-red-600",
-    inactiveHover: "hover:bg-red-50",
-    countBg: "bg-red-100",
-    countText: "text-red-800",
-    countActiveBg: "bg-white/30",
-    countActiveText: "text-white",
-  },
-  {
-    slug: "procurement-required",
-    label: "Procurement",
-    apiStatus: "Procurement Required",
-    icon: AlertTriangle,
-    activeBg: "bg-orange-500",
-    activeText: "text-white",
-    activeShadow: "shadow-orange-200",
-    inactiveBorder: "border-orange-200",
-    inactiveText: "text-orange-600",
-    inactiveHover: "hover:bg-orange-50",
-    countBg: "bg-orange-100",
-    countText: "text-orange-800",
-    countActiveBg: "bg-white/30",
-    countActiveText: "text-white",
-  },
-];
+    {
+      slug: "pending",
+      label: "Pending",
+      apiStatus: "Pending",
+      icon: Clock,
+      activeBg: "bg-amber-400",
+      activeText: "text-white",
+      activeShadow: "shadow-amber-200",
+      inactiveBorder: "border-amber-200",
+      inactiveText: "text-amber-700",
+      inactiveHover: "hover:bg-amber-50",
+      countBg: "bg-amber-100",
+      countText: "text-amber-800",
+      countActiveBg: "bg-white/30",
+      countActiveText: "text-white",
+    },
+    {
+      slug: "approved",
+      label: "Approved",
+      apiStatus: "Approved",
+      icon: CheckCircle,
+      activeBg: "bg-emerald-500",
+      activeText: "text-white",
+      activeShadow: "shadow-emerald-200",
+      inactiveBorder: "border-emerald-200",
+      inactiveText: "text-emerald-700",
+      inactiveHover: "hover:bg-emerald-50",
+      countBg: "bg-emerald-100",
+      countText: "text-emerald-800",
+      countActiveBg: "bg-white/30",
+      countActiveText: "text-white",
+    },
+    {
+      slug: "procurement",
+      label: "Procurement",
+      apiStatus: "Procurement",
+      icon: ShoppingCart,
+      activeBg: "bg-purple-600",
+      activeText: "text-white",
+      activeShadow: "shadow-purple-200",
+      inactiveBorder: "border-purple-200",
+      inactiveText: "text-purple-705",
+      inactiveHover: "hover:bg-purple-50",
+      countBg: "bg-purple-100",
+      countText: "text-purple-800",
+      countActiveBg: "bg-white/30",
+      countActiveText: "text-white",
+    },
+    {
+      slug: "completed",
+      label: "Completed",
+      apiStatus: "Completed",
+      icon: BadgeCheck,
+      activeBg: "bg-blue-500",
+      activeText: "text-white",
+      activeShadow: "shadow-blue-200",
+      inactiveBorder: "border-blue-200",
+      inactiveText: "text-blue-700",
+      inactiveHover: "hover:bg-blue-50",
+      countBg: "bg-blue-100",
+      countText: "text-blue-800",
+      countActiveBg: "bg-white/30",
+      countActiveText: "text-white",
+    },
+    {
+      slug: "rejected",
+      label: "Rejected",
+      apiStatus: "Rejected",
+      icon: XCircle,
+      activeBg: "bg-red-500",
+      activeText: "text-white",
+      activeShadow: "shadow-red-200",
+      inactiveBorder: "border-red-200",
+      inactiveText: "text-red-600",
+      inactiveHover: "hover:bg-red-50",
+      countBg: "bg-red-100",
+      countText: "text-red-800",
+      countActiveBg: "bg-white/30",
+      countActiveText: "text-white",
+    },
+  ];
 
 /* ================================================================
    STATUS BADGE
 ================================================================ */
 const STATUS_STYLES: Record<string, { bg: string; border: string; text: string; dot: string }> = {
-  Pending:                 { bg: "bg-amber-50",  border: "border-amber-200",  text: "text-amber-700",  dot: "bg-amber-400"  },
-  Approved:                { bg: "bg-emerald-50",border: "border-emerald-200",text: "text-emerald-700",dot: "bg-emerald-500"},
-  "Ready For Issue":       { bg: "bg-emerald-50",border: "border-emerald-200",text: "text-emerald-700",dot: "bg-emerald-500"},
-  Rejected:                { bg: "bg-red-50",    border: "border-red-200",    text: "text-red-600",    dot: "bg-red-500"    },
-  "Procurement Required":  { bg: "bg-orange-50", border: "border-orange-200", text: "text-orange-700", dot: "bg-orange-500" },
-  "Vendor Selected":       { bg: "bg-purple-50", border: "border-purple-200", text: "text-purple-700", dot: "bg-purple-500" },
-  "PO Created":            { bg: "bg-cyan-50",   border: "border-cyan-200",   text: "text-cyan-700",   dot: "bg-cyan-500"   },
-  "PO Approved":           { bg: "bg-indigo-50", border: "border-indigo-200", text: "text-indigo-700", dot: "bg-indigo-500" },
-  Completed:               { bg: "bg-blue-50",   border: "border-blue-200",   text: "text-blue-700",   dot: "bg-blue-500"   },
-  "Procurement Completed": { bg: "bg-blue-50",   border: "border-blue-200",   text: "text-blue-700",   dot: "bg-blue-500"   },
+  Pending: { bg: "bg-amber-50", border: "border-amber-200", text: "text-amber-700", dot: "bg-amber-400" },
+  Approved: { bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700", dot: "bg-emerald-500" },
+  "Ready For Issue": { bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700", dot: "bg-emerald-500" },
+  Rejected: { bg: "bg-red-50", border: "border-red-200", text: "text-red-600", dot: "bg-red-500" },
+  "Procurement Required": { bg: "bg-orange-50", border: "border-orange-200", text: "text-orange-700", dot: "bg-orange-500" },
+  "RFQ Created": { bg: "bg-purple-50", border: "border-purple-200", text: "text-purple-700", dot: "bg-purple-500" },
+  "Quotations Received": { bg: "bg-purple-50", border: "border-purple-200", text: "text-purple-700", dot: "bg-purple-500" },
+  "Vendor Selected": { bg: "bg-purple-50", border: "border-purple-200", text: "text-purple-700", dot: "bg-purple-500" },
+  "PO Created": { bg: "bg-cyan-50", border: "border-cyan-200", text: "text-cyan-700", dot: "bg-cyan-500" },
+  "PO Approved": { bg: "bg-indigo-50", border: "border-indigo-200", text: "text-indigo-700", dot: "bg-indigo-500" },
+  "Material Ordered": { bg: "bg-indigo-50", border: "border-indigo-200", text: "text-indigo-700", dot: "bg-indigo-500" },
+  "Material Received": { bg: "bg-teal-50", border: "border-teal-200", text: "text-teal-700", dot: "bg-teal-500" },
+  Completed: { bg: "bg-blue-50", border: "border-blue-200", text: "text-blue-700", dot: "bg-blue-500" },
+  "Procurement Completed": { bg: "bg-blue-50", border: "border-blue-200", text: "text-blue-700", dot: "bg-blue-500" },
 };
 
 const StatusBadge = ({ status, isClickable = false }: { status: string; isClickable?: boolean }) => {
@@ -209,10 +215,10 @@ const StatusBadge = ({ status, isClickable = false }: { status: string; isClicka
    PRIORITY BADGE
 ================================================================ */
 const PRIORITY_STYLES: Record<string, string> = {
-  High:   "bg-red-100  text-red-700  border-red-200",
+  High: "bg-red-100  text-red-700  border-red-200",
   Urgent: "bg-rose-100 text-rose-700 border-rose-200",
   Medium: "bg-amber-100 text-amber-700 border-amber-200",
-  Low:    "bg-green-100 text-green-700 border-green-200",
+  Low: "bg-green-100 text-green-700 border-green-200",
 };
 
 const PriorityBadge = ({ priority }: { priority: string }) => (
@@ -226,11 +232,11 @@ const PriorityBadge = ({ priority }: { priority: string }) => (
 ================================================================ */
 const WorkflowStepper = ({ status }: { status: string }) => {
   const steps = [
-    { label: "Requested",   done: true },
-    { label: "Pending",     done: true },
-    { label: "Approved",    done: ["Approved", "Ready For Issue", "Completed", "Procurement Required", "Vendor Selected", "PO Created", "PO Approved", "Procurement Completed"].includes(status) },
+    { label: "Requested", done: true },
+    { label: "Pending", done: true },
+    { label: "Approved", done: ["Approved", "Ready For Issue", "Completed", "Procurement Required", "Vendor Selected", "PO Created", "PO Approved", "Procurement Completed"].includes(status) },
     { label: "Stock Check", done: ["Ready For Issue", "Completed", "Procurement Required", "Vendor Selected", "PO Created", "PO Approved", "Procurement Completed"].includes(status) },
-    { label: "Fulfilled",   done: ["Completed", "Procurement Completed"].includes(status) },
+    { label: "Fulfilled", done: ["Completed", "Procurement Completed"].includes(status) },
   ];
 
   return (
@@ -341,17 +347,19 @@ const StockSummaryCard = ({
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 bg-white divide-x divide-y sm:divide-y-0 divide-slate-100">
         {[
-          { label: "Current Stock",   value: result.stock,                                 icon: Boxes,         color: "text-blue-600",    bg: "bg-blue-50",    num: true  },
-          { label: "Requested Qty",   value: requestedQty,                                 icon: Hash,          color: "text-amber-600",   bg: "bg-amber-50",   num: true  },
-          { label: "Remaining Stock", value: result.remaining,                              icon: TrendingDown,  color: result.remaining >= 0 ? "text-emerald-600" : "text-red-600", bg: result.remaining >= 0 ? "bg-emerald-50" : "bg-red-50", num: true },
-          { label: "Stock Status",    value: result.isAvailable ? "Sufficient" : "Deficit", icon: result.isAvailable ? ShieldCheck : AlertTriangle, color: result.isAvailable ? "text-emerald-600" : "text-red-600", bg: result.isAvailable ? "bg-emerald-50" : "bg-red-50", num: false },
-        ].map((s, i) => { const Icon = s.icon; return (
-          <div key={i} className="p-4 flex flex-col gap-2">
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${s.bg}`}><Icon className={`w-4 h-4 ${s.color}`} /></div>
-            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{s.label}</p>
-            <p className={`text-xl font-extrabold ${s.color}`}>{s.num ? Number(s.value).toLocaleString() : s.value}</p>
-          </div>
-        );})}
+          { label: "Current Stock", value: result.stock, icon: Boxes, color: "text-blue-600", bg: "bg-blue-50", num: true },
+          { label: "Requested Qty", value: requestedQty, icon: Hash, color: "text-amber-600", bg: "bg-amber-50", num: true },
+          { label: "Remaining Stock", value: result.remaining, icon: TrendingDown, color: result.remaining >= 0 ? "text-emerald-600" : "text-red-600", bg: result.remaining >= 0 ? "bg-emerald-50" : "bg-red-50", num: true },
+          { label: "Stock Status", value: result.isAvailable ? "Sufficient" : "Deficit", icon: result.isAvailable ? ShieldCheck : AlertTriangle, color: result.isAvailable ? "text-emerald-600" : "text-red-600", bg: result.isAvailable ? "bg-emerald-50" : "bg-red-50", num: false },
+        ].map((s, i) => {
+          const Icon = s.icon; return (
+            <div key={i} className="p-4 flex flex-col gap-2">
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${s.bg}`}><Icon className={`w-4 h-4 ${s.color}`} /></div>
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{s.label}</p>
+              <p className={`text-xl font-extrabold ${s.color}`}>{s.num ? Number(s.value).toLocaleString() : s.value}</p>
+            </div>
+          );
+        })}
       </div>
       <div className="px-5 py-4 bg-white border-t border-slate-100">
         <div className="flex justify-between items-center mb-2">
@@ -452,12 +460,13 @@ interface DetailsPanelProps {
   onIssueStock: () => void;
   onOpenVendorModal: () => void;
   onOpenPoModal: () => void;
+  onViewBill: () => void;
 }
 
 const DetailsPanel = ({
   item, stockResult, stockMessage, loading,
   onApprove, onReject, onCheckStock, onProcess, onCloseStock, onProcure,
-  onIssueStock, onOpenVendorModal, onOpenPoModal
+  onIssueStock, onOpenVendorModal, onOpenPoModal, onViewBill
 }: DetailsPanelProps) => {
   if (!item) {
     return (
@@ -475,30 +484,22 @@ const DetailsPanel = ({
   const isApproved    = item.status === "Approved";
   const isReadyForIssue = item.status === "Ready For Issue";
   const isCompleted   = item.status === "Completed" || item.status === "Procurement Completed";
-  const isProcurement = item.status === "Procurement Required";
-  const isVendorSelected = item.status === "Vendor Selected";
-  const isPoCreated = item.status === "PO Created";
-  const isPoApproved = item.status === "PO Approved";
   const isRejected    = item.status === "Rejected";
-  const canAct        = isPending || isApproved || isReadyForIssue || isProcurement || isVendorSelected;
+  const isProcurementRequired = item.status === "Procurement Required";
+  const isVendorSelected      = item.status === "Vendor Selected";
+  const canAct        = isPending || isApproved || isReadyForIssue || isProcurementRequired || isVendorSelected;
   const anyLoading    = loading.approve || loading.reject || loading.stock || loading.process;
 
   const resolvedBanner = item.status === "Completed"
     ? { bg: "bg-blue-50 border-blue-100", icon: <CheckCircle className="w-4 h-4 text-blue-600" />, iconBg: "bg-blue-100", title: "Request Completed", desc: "Stock was available and has been deducted from inventory.", textColor: "text-blue-700", descColor: "text-blue-600" }
     : item.status === "Procurement Completed"
     ? { bg: "bg-emerald-50 border-emerald-100", icon: <CheckCircle className="w-4 h-4 text-emerald-600" />, iconBg: "bg-emerald-100", title: "Procurement Completed", desc: "Purchase Order was completed and goods have been stocked.", textColor: "text-emerald-700", descColor: "text-emerald-600" }
-    : isVendorSelected
-    ? { bg: "bg-purple-50 border-purple-100", icon: <CheckCircle className="w-4 h-4 text-purple-600" />, iconBg: "bg-purple-100", title: "Vendor Assigned", desc: "Supplier assigned. Proceed below to generate the shortage Purchase Order.", textColor: "text-purple-700", descColor: "text-purple-600" }
-    : isPoCreated
-    ? { bg: "bg-cyan-50 border-cyan-100", icon: <CheckCircle className="w-4 h-4 text-cyan-600" />, iconBg: "bg-cyan-100", title: "PO Created", desc: "Purchase Order generated for shortage quantity. Awaiting fulfillment in Procurement module.", textColor: "text-cyan-700", descColor: "text-cyan-600" }
-    : isPoApproved
-    ? { bg: "bg-indigo-50 border-indigo-100", icon: <CheckCircle className="w-4 h-4 text-indigo-600" />, iconBg: "bg-indigo-100", title: "PO Approved", desc: "Purchase Order approved and issued to supplier.", textColor: "text-indigo-700", descColor: "text-indigo-600" }
     : (isReadyForIssue || (isApproved && stockResult?.isAvailable))
     ? { bg: "bg-emerald-50 border-emerald-100", icon: <CheckCircle className="w-4 h-4 text-emerald-600" />, iconBg: "bg-emerald-100", title: "Available In Stock", desc: "Inventory quantities verified. Safe to issue directly.", textColor: "text-emerald-700", descColor: "text-emerald-600" }
-    : (isProcurement || (isApproved && stockResult && !stockResult.isAvailable))
-    ? { bg: "bg-orange-50 border-orange-100", icon: <AlertTriangle className="w-4 h-4 text-orange-600" />, iconBg: "bg-orange-100", title: "Insufficient Stock", desc: "Inventory quantities insufficient. Assign vendor and create Purchase Order below.", textColor: "text-orange-700", descColor: "text-orange-600" }
     : isRejected
     ? { bg: "bg-red-50 border-red-100", icon: <XCircle className="w-4 h-4 text-red-600" />, iconBg: "bg-red-100", title: "Request Rejected", desc: "This material request was rejected by the admin.", textColor: "text-red-700", descColor: "text-red-600" }
+    : ["Procurement Required", "RFQ Created", "Quotations Received", "Vendor Selected", "PO Created", "PO Approved", "Material Ordered", "Material Received"].includes(item.status)
+    ? { bg: "bg-purple-50 border-purple-100", icon: <ShoppingCart className="w-4 h-4 text-purple-650" />, iconBg: "bg-purple-100", title: "Procurement Active", desc: `Request is in procurement pipeline: ${item.status}.`, textColor: "text-purple-700", descColor: "text-purple-600" }
     : null;
 
   // Retrieve assigned vendor details from localStorage
@@ -536,317 +537,363 @@ const DetailsPanel = ({
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
 
         {/* ── Dark header ── */}
-        <div className="bg-gradient-to-r from-slate-800 to-slate-700 px-6 py-5">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2 mb-1.5">
-                <BadgeCheck className="w-4 h-4 text-blue-400" />
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Material Request Detail</span>
-              </div>
-              <h2 className="text-2xl font-extrabold text-white tracking-tight">{item.referenceId}</h2>
-              <p className="text-slate-400 text-xs mt-1">Review request details and take action below.</p>
-            </div>
-            <StatusBadge status={item.status} />
+<div className="bg-gradient-to-r from-slate-800 to-slate-700 px-6 py-5">
+  <div className="flex items-start justify-between gap-4">
+    <div>
+      <div className="flex items-center gap-2 mb-1.5">
+        <BadgeCheck className="w-4 h-4 text-blue-400" />
+        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Material Request Detail</span>
+      </div>
+      <h2 className="text-2xl font-extrabold text-white tracking-tight">{item.referenceId}</h2>
+      <p className="text-slate-400 text-xs mt-1">Review request details and take action below.</p>
+    </div>
+    <StatusBadge status={item.status} />
+  </div>
+</div>
+
+{/* ── Stock message banner ── */ }
+{
+  stockMessage && (
+    <div className={`flex items-center gap-2 px-6 py-3 text-sm font-semibold border-b ${stockMessage.type === "success" ? "bg-emerald-50 text-emerald-700 border-emerald-100" : "bg-red-50 text-red-700 border-red-100"}`}>
+      {stockMessage.type === "success" ? <CheckCircle className="w-4 h-4 shrink-0" /> : <AlertTriangle className="w-4 h-4 shrink-0" />}
+      {stockMessage.text}
+    </div>
+  )
+}
+
+<div className="p-6 space-y-5">
+
+  {/* ── Info cards ── */}
+  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    {[
+      { label: "Requester", value: item.requester, icon: User, color: "text-blue-500", bg: "bg-blue-50" },
+      { label: "Department", value: item.department, icon: Building2, color: "text-purple-500", bg: "bg-purple-50" },
+      { label: "Product / Item", value: item.productDetails, icon: Package, color: "text-emerald-500", bg: "bg-emerald-50" },
+      { label: "Requested Quantity", value: String(item.quantity), icon: Hash, color: "text-orange-500", bg: "bg-orange-50" },
+    ].map((f, i) => {
+      const Icon = f.icon;
+      return (
+        <div key={i} className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-100">
+          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${f.bg}`}>
+            <Icon className={`w-4 h-4 ${f.color}`} />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{f.label}</p>
+            <p className="font-semibold text-slate-800 text-sm truncate">{f.value || "—"}</p>
           </div>
         </div>
+      );
+    })}
+  </div>
 
-        {/* ── Stock message banner ── */}
-        {stockMessage && (
-          <div className={`flex items-center gap-2 px-6 py-3 text-sm font-semibold border-b ${stockMessage.type === "success" ? "bg-emerald-50 text-emerald-700 border-emerald-100" : "bg-red-50 text-red-700 border-red-100"}`}>
-            {stockMessage.type === "success" ? <CheckCircle className="w-4 h-4 shrink-0" /> : <AlertTriangle className="w-4 h-4 shrink-0" />}
-            {stockMessage.text}
+  {/* ── Workflow stepper ── */}
+  <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-4">Workflow Progress</p>
+    <WorkflowStepper status={item.status} />
+  </div>
+
+  {/* ── Stock check results (for Approved / Ready For Issue / Procurement Required / Vendor Selected / PO Created) ── */}
+  {(isReadyForIssue || (isApproved && stockResult) || ["Procurement Required", "RFQ Created", "Quotations Received", "Vendor Selected", "PO Created", "PO Approved"].includes(item.status)) && (
+    <div className="border border-slate-150 rounded-xl p-4 bg-slate-50/50 space-y-3 shadow-inner">
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Stock Check Result</span>
+        {(isReadyForIssue || (isApproved && stockResult?.isAvailable)) ? (
+          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+            Available In Stock
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold bg-red-100 text-red-800 border border-red-200">
+            Insufficient Stock
+          </span>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 text-xs pt-1">
+        <div>
+          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Product Name</p>
+          <p className="font-semibold text-slate-700 mt-0.5">{item.productDetails}</p>
+        </div>
+        <div>
+          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Available Quantity</p>
+          <p className="font-semibold text-slate-700 mt-0.5">{stockResult ? stockResult.stock : 0} units</p>
+        </div>
+        <div>
+          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Requested Quantity</p>
+          <p className="font-semibold text-slate-700 mt-0.5">{item.quantity} units</p>
+        </div>
+        {!(isReadyForIssue || (isApproved && stockResult?.isAvailable)) && (
+          <div>
+            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Shortage Quantity</p>
+            <p className="font-bold text-red-600 mt-0.5">
+              {Math.max(0, item.quantity - (stockResult ? stockResult.stock : 0))} units
+            </p>
           </div>
         )}
+      </div>
+    </div>
+  )}
 
-        <div className="p-6 space-y-5">
-
-          {/* ── Info cards ── */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {[
-              { label: "Requester",         value: item.requester,        icon: User,      color: "text-blue-500",    bg: "bg-blue-50"    },
-              { label: "Department",         value: item.department,       icon: Building2, color: "text-purple-500",  bg: "bg-purple-50"  },
-              { label: "Product / Item",     value: item.productDetails,   icon: Package,   color: "text-emerald-500", bg: "bg-emerald-50" },
-              { label: "Requested Quantity", value: String(item.quantity), icon: Hash,      color: "text-orange-500",  bg: "bg-orange-50"  },
-            ].map((f, i) => {
-              const Icon = f.icon;
-              return (
-                <div key={i} className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-100">
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${f.bg}`}>
-                    <Icon className={`w-4 h-4 ${f.color}`} />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{f.label}</p>
-                    <p className="font-semibold text-slate-800 text-sm truncate">{f.value || "—"}</p>
-                  </div>
-                </div>
-              );
-            })}
+  {/* ── Status & Metadata Details ── */}
+  <div className="border border-slate-100 rounded-xl p-4 bg-slate-50/50 space-y-3">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+      <div>
+        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Material Request No.</p>
+        <p className="font-semibold text-slate-700 mt-0.5">{item.referenceId}</p>
+      </div>
+      <div>
+        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Requested By</p>
+        <p className="font-semibold text-slate-700 mt-0.5">{item.requester}</p>
+      </div>
+      <div>
+        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Department</p>
+        <p className="font-semibold text-slate-700 mt-0.5">{item.department}</p>
+      </div>
+      <div>
+        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Request Date</p>
+        <p className="font-semibold text-slate-700 mt-0.5">{item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "—"}</p>
+      </div>
+      <div>
+        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Status</p>
+        <div className="mt-0.5"><StatusBadge status={item.status} /></div>
+      </div>
+      {(assignedVendorName || ["Vendor Selected", "PO Created", "PO Approved"].includes(item.status)) && (
+        <div>
+          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Assigned Vendor</p>
+          <p className="font-semibold text-slate-700 mt-0.5">{assignedVendorName || "—"}</p>
+        </div>
+      )}
+      {linkedPoNumber && (
+        <div>
+          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">PO Reference</p>
+          <p className="font-extrabold text-blue-600 mt-0.5">{linkedPoNumber}</p>
+        </div>
+      )}
+      {["Ready For Issue", "Procurement Required", "Vendor Selected", "PO Created", "Completed", "Procurement Completed"].includes(item.status) && (
+        <>
+          <div>
+            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Approved By</p>
+            <p className="font-semibold text-slate-700 mt-0.5">Manager Bhabani</p>
           </div>
-
-          {/* ── Workflow stepper ── */}
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-4">Workflow Progress</p>
-            <WorkflowStepper status={item.status} />
+          <div>
+            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Approval Date & Time</p>
+            <p className="font-semibold text-slate-700 mt-0.5">{item.createdAt ? new Date(item.createdAt).toLocaleString() : "—"}</p>
           </div>
+        </>
+      )}
+    </div>
+  </div>
 
-          {/* ── Stock check results (for Approved / Ready For Issue / Procurement Required / Vendor Selected / PO Created) ── */}
-          {(isReadyForIssue || isProcurement || isVendorSelected || isPoCreated || (isApproved && stockResult)) && (
-            <div className="border border-slate-150 rounded-xl p-4 bg-slate-50/50 space-y-3 shadow-inner">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Stock Check Result</span>
-                {(isReadyForIssue || (isApproved && stockResult?.isAvailable)) ? (
-                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                    Available In Stock
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold bg-red-100 text-red-800 border border-red-200">
-                    Insufficient Stock
-                  </span>
-                )}
-              </div>
+  {/* ── Resolved info banner ── */}
+  {resolvedBanner && (
+    <div className={`flex items-start gap-3 p-4 rounded-xl border ${resolvedBanner.bg}`}>
+      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${resolvedBanner.iconBg}`}>
+        {resolvedBanner.icon}
+      </div>
+      <div>
+        <p className={`font-bold text-sm ${resolvedBanner.textColor}`}>{resolvedBanner.title}</p>
+        <p className={`text-xs mt-0.5 ${resolvedBanner.descColor}`}>{resolvedBanner.desc}</p>
+      </div>
+    </div>
+  )}
 
-              <div className="grid grid-cols-2 gap-3 text-xs pt-1">
-                <div>
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Product Name</p>
-                  <p className="font-semibold text-slate-700 mt-0.5">{item.productDetails}</p>
-                </div>
-                <div>
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Available Quantity</p>
-                  <p className="font-semibold text-slate-700 mt-0.5">{stockResult ? stockResult.stock : 0} units</p>
-                </div>
-                <div>
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Requested Quantity</p>
-                  <p className="font-semibold text-slate-700 mt-0.5">{item.quantity} units</p>
-                </div>
-                {!(isReadyForIssue || (isApproved && stockResult?.isAvailable)) && (
-                  <div>
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Shortage Quantity</p>
-                    <p className="font-bold text-red-600 mt-0.5">
-                      {Math.max(0, item.quantity - (stockResult ? stockResult.stock : 0))} units
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
+  {/* ── Action Buttons (Pending, Approved, Ready For Issue, Procurement Required & Vendor Selected) ── */}
+  {canAct && (
+    <div className="border-t border-slate-100 pt-5">
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Admin Actions</p>
+        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg ${isPending ? "bg-amber-50 text-amber-700 border border-amber-200" :
+            isApproved ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
+              isReadyForIssue ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
+                isProcurementRequired ? "bg-orange-50 text-orange-700 border border-orange-200" :
+                  isVendorSelected ? "bg-purple-50 text-purple-700 border border-purple-200" :
+                    "bg-slate-50 text-slate-700 border border-slate-200"
+          }`}>
+          {isPending ? "⏳ Awaiting Approval" :
+            isApproved ? "✓ Approved — Awaiting Stock Check" :
+              isReadyForIssue ? "✓ Stock Available — Ready for Issue" :
+                isProcurementRequired ? "🛒 Procurement Required — Select Vendor" :
+                  isVendorSelected ? "🤝 Vendor Selected — Awaiting PO Generation" :
+                    "✓ Active Request"}
+        </span>
+      </div>
+
+      <div className="flex flex-wrap gap-3">
+        {/* Check Stock — both Pending & Approved */}
+        {(isPending || isApproved) && (
+          <button
+            id="btn-check-stock"
+            onClick={onCheckStock}
+            disabled={anyLoading}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white border border-slate-300 text-slate-700 font-semibold text-sm hover:bg-slate-50 hover:border-blue-300 hover:text-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading.stock ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+            Check Stock
+          </button>
+        )}
+
+        {/* Reject — Pending only */}
+        {isPending && (
+          <button
+            id="btn-reject"
+            onClick={onReject}
+            disabled={anyLoading}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-50 border border-red-300 text-red-600 font-semibold text-sm hover:bg-red-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading.reject ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
+            Reject
+          </button>
+        )}
+
+        {/* Approve — Pending only */}
+        {isPending && (
+          <button
+            id="btn-approve"
+            onClick={onApprove}
+            disabled={anyLoading}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold text-sm shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading.approve ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+            Approve
+          </button>
+        )}
+
+        {/* Process & Check Stock — Approved only (when stockResult not loaded yet) */}
+        {isApproved && !stockResult && (
+          <button
+            id="btn-process"
+            onClick={onProcess}
+            disabled={anyLoading}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold text-sm shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading.process ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
+            Process & Check Stock
+          </button>
+        )}
+
+        {/* Issue Stock — Ready For Issue only (or Approved with stock available) */}
+        {(isReadyForIssue || (isApproved && stockResult?.isAvailable)) && (
+          <button
+            id="btn-issue-stock"
+            onClick={onIssueStock}
+            disabled={anyLoading}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold text-sm shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading.process ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <Package className="w-4 h-4" />}
+            Issue Stock
+          </button>
+        )}
+
+        {/* Send to Procurement — Approved only with stock shortage checked */}
+        {isApproved && stockResult && !stockResult.isAvailable && (
+          <button
+            id="btn-send-procurement"
+            onClick={onProcure}
+            disabled={anyLoading}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white font-semibold text-sm shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ShoppingCart className="w-4 h-4" />
+            Send to Procurement
+          </button>
+        )}
+
+        {/* Select Vendor & Create PO — Procurement Required */}
+        {isProcurementRequired && (
+          <button
+            id="btn-select-vendor"
+            onClick={onOpenVendorModal}
+            disabled={anyLoading}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-650 hover:to-indigo-750 text-white font-semibold text-sm shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Building2 className="w-4 h-4" />
+            Select Vendor & Create PO
+          </button>
+        )}
+
+        {/* Create Purchase Order — Vendor Selected */}
+        {isVendorSelected && (
+          <button
+            id="btn-create-po"
+            onClick={onOpenPoModal}
+            disabled={anyLoading}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold text-sm shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ShoppingCart className="w-4 h-4" />
+            Create Purchase Order
+          </button>
+        )}
+      </div>
+
+      {/* Workflow hint */}
+      <div className="mt-4 p-3 bg-slate-50 rounded-xl border border-slate-100">
+        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">How it works</p>
+        <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-slate-500">
+          {isPending ? (
+            <>
+              <span className="font-semibold text-amber-600">Pending</span>
+              <ArrowRight className="w-3 h-3 text-slate-300" />
+              <span className="font-semibold">Approve / Reject</span>
+              <ArrowRight className="w-3 h-3 text-slate-300" />
+              <span className="font-semibold text-emerald-600">Approved</span>
+              <span className="text-slate-300 font-bold">/</span>
+              <span className="font-semibold text-red-600">Rejected</span>
+            </>
+          ) : isApproved ? (
+            <>
+              <span className="font-semibold text-emerald-600">Approved</span>
+              <ArrowRight className="w-3 h-3 text-slate-300" />
+              <span>Check Stock</span>
+              <ArrowRight className="w-3 h-3 text-slate-300" />
+              <span>Fulfill / Procure</span>
+            </>
+          ) : isProcurementRequired ? (
+            <>
+              <span className="font-semibold text-orange-655">Procurement Required</span>
+              <ArrowRight className="w-3 h-3 text-slate-300" />
+              <span>Assign Vendor</span>
+              <ArrowRight className="w-3 h-3 text-slate-300" />
+              <span className="font-semibold text-purple-600">Vendor Selected</span>
+            </>
+          ) : isVendorSelected ? (
+            <>
+              <span className="font-semibold text-purple-600">Vendor Selected</span>
+              <ArrowRight className="w-3 h-3 text-slate-300" />
+              <span>Generate PO</span>
+              <ArrowRight className="w-3 h-3 text-slate-300" />
+              <span className="font-semibold text-cyan-600">PO Created</span>
+            </>
+          ) : (
+            <>
+              <span className="font-semibold text-emerald-600">Ready For Issue</span>
+              <ArrowRight className="w-3 h-3 text-slate-300" />
+              <span>Click Issue Stock</span>
+              <ArrowRight className="w-3 h-3 text-slate-300" />
+              <span className="font-semibold text-blue-600">Stock Deducted & Completed</span>
+            </>
           )}
+        </div>
+      </div>
+    </div>
+  )}
 
-          {/* ── Status & Metadata Details ── */}
-          <div className="border border-slate-100 rounded-xl p-4 bg-slate-50/50 space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-              <div>
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Material Request No.</p>
-                <p className="font-semibold text-slate-700 mt-0.5">{item.referenceId}</p>
-              </div>
-              <div>
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Requested By</p>
-                <p className="font-semibold text-slate-700 mt-0.5">{item.requester}</p>
-              </div>
-              <div>
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Department</p>
-                <p className="font-semibold text-slate-700 mt-0.5">{item.department}</p>
-              </div>
-              <div>
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Request Date</p>
-                <p className="font-semibold text-slate-700 mt-0.5">{item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "—"}</p>
-              </div>
-              <div>
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Status</p>
-                <div className="mt-0.5"><StatusBadge status={item.status} /></div>
-              </div>
-              {(assignedVendorName || isVendorSelected || isPoCreated) && (
-                <div>
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Assigned Vendor</p>
-                  <p className="font-semibold text-slate-700 mt-0.5">{assignedVendorName || "—"}</p>
-                </div>
-              )}
-              {linkedPoNumber && (
-                <div>
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">PO Reference</p>
-                  <p className="font-extrabold text-blue-600 mt-0.5">{linkedPoNumber}</p>
-                </div>
-              )}
-              {["Ready For Issue", "Procurement Required", "Vendor Selected", "PO Created", "Completed", "Procurement Completed"].includes(item.status) && (
-                <>
-                  <div>
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Approved By</p>
-                    <p className="font-semibold text-slate-700 mt-0.5">Manager Bhabani</p>
-                  </div>
-                  <div>
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Approval Date & Time</p>
-                    <p className="font-semibold text-slate-700 mt-0.5">{item.createdAt ? new Date(item.createdAt).toLocaleString() : "—"}</p>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* ── Resolved info banner ── */}
-          {resolvedBanner && (
-            <div className={`flex items-start gap-3 p-4 rounded-xl border ${resolvedBanner.bg}`}>
-              <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${resolvedBanner.iconBg}`}>
-                {resolvedBanner.icon}
-              </div>
-              <div>
-                <p className={`font-bold text-sm ${resolvedBanner.textColor}`}>{resolvedBanner.title}</p>
-                <p className={`text-xs mt-0.5 ${resolvedBanner.descColor}`}>{resolvedBanner.desc}</p>
-              </div>
-            </div>
-          )}
-
-          {/* ── Action Buttons (Pending, Approved, Ready For Issue, Procurement Required & Vendor Selected) ── */}
-          {canAct && (
-            <div className="border-t border-slate-100 pt-5">
-              <div className="flex items-center justify-between mb-4">
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Admin Actions</p>
-                <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg ${isPending ? "bg-amber-50 text-amber-700 border border-amber-200" : isApproved ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : isReadyForIssue ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : isProcurement ? "bg-orange-50 text-orange-700 border border-orange-200" : "bg-purple-50 text-purple-700 border border-purple-200"}`}>
-                  {isPending ? "⏳ Awaiting Approval" : isApproved ? "✓ Approved — Awaiting Stock Check" : isReadyForIssue ? "✓ Stock Available — Ready for Issue" : isProcurement ? "🟠 Stock Deficit — Procurement Required" : "🤝 Vendor Selected — Awaiting PO"}
-                </span>
-              </div>
-
-              <div className="flex flex-wrap gap-3">
-                {/* Check Stock — both Pending & Approved */}
-                {(isPending || isApproved) && (
-                  <button
-                    id="btn-check-stock"
-                    onClick={onCheckStock}
-                    disabled={anyLoading}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white border border-slate-300 text-slate-700 font-semibold text-sm hover:bg-slate-50 hover:border-blue-300 hover:text-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {loading.stock ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-                    Check Stock
-                  </button>
-                )}
-
-                {/* Reject — Pending only */}
-                {isPending && (
-                  <button
-                    id="btn-reject"
-                    onClick={onReject}
-                    disabled={anyLoading}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-50 border border-red-300 text-red-600 font-semibold text-sm hover:bg-red-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {loading.reject ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
-                    Reject
-                  </button>
-                )}
-
-                {/* Approve — Pending only */}
-                {isPending && (
-                  <button
-                    id="btn-approve"
-                    onClick={onApprove}
-                    disabled={anyLoading}
-                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold text-sm shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {loading.approve ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-                    Approve
-                  </button>
-                )}
-
-                {/* Process & Check Stock — Approved only (when stockResult not loaded yet) */}
-                {isApproved && !stockResult && (
-                  <button
-                    id="btn-process"
-                    onClick={onProcess}
-                    disabled={anyLoading}
-                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold text-sm shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {loading.process ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
-                    Process & Check Stock
-                  </button>
-                )}
-
-                {/* Issue Stock — Ready For Issue only (or Approved with stock available) */}
-                {(isReadyForIssue || (isApproved && stockResult?.isAvailable)) && (
-                  <button
-                    id="btn-issue-stock"
-                    onClick={onIssueStock}
-                    disabled={anyLoading}
-                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold text-sm shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {loading.process ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <Package className="w-4 h-4" />}
-                    Issue Stock
-                  </button>
-                )}
-
-                {/* Procurement Required button — navigates to Vendor Management page */}
-                {(isProcurement || (isApproved && stockResult && !stockResult.isAvailable)) && (
-                  <button
-                    id="btn-procurement-required"
-                    onClick={onProcure}
-                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-semibold text-sm shadow-sm hover:shadow-md transition-all animate-pulse-slow"
-                  >
-                    <ArrowRight className="w-4 h-4" />
-                    Select Vendor &amp; Create PO
-                  </button>
-                )}
-
-                {/* Create Purchase Order button — Vendor Selected only */}
-                {isVendorSelected && (
-                  <button
-                    id="btn-create-po"
-                    onClick={onOpenPoModal}
-                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold text-sm shadow-sm hover:shadow-md transition-all"
-                  >
-                    <ShoppingCart className="w-4 h-4" />
-                    Create Purchase Order
-                  </button>
-                )}
-              </div>
-
-              {/* Workflow hint */}
-              <div className="mt-4 p-3 bg-slate-50 rounded-xl border border-slate-100">
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">How it works</p>
-                <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-slate-500">
-                  {isPending ? (
-                    <>
-                      <span className="font-semibold text-amber-600">Pending</span>
-                      <ArrowRight className="w-3 h-3 text-slate-300" />
-                      <span className="font-semibold">Approve / Reject</span>
-                      <ArrowRight className="w-3 h-3 text-slate-300" />
-                      <span className="font-semibold text-emerald-600">Approved</span>
-                      <span className="text-slate-300 font-bold">/</span>
-                      <span className="font-semibold text-red-600">Rejected</span>
-                    </>
-                  ) : isApproved ? (
-                    <>
-                      <span className="font-semibold text-emerald-600">Already Approved</span>
-                      <ArrowRight className="w-3 h-3 text-slate-300" />
-                      <span>Process & Check Stock</span>
-                      <ArrowRight className="w-3 h-3 text-slate-300" />
-                      <span className="font-semibold text-blue-600">Stock OK → Completed</span>
-                      <span className="text-slate-300 font-bold">|</span>
-                      <span className="font-semibold text-orange-600">No Stock → Procurement</span>
-                    </>
-                  ) : isReadyForIssue ? (
-                    <>
-                      <span className="font-semibold text-emerald-600">Ready For Issue</span>
-                      <ArrowRight className="w-3 h-3 text-slate-300" />
-                      <span>Click Issue Stock</span>
-                      <ArrowRight className="w-3 h-3 text-slate-300" />
-                      <span className="font-semibold text-blue-600">Stock Deducted & Completed</span>
-                    </>
-                  ) : isProcurement ? (
-                    <>
-                      <span className="font-semibold text-orange-600">Procurement Required</span>
-                      <ArrowRight className="w-3 h-3 text-slate-300" />
-                      <span>Assign Vendor</span>
-                      <ArrowRight className="w-3 h-3 text-slate-300" />
-                      <span className="font-semibold text-purple-600">Vendor Assigned</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="font-semibold text-purple-600">Vendor Assigned</span>
-                      <ArrowRight className="w-3 h-3 text-slate-300" />
-                      <span>Click Create PO (Shortage Qty)</span>
-                      <ArrowRight className="w-3 h-3 text-slate-300" />
-                      <span className="font-semibold text-blue-600">PO Created in Draft</span>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
+  {/* ── Action Buttons for Completed requests (View Bill receipt) ── */}
+  {isCompleted && (
+    <div className="border-t border-slate-100 pt-5">
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest font-black">Receipt Details</p>
+        <span className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-blue-50 text-blue-750 border border-blue-200">
+          ✓ Completed
+        </span>
+      </div>
+      <button
+        id="btn-view-bill"
+        onClick={onViewBill}
+        className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-650 hover:from-blue-650 hover:to-indigo-750 text-black font-semibold text-sm shadow-sm hover:shadow-md transition-all"
+      >
+        <FileText className="w-4 h-4" />
+        View Bill
+      </button>
+    </div>
+  )}
         </div>
       </div>
 
@@ -867,24 +914,24 @@ const PAGE_SIZE = 8;
 const EMPTY_COUNTS: CountsMap = {
   Pending: 0,
   Approved: 0,
+  Procurement: 0,
   Completed: 0,
   Rejected: 0,
-  "Procurement Required": 0,
 };
 
 const Approvals = () => {
   const navigate = useNavigate();
-  const [activeSlug,    setActiveSlug]    = useState<TabSlug>("pending");
-  const [requests,      setRequests]      = useState<MaterialRequest[]>([]);
-  const [allRequests,   setAllRequests]   = useState<MaterialRequest[]>([]);
-  const [selected,      setSelected]      = useState<MaterialRequest | null>(null);
-  const [counts,        setCounts]        = useState<CountsMap>(EMPTY_COUNTS);
-  const [stockResult,   setStockResult]   = useState<StockResult | null>(null);
-  const [stockMessage,  setStockMessage]  = useState<{ text: string; type: "success" | "error" } | null>(null);
-  const [search,        setSearch]        = useState("");
+  const [activeSlug, setActiveSlug] = useState<TabSlug>("pending");
+  const [requests, setRequests] = useState<MaterialRequest[]>([]);
+  const [allRequests, setAllRequests] = useState<MaterialRequest[]>([]);
+  const [selected, setSelected] = useState<MaterialRequest | null>(null);
+  const [counts, setCounts] = useState<CountsMap>(EMPTY_COUNTS);
+  const [stockResult, setStockResult] = useState<StockResult | null>(null);
+  const [stockMessage, setStockMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
+  const [search, setSearch] = useState("");
   const [isGlobalSearching, setIsGlobalSearching] = useState(false);
-  const [page,          setPage]          = useState(1);
-  const [loading,       setLoading]       = useState({ list: false, counts: false, approve: false, reject: false, stock: false, process: false });
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState({ list: false, counts: false, approve: false, reject: false, stock: false, process: false });
   const [requestToDelete, setRequestToDelete] = useState<MaterialRequest | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -896,6 +943,7 @@ const Approvals = () => {
   const [poExpectedDate, setPoExpectedDate] = useState("");
   const [poPaymentTerms, setPoPaymentTerms] = useState("Net 30");
   const [poUnitPrice, setPoUnitPrice] = useState(1200);
+  const [billRequest, setBillRequest] = useState<MaterialRequest | null>(null);
 
   const activeTab = TABS.find((t) => t.slug === activeSlug)!;
 
@@ -903,7 +951,7 @@ const Approvals = () => {
   const fetchAllCounts = useCallback(async () => {
     setLoading((p) => ({ ...p, counts: true }));
     try {
-      const statuses: string[] = ["Pending", "Approved", "Ready For Issue", "Completed", "Rejected", "Procurement Required", "Vendor Selected", "PO Created", "PO Approved", "Procurement Completed"];
+      const statuses: string[] = ["Pending", "Approved", "Ready For Issue", "Completed", "Rejected", "Procurement Required", "RFQ Created", "Quotations Received", "Vendor Selected", "PO Created", "PO Approved", "Material Ordered", "Material Received", "Procurement Completed"];
       const results = await Promise.all(
         statuses.map((s) =>
           fetch(`${API_BASE_URL}/material?status=${encodeURIComponent(s)}`)
@@ -912,25 +960,25 @@ const Approvals = () => {
             .catch(() => ({ status: s, count: 0 }))
         )
       );
-      
+
       const map = { ...EMPTY_COUNTS };
       let completedCount = 0;
-      let procurementCount = 0;
       let approvedCount = 0;
+      let procurementCount = 0;
       results.forEach(({ status, count }) => {
         if (status === "Completed" || status === "Procurement Completed") {
           completedCount += count;
-        } else if (status === "Procurement Required" || status === "Vendor Selected" || status === "PO Created" || status === "PO Approved") {
-          procurementCount += count;
         } else if (status === "Approved" || status === "Ready For Issue") {
           approvedCount += count;
+        } else if (["Procurement Required", "RFQ Created", "Quotations Received", "Vendor Selected", "PO Created", "PO Approved", "Material Ordered", "Material Received"].includes(status)) {
+          procurementCount += count;
         } else if (status in map) {
           map[status as ApiStatus] = count;
         }
       });
       map["Completed"] = completedCount;
-      map["Procurement Required"] = procurementCount;
       map["Approved"] = approvedCount;
+      map["Procurement"] = procurementCount;
       setCounts(map);
     } finally {
       setLoading((p) => ({ ...p, counts: false }));
@@ -955,16 +1003,14 @@ const Approvals = () => {
           fetch(`${API_BASE_URL}/material?status=${encodeURIComponent("Ready For Issue")}`).then(r => r.json())
         ]);
         list = [...(res1.data ?? []), ...(res2.data ?? [])];
-      } else if (tab.slug === "procurement-required") {
-        const [res1, res2, res3, res4] = await Promise.all([
-          fetch(`${API_BASE_URL}/material?status=${encodeURIComponent("Procurement Required")}`).then(r => r.json()),
-          fetch(`${API_BASE_URL}/material?status=${encodeURIComponent("Vendor Selected")}`).then(r => r.json()),
-          fetch(`${API_BASE_URL}/material?status=${encodeURIComponent("PO Created")}`).then(r => r.json()),
-          fetch(`${API_BASE_URL}/material?status=${encodeURIComponent("PO Approved")}`).then(r => r.json())
-        ]);
-        list = [...(res1.data ?? []), ...(res2.data ?? []), ...(res3.data ?? []), ...(res4.data ?? [])];
+      } else if (tab.slug === "procurement") {
+        const procurementStatuses = ["Procurement Required", "RFQ Created", "Quotations Received", "Vendor Selected", "PO Created", "PO Approved", "Material Ordered", "Material Received"];
+        const results = await Promise.all(
+          procurementStatuses.map(s => fetch(`${API_BASE_URL}/material?status=${encodeURIComponent(s)}`).then(r => r.json()))
+        );
+        list = results.flatMap(res => res.data ?? []);
       } else {
-        const res  = await fetch(`${API_BASE_URL}/material?status=${encodeURIComponent(tab.apiStatus)}`);
+        const res = await fetch(`${API_BASE_URL}/material?status=${encodeURIComponent(tab.apiStatus)}`);
         const json = await res.json();
         list = json.data ?? [];
       }
@@ -986,8 +1032,9 @@ const Approvals = () => {
     try {
       const allStatuses = [
         "Pending", "Approved", "Ready For Issue", "Completed",
-        "Rejected", "Procurement Required", "Vendor Selected",
-        "PO Created", "PO Approved", "Procurement Completed"
+        "Rejected", "Procurement Required", "RFQ Created", "Quotations Received",
+        "Vendor Selected", "PO Created", "PO Approved", "Material Ordered",
+        "Material Received", "Procurement Completed"
       ];
       const results = await Promise.all(
         allStatuses.map((s) =>
@@ -1037,11 +1084,11 @@ const Approvals = () => {
     setSelected(item);
     setStockResult(null);
     setStockMessage(null);
-    
+
     // Silently check stock in the background for approved/procurement requests so details load instantly
     if (["Approved", "Ready For Issue", "Procurement Required", "Vendor Selected", "PO Created", "PO Approved", "Completed", "Procurement Completed"].includes(item.status)) {
       try {
-        const res  = await fetch(`${API_BASE_URL}/inventory/check-stock/${encodeURIComponent(item.productDetails)}`);
+        const res = await fetch(`${API_BASE_URL}/inventory/check-stock/${encodeURIComponent(item.productDetails)}`);
         const json = await res.json();
         if (json.found) {
           const currentStock = json.stock ?? 0;
@@ -1075,7 +1122,7 @@ const Approvals = () => {
     setStockResult(null);
     setStockMessage(null);
     try {
-      const res  = await fetch(`${API_BASE_URL}/inventory/check-stock/${encodeURIComponent(selected.productDetails)}`);
+      const res = await fetch(`${API_BASE_URL}/inventory/check-stock/${encodeURIComponent(selected.productDetails)}`);
       const json = await res.json();
       if (!json.found) {
         setStockMessage({ text: `"${selected.productDetails}" not found in inventory.`, type: "error" });
@@ -1084,12 +1131,12 @@ const Approvals = () => {
       const currentStock: number = json.stock ?? 0;
       const isAvailable = currentStock >= selected.quantity;
       setStockResult({
-        found:       true,
-        stock:       currentStock,
-        itemName:    json.itemName ?? selected.productDetails,
+        found: true,
+        stock: currentStock,
+        itemName: json.itemName ?? selected.productDetails,
         inventoryId: json.data?._id ?? "",
         isAvailable,
-        remaining:   currentStock - selected.quantity,
+        remaining: currentStock - selected.quantity,
       });
       setStockMessage(
         isAvailable
@@ -1128,18 +1175,18 @@ const Approvals = () => {
     setStockMessage(null);
     try {
       // 1. Silent stock validation against Masters -> Products (Inventory checkStock API)
-      const stockRes  = await fetch(`${API_BASE_URL}/inventory/check-stock/${encodeURIComponent(selected.productDetails)}`);
+      const stockRes = await fetch(`${API_BASE_URL}/inventory/check-stock/${encodeURIComponent(selected.productDetails)}`);
       const stockJson = await stockRes.json();
       const currentStock: number = stockJson.stock ?? 0;
       const isAvailable = stockJson.found && currentStock >= selected.quantity;
 
       const result: StockResult = {
-        found:       stockJson.found ?? false,
-        stock:       currentStock,
-        itemName:    stockJson.itemName ?? selected.productDetails,
+        found: stockJson.found ?? false,
+        stock: currentStock,
+        itemName: stockJson.itemName ?? selected.productDetails,
         inventoryId: stockJson.data?._id ?? "",
         isAvailable,
-        remaining:   currentStock - selected.quantity,
+        remaining: currentStock - selected.quantity,
       };
       setStockResult(result);
 
@@ -1150,12 +1197,12 @@ const Approvals = () => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ status: "Ready For Issue" }),
         });
-        
+
         addAuditLog(`Material Request ${selected.referenceId} approved automatically with sufficient stock available. Status set to Ready For Issue.`);
-        
+
         setStockMessage({ text: "✓ Request Approved: Sufficient stock available. Marked as Ready For Issue.", type: "success" });
         toast.success("Request approved and marked as Ready For Issue! 📦");
-        
+
         await fetchAllCounts();
         switchTab("approved");
         await fetchRequests("approved");
@@ -1170,13 +1217,13 @@ const Approvals = () => {
         const available = stockJson.found ? currentStock : 0;
         const shortage = selected.quantity - available;
         addAuditLog(`Material Request ${selected.referenceId} approved with insufficient stock (Shortage: ${shortage} units). Status set to Procurement Required.`);
-        
-        setStockMessage({ text: `✗ Request Approved: Insufficient stock (Shortage: ${shortage} units). Status set to Procurement Required.`, type: "error" });
-        toast.warning("Request approved. Insufficient stock, moved to Procurement Required!");
-        
+
+        setStockMessage({ text: `✓ Request Approved: Sent to Procurement.`, type: "success" });
+        toast.success("Request approved and sent to Procurement! 🚀");
+
         await fetchAllCounts();
-        switchTab("procurement-required");
-        await fetchRequests("procurement-required");
+        switchTab("approved");
+        await fetchRequests("approved");
       }
     } catch (err) {
       console.error("Approve error", err);
@@ -1197,7 +1244,7 @@ const Approvals = () => {
       await fetch(`${API_BASE_URL}/material/${selected._id}/reject`, { method: "PUT" });
       setStockMessage({ text: "✗ Material Request Rejected.", type: "error" });
       addAuditLog(`Material Request ${selected.referenceId} rejected by Manager Bhabani.`);
-      
+
       // Refresh counts + move to Rejected tab
       await fetchAllCounts();
       switchTab("rejected");
@@ -1216,43 +1263,71 @@ const Approvals = () => {
     setStockResult(null);
     setStockMessage(null);
     try {
-      const stockRes  = await fetch(`${API_BASE_URL}/inventory/check-stock/${encodeURIComponent(selected.productDetails)}`);
+      const stockRes = await fetch(`${API_BASE_URL}/inventory/check-stock/${encodeURIComponent(selected.productDetails)}`);
       const stockJson = await stockRes.json();
       const currentStock: number = stockJson.stock ?? 0;
       const isAvailable = stockJson.found && currentStock >= selected.quantity;
 
       const result: StockResult = {
-        found:       stockJson.found ?? false,
-        stock:       currentStock,
-        itemName:    stockJson.itemName ?? selected.productDetails,
+        found: stockJson.found ?? false,
+        stock: currentStock,
+        itemName: stockJson.itemName ?? selected.productDetails,
         inventoryId: stockJson.data?._id ?? "",
         isAvailable,
-        remaining:   currentStock - selected.quantity,
+        remaining: currentStock - selected.quantity,
       };
       setStockResult(result);
 
       if (isAvailable && result.inventoryId) {
-        // Old Approved flow: transition to Ready For Issue so the user can issue it
-        await fetch(`${API_BASE_URL}/material/${selected._id}/status`, {
+        // Automatically deduct stock and mark as Completed
+        await fetch(`${API_BASE_URL}/inventory/deduct-stock/${result.inventoryId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: "Ready For Issue" }),
+          body: JSON.stringify({ quantity: selected.quantity }),
         });
-        setStockMessage({ text: "✓ Stock Available — sufficient quantity. Request status set to Ready For Issue.", type: "success" });
-        toast.success("Stock available! Request status set to Ready For Issue.");
+
+        await fetch(`${API_BASE_URL}/material/${selected._id}/complete`, { method: "PUT" });
+
+        addAuditLog(`Auto-Issued ${selected.quantity} units of ${selected.productDetails} to ${selected.requester} from inventory. Material Request completed.`);
+        toast.success("Inventory stock issued automatically! Request completed. 🚚");
+
         await fetchAllCounts();
-        await fetchRequests("approved");
+        switchTab("completed");
+        await fetchRequests("completed");
       } else {
         await fetch(`${API_BASE_URL}/material/${selected._id}/procurement-required`, { method: "PUT" });
-        setStockMessage({ text: "✗ Stock Not Available — Moved to Procurement Required.", type: "error" });
-        addAuditLog(`Material Request ${selected.referenceId} found to have insufficient stock on manual check. Status set to Procurement Required.`);
-        toast.warning("Stock insufficient, moved to Procurement Required!");
+        setStockMessage({ text: "✗ Stock Not Available — Sent to Procurement.", type: "error" });
+        addAuditLog(`Material Request ${selected.referenceId} routed automatically to Procurement due to insufficient stock.`);
+        toast.success("Sufficient stock not available. Request sent to Procurement! 🚀");
+
         await fetchAllCounts();
-        switchTab("procurement-required");
-        await fetchRequests("procurement-required");
+        switchTab("approved");
+        await fetchRequests("approved");
       }
-    } catch {
+    } catch (err) {
+      console.error("Process check stock error", err);
       setStockMessage({ text: "An error occurred. Please try again.", type: "error" });
+    } finally {
+      setLoading((p) => ({ ...p, process: false }));
+    }
+  };
+
+  /* ── Send to Procurement: transition approved request to procurement module manually ── */
+  const handleSendToProcurement = async () => {
+    if (!selected) return;
+    setLoading((p) => ({ ...p, process: true }));
+    try {
+      await fetch(`${API_BASE_URL}/material/${selected._id}/procurement-required`, { method: "PUT" });
+      setStockMessage({ text: "✗ Stock Not Available — Sent to Procurement.", type: "error" });
+      addAuditLog(`Material Request ${selected.referenceId} manually sent to Procurement. Status set to Procurement Required.`);
+      toast.success("Request sent to Procurement! 🚀");
+
+      await fetchAllCounts();
+      switchTab("procurement");
+      await fetchRequests("procurement");
+    } catch (err) {
+      console.error("Send to procurement error", err);
+      toast.error("Failed to send request to Procurement.");
     } finally {
       setLoading((p) => ({ ...p, process: false }));
     }
@@ -1264,7 +1339,7 @@ const Approvals = () => {
     setLoading((p) => ({ ...p, process: true }));
     try {
       // 1. Double check stock
-      const stockRes  = await fetch(`${API_BASE_URL}/inventory/check-stock/${encodeURIComponent(selected.productDetails)}`);
+      const stockRes = await fetch(`${API_BASE_URL}/inventory/check-stock/${encodeURIComponent(selected.productDetails)}`);
       const stockJson = await stockRes.json();
       const currentStock: number = stockJson.stock ?? 0;
       const isAvailable = stockJson.found && currentStock >= selected.quantity;
@@ -1286,9 +1361,9 @@ const Approvals = () => {
 
       // 4. Log to Audit
       addAuditLog(`Issued ${selected.quantity} units of ${selected.productDetails} to ${selected.requester} from inventory. Material Request completed.`);
-      
+
       toast.success("Inventory stock issued successfully! Request completed. 🚚");
-      
+
       await fetchAllCounts();
       switchTab("completed");
       await fetchRequests("completed");
@@ -1317,7 +1392,7 @@ const Approvals = () => {
       if (cachedVendors) {
         try {
           map = JSON.parse(cachedVendors);
-        } catch {}
+        } catch { }
       }
       map[selected._id] = {
         vendorName: vendor.name,
@@ -1342,7 +1417,7 @@ const Approvals = () => {
 
       // 4. Refresh requests and update UI state
       await fetchAllCounts();
-      await fetchRequests("procurement-required");
+      await fetchRequests("approved");
     } catch (err) {
       console.error("Assign vendor error", err);
       toast.error("Failed to assign vendor.");
@@ -1359,7 +1434,7 @@ const Approvals = () => {
     if (cachedPos) {
       try {
         posList = JSON.parse(cachedPos);
-      } catch {}
+      } catch { }
     }
 
     const alreadyExists = posList.some((p: any) => p.materialRequestRef === selected.referenceId);
@@ -1383,7 +1458,7 @@ const Approvals = () => {
           vendorContact = mapped.vendorContact;
           vendorAddress = mapped.vendorAddress;
         }
-      } catch {}
+      } catch { }
     }
 
     try {
@@ -1395,7 +1470,7 @@ const Approvals = () => {
       // Fetch inventory details for calculating the shortage quantity strictly!
       let availableQty = 0;
       try {
-        const stockRes  = await fetch(`${API_BASE_URL}/inventory/check-stock/${encodeURIComponent(selected.productDetails)}`);
+        const stockRes = await fetch(`${API_BASE_URL}/inventory/check-stock/${encodeURIComponent(selected.productDetails)}`);
         const stockJson = await stockRes.json();
         if (stockJson.found) {
           availableQty = stockJson.stock ?? 0;
@@ -1457,7 +1532,7 @@ const Approvals = () => {
 
       // 4. Refresh requests and update UI state
       await fetchAllCounts();
-      await fetchRequests("procurement-required");
+      await fetchRequests("approved");
     } catch (err) {
       console.error("Create PO error", err);
       toast.error("Failed to generate Purchase Order.");
@@ -1471,7 +1546,7 @@ const Approvals = () => {
     } catch {
       toastId = toast.info ? toast.info(`Initiating Vendor Selection for request ${req.referenceId}...`) : toast(`Initiating Vendor Selection...`);
     }
-    
+
     try {
       try {
         if (toastId && typeof toastId !== "object" && toast.success) {
@@ -1543,7 +1618,7 @@ const Approvals = () => {
         } catch {
           toast.success(`Request ${requestToDelete.referenceId} permanently deleted! 🗑️`);
         }
-        
+
         // Clean up local storage purchase_requests as well
         try {
           const saved = localStorage.getItem("purchase_requests");
@@ -1590,9 +1665,9 @@ const Approvals = () => {
   const isSearchActive = search.trim().length > 0;
 
   const matchRecord = (r: MaterialRequest, q: string) =>
-    r.referenceId.toLowerCase().includes(q)   ||
-    r.requester.toLowerCase().includes(q)      ||
-    r.department.toLowerCase().includes(q)     ||
+    r.referenceId.toLowerCase().includes(q) ||
+    r.requester.toLowerCase().includes(q) ||
+    r.department.toLowerCase().includes(q) ||
     r.productDetails.toLowerCase().includes(q);
 
   const filtered = isSearchActive
@@ -1600,8 +1675,8 @@ const Approvals = () => {
     : requests.filter((r) => matchRecord(r, search.toLowerCase()));
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const safePage   = Math.min(page, totalPages);
-  const paginated  = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const safePage = Math.min(page, totalPages);
+  const paginated = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
   // Retrieve assigned vendor details from localStorage for modals
   const cachedMrVendors = localStorage.getItem("invenpro_mr_vendors");
@@ -1617,7 +1692,7 @@ const Approvals = () => {
         assignedVendorContact = mapped.vendorContact;
         assignedVendorAddress = mapped.vendorAddress;
       }
-    } catch {}
+    } catch { }
   }
 
   /* ================================================================
@@ -1709,17 +1784,15 @@ const Approvals = () => {
                     <button
                       key={tab.slug}
                       onClick={() => switchTab(tab.slug)}
-                      className={`flex items-center gap-2 px-3 py-3 rounded-xl font-semibold text-sm transition-all duration-200 ${
-                        isActive
+                      className={`flex items-center gap-2 px-3 py-3 rounded-xl font-semibold text-sm transition-all duration-200 ${isActive
                           ? `${tab.activeBg} ${tab.activeText} shadow-lg ${tab.activeShadow}`
                           : `bg-white border ${tab.inactiveBorder} ${tab.inactiveText} ${tab.inactiveHover}`
-                      }`}
+                        }`}
                     >
                       <Icon className="w-4 h-4 shrink-0" />
                       <span className="truncate text-xs">{tab.label}</span>
-                      <span className={`ml-auto text-[10px] font-extrabold min-w-[20px] text-center px-1.5 py-0.5 rounded-full ${
-                        isActive ? `${tab.countActiveBg} ${tab.countActiveText}` : `${tab.countBg} ${tab.countText}`
-                      }`}>
+                      <span className={`ml-auto text-[10px] font-extrabold min-w-[20px] text-center px-1.5 py-0.5 rounded-full ${isActive ? `${tab.countActiveBg} ${tab.countActiveText}` : `${tab.countBg} ${tab.countText}`
+                        }`}>
                         {loading.counts && count === 0 ? "…" : count}
                       </span>
                     </button>
@@ -1736,17 +1809,15 @@ const Approvals = () => {
                     <button
                       key={tab.slug}
                       onClick={() => switchTab(tab.slug)}
-                      className={`flex items-center gap-2 px-3 py-3 rounded-xl font-semibold text-sm transition-all duration-200 ${
-                        isActive
+                      className={`flex items-center gap-2 px-3 py-3 rounded-xl font-semibold text-sm transition-all duration-200 ${isActive
                           ? `${tab.activeBg} ${tab.activeText} shadow-lg ${tab.activeShadow}`
                           : `bg-white border ${tab.inactiveBorder} ${tab.inactiveText} ${tab.inactiveHover}`
-                      }`}
+                        }`}
                     >
                       <Icon className="w-4 h-4 shrink-0" />
                       <span className="truncate text-xs">{tab.label}</span>
-                      <span className={`ml-auto text-[10px] font-extrabold min-w-[20px] text-center px-1.5 py-0.5 rounded-full ${
-                        isActive ? `${tab.countActiveBg} ${tab.countActiveText}` : `${tab.countBg} ${tab.countText}`
-                      }`}>
+                      <span className={`ml-auto text-[10px] font-extrabold min-w-[20px] text-center px-1.5 py-0.5 rounded-full ${isActive ? `${tab.countActiveBg} ${tab.countActiveText}` : `${tab.countBg} ${tab.countText}`
+                        }`}>
                         {loading.counts && count === 0 ? "…" : count}
                       </span>
                     </button>
@@ -1789,7 +1860,7 @@ const Approvals = () => {
                     item={req}
                     isSelected={selected?._id === req._id}
                     onClick={() => handleSelect(req)}
-                    onDeleteAction={activeSlug === "procurement-required" ? () => handleDeleteClick(req) : undefined}
+                    onDeleteAction={undefined}
                     searchQuery={isSearchActive ? search : ""}
                   />
                 ))}
@@ -1815,11 +1886,10 @@ const Approvals = () => {
                   <button
                     key={p}
                     onClick={() => setPage(p)}
-                    className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition ${
-                      p === safePage
+                    className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition ${p === safePage
                         ? `${activeTab.activeBg} ${activeTab.activeText} shadow-sm`
                         : "border border-slate-200 text-slate-500 hover:bg-slate-100"
-                    }`}
+                      }`}
                   >{p}</button>
                 ))}
                 <button
@@ -1844,7 +1914,7 @@ const Approvals = () => {
             onCheckStock={handleCheckStock}
             onProcess={handleProcess}
             onCloseStock={() => { setStockResult(null); setStockMessage(null); }}
-            onProcure={() => selected && handleMoveToProcurement(selected)}
+            onProcure={handleSendToProcurement}
             onIssueStock={handleIssueStock}
             onOpenVendorModal={() => {
               setSelectedVendorName("");
@@ -1856,6 +1926,7 @@ const Approvals = () => {
               setPoPaymentTerms("Net 30");
               setShowPoModal(true);
             }}
+            onViewBill={() => selected && setBillRequest(selected)}
           />
           {/* Workflow diagram — shown when no item selected */}
           {!selected && <WorkflowDiagram />}
@@ -2014,12 +2085,12 @@ const Approvals = () => {
               <AlertTriangle className="w-6 h-6 shrink-0 animate-bounce" />
               <h3 className="text-lg font-black tracking-tight">Delete Procurement Request</h3>
             </div>
-            
+
             <div className="text-slate-600 text-sm space-y-2">
               <p>Are you sure you want to delete this Procurement Request?</p>
               <div className="bg-slate-50 border p-3 rounded-xl text-xs font-semibold text-slate-500">
-                <span className="font-bold text-slate-700">Reference:</span> {requestToDelete.referenceId}<br/>
-                <span className="font-bold text-slate-700">Product:</span> {requestToDelete.productDetails} ({requestToDelete.quantity} qty)<br/>
+                <span className="font-bold text-slate-700">Reference:</span> {requestToDelete.referenceId}<br />
+                <span className="font-bold text-slate-700">Product:</span> {requestToDelete.productDetails} ({requestToDelete.quantity} qty)<br />
                 <span className="font-bold text-slate-700">Department:</span> {requestToDelete.department}
               </div>
               <p className="text-red-500 font-bold text-xs mt-1">⚠️ This action cannot be undone.</p>
@@ -2041,6 +2112,16 @@ const Approvals = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {billRequest && (
+        <MaterialIssueBillModal
+          request={{
+            ...billRequest,
+            date: billRequest.createdAt ?? new Date().toISOString()
+          }}
+          onClose={() => setBillRequest(null)}
+        />
       )}
     </div>
   );
