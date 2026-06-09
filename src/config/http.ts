@@ -2,7 +2,9 @@
 import type { ApiResponse } from "@/types/global.types";
 import axios, { type AxiosRequestConfig } from "axios";
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://backendprojectbeghg.onrender.com/api";
+export const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  "https://pradhaninventorybackend.onrender.com/api";
 
 export const http = axios.create({
     baseURL: API_BASE_URL,
